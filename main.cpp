@@ -10,6 +10,9 @@ int main(int argc, char *argv[])
     StowageInfo objStowageInfo = 
                 objBLReadFiles.ChargeFile("E:/universidad/Maestria/tesis/Proyecto/Ejemplo de papers/inst/inputBay0_3_11_1.txt");
     
+    
+    
+    
     system("PAUSE");
     return EXIT_SUCCESS;
 }

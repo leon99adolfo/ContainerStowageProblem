@@ -29,6 +29,8 @@ class StowageInfo
               list<ContainerBox> _listContainerLoaded;
               list<StackContainer> _listStacks;
               list<Cell> _listCells;
+              /* calculated variables */
+              
               
       public:
              // ------------------------ Properties -------------------------------
