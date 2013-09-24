@@ -75,18 +75,6 @@ int     Cell::GetNumLocation()
 }
 
 
-void	Cell::SetContainerList(list<ContainerBox> pContainerlist)
-{
-	_containerList = pContainerlist;
-}
-
-
-list<ContainerBox>	Cell::GetContainerList()
-{
-	return _containerList;
-}
-
-
 // ------------------------ Methods ----------------------------------
 Cell::Cell(){}
 Cell::~Cell(){}

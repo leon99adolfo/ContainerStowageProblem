@@ -71,63 +71,63 @@ int     StowageInfo::GetNumTiers()
         return _numTiers;      
 }
 
-void    StowageInfo::SetListPortsDischarges(list<int> pListPortsDischarges)
+
+void    StowageInfo::SetListPortsDischarges(vector<int> pListPortsDischarges)
 {
         _listPortsDischarges = pListPortsDischarges;       
 }
              
-list<int> StowageInfo::GetListPortsDischarges()
+vector<int> StowageInfo::GetListPortsDischarges()
 {
         return _listPortsDischarges;      
 }
 
-void    StowageInfo::SetListLocations(list<int> pListLocations)
+void    StowageInfo::SetListLocations(vector<int> pListLocations)
 {
         _listLocations = pListLocations;      
 }
 
-list<int> StowageInfo::GetListLocations()
+vector<int> StowageInfo::GetListLocations()
 {
           return _listLocations;       
 }
 
-void    StowageInfo::SetListContainerLoad(list<ContainerBox> pListContainerLoad)
+void    StowageInfo::SetListContainerLoad(vector<ContainerBox> pListContainerLoad)
 {
         _listContainerLoad = pListContainerLoad;        
 }
 
-list<ContainerBox> StowageInfo::GetListContainerLoad()
+vector<ContainerBox> StowageInfo::GetListContainerLoad()
 {
         return _listContainerLoad;                 
 }
 
-void    StowageInfo::SetListContainerLoaded(list<ContainerBox> pListContainerLoaded)
+void    StowageInfo::SetListContainerLoaded(vector<ContainerBox> pListContainerLoaded)
 {
         _listContainerLoaded = pListContainerLoaded;        
 }
 
-list<ContainerBox> StowageInfo::GetListContainerLoaded()
+vector<ContainerBox> StowageInfo::GetListContainerLoaded()
 {
         return _listContainerLoaded;                 
 }
 
-void    StowageInfo::SetListStacks(list<StackContainer> pListStacks)
+void    StowageInfo::SetListStacks(vector<StackContainer> pListStacks)
 {
         _listStacks = pListStacks;        
 }
 
-list<StackContainer> StowageInfo::GetListStacks()
+vector<StackContainer> StowageInfo::GetListStacks()
 {
         return _listStacks;                   
 }
 
-
-void    StowageInfo::SetListCells(list<Cell> pListCells)
+void    StowageInfo::SetListCells(vector<Cell> pListCells)
 {
         _listCells = pListCells;        
 }
 
-list<Cell> StowageInfo::GetListCells()
+vector<Cell> StowageInfo::GetListCells()
 {
         return _listCells;          
 }
@@ -135,3 +135,97 @@ list<Cell> StowageInfo::GetListCells()
 // ------------------------ Methods ----------------------------------
 StowageInfo::StowageInfo(){}
 StowageInfo::~StowageInfo(){}
+
+int StowageInfo::fnuSlots()
+{
+    return _listCells.size() * 2;
+}
+
+void StowageInfo::ChargeContainer(vector<ContainerBox> pListContainer, bool pValFirst)
+{
+     for(int x = 0; x < pListContainer.size(); x++)
+     {
+          if(x == 0 && pValFirst)
+          {
+               _nuMinLength = _nuMaxLength = pListContainer.at(x).GetLength();
+               _nuMinHeight = _nuMaxHeight = pListContainer.at(x).GetHeight();
+               _nuMinWeight = _nuMaxWeight = pListContainer.at(x).GetWeight();     
+          }
+          else
+          {
+               //  Minimum and maximum Length
+               if(pListContainer.at(x).GetLength() < _nuMinLength)
+               {
+                    _nuMinLength = pListContainer.at(x).GetLength();
+               }
+               else if(pListContainer.at(x).GetLength() > _nuMaxLength)
+               {
+                    _nuMaxLength = pListContainer.at(x).GetLength();                   
+               }
+               
+               //  Minimum and maximum Heigth
+               if(pListContainer.at(x).GetHeight() < _nuMinHeight)
+               {
+                    _nuMinHeight = pListContainer.at(x).GetHeight();
+               }
+               else if(pListContainer.at(x).GetHeight() > _nuMaxHeight)
+               {
+                    _nuMaxHeight = pListContainer.at(x).GetHeight();                   
+               }
+               
+               //  Minimum and maximum Weigth
+               if(pListContainer.at(x).GetWeight() < _nuMinWeight)
+               {
+                    _nuMinWeight = pListContainer.at(x).GetWeight();
+               }
+               else if(pListContainer.at(x).GetWeight() > _nuMaxWeight)
+               {
+                    _nuMaxWeight = pListContainer.at(x).GetWeight();                   
+               }    
+          }
+     }  
+}
+
+void StowageInfo::ChargeData()
+{
+     // Container load
+     ChargeContainer(_listContainerLoad, true);
+     // Container loaded
+     ChargeContainer(_listContainerLoaded, false);  
+     
+     cout<<"_nuMinLength: "<<_nuMinLength<<endl;
+     cout<<"_nuMaxLength: "<<_nuMaxLength<<endl;
+     cout<<"_nuMinHeight: "<<_nuMinHeight<<endl;
+     cout<<"_nuMaxHeight: "<<_nuMaxHeight<<endl;
+     cout<<"_nuMinWeight: "<<_nuMinWeight<<endl;
+     cout<<"_nuMaxWeight: "<<_nuMaxWeight<<endl;
+        
+     // Stacks
+     for(int x = 0; x < _listStacks.size(); x++)
+     {
+          if(x == 0)
+          {
+               _nuMinStackHeight = _nuMaxStackHeight = _listStacks.at(x).GetMaxHeigth();
+          }
+          else
+          {
+               //  Minimum and maximum Length
+               if(_listStacks.at(x).GetMaxHeigth() < _nuMinStackHeight)
+               {
+                    _nuMinStackHeight = _listStacks.at(x).GetMaxHeigth();
+               }
+               else if(_listStacks.at(x).GetMaxHeigth() > _nuMaxStackHeight)
+               {
+                    _nuMaxStackHeight = _listStacks.at(x).GetMaxHeigth();                   
+               }  
+          }
+     }   
+     
+     cout<<"_nuMinStackHeight: "<<_nuMinStackHeight<<endl;
+     cout<<"_nuMaxStackHeight: "<<_nuMaxStackHeight<<endl;
+     
+           
+}
+
+
+

@@ -9,30 +9,46 @@
 #define StowageInfo_h
 
 #include "StackContainer.h"
-#include <list>
+#include <iostream>
+#include <vector>
+
 using namespace std;
 
 class StowageInfo
 {
       private:
               // ------------------------ Properties ------------------------------- 
-              int         _numPortsDischarge;
-              int         _numContainerLoad;
-              int         _numContainerLoaded;
-              int         _numStacks;
-              int         _numCell;
-              int         _numLocations;
-              int         _numTiers;
-              list<int>   _listPortsDischarges;
-              list<int>   _listLocations;
-              list<ContainerBox> _listContainerLoad;
-              list<ContainerBox> _listContainerLoaded;
-              list<StackContainer> _listStacks;
-              list<Cell> _listCells;
-              /* calculated variables */
+              int                    _numPortsDischarge;
+              int                    _numContainerLoad;
+              int                    _numContainerLoaded;
+              int                    _numStacks;
+              int                    _numCell;
+              int                    _numLocations;
+              int                    _numTiers;
+              vector<int>            _listPortsDischarges;
+              vector<int>            _listLocations;
+              vector<ContainerBox>   _listContainerLoad;
+              vector<ContainerBox>   _listContainerLoaded;
+              vector<StackContainer> _listStacks;
+              vector<Cell>           _listCells;
               
               
+              /**
+               * Charge container in memory
+               */
+              void ChargeContainer(vector<ContainerBox> pListContainer, bool pValFirst);
+                            
       public:
+             /* Calculated variables */
+              int         _nuMinLength;  // minimum length
+              int         _nuMaxLength;  // maximum length
+              double      _nuMinHeight;  // minimum height
+              double      _nuMaxHeight;  // maximum height
+              double      _nuMinWeight;  // minimum weight
+              double      _nuMaxWeight;  // maximum weight
+              double      _nuMinStackHeight; // Minimum height of the stack
+              double      _nuMaxStackHeight; // Maximum height of the stack
+                            
              // ------------------------ Properties -------------------------------
     		 /**
     		 *	NumPortsDischarge Property SET
@@ -108,65 +124,65 @@ class StowageInfo
     		 *	ListPortsDischarges Property SET
     		 *	@param pListPortsDischarges
     		 */
-             void    SetListPortsDischarges(list<int> pListPortsDischarges);
+             void    SetListPortsDischarges(vector<int> pListPortsDischarges);
              /**
     		 *	ListPortsDischarges Property GET
     		 */
-             list<int> GetListPortsDischarges();
+             vector<int> GetListPortsDischarges();
              
              
              /**
     		 *	ListLocations Property SET
     		 *	@param pListLocations
     		 */
-             void    SetListLocations(list<int> pListLocations);
+             void    SetListLocations(vector<int> pListLocations);
              /**
     		 *	ListLocations Property GET
     		 */
-             list<int> GetListLocations();
+             vector<int> GetListLocations();
              
              
              /**
     		 *	ListContainerLoad Property SET
     		 *	@param pListContainerLoad
     		 */
-             void    SetListContainerLoad(list<ContainerBox> pListContainerLoad);
+             void    SetListContainerLoad(vector<ContainerBox> pListContainerLoad);
              /**
     		 *	ListContainerLoad Property GET
     		 */
-             list<ContainerBox> GetListContainerLoad();
+             vector<ContainerBox> GetListContainerLoad();
              
              
              /**
     		 *	ListContainerLoaded Property SET
     		 *	@param pListContainerLoaded
     		 */
-             void    SetListContainerLoaded(list<ContainerBox> pListContainerLoaded);
+             void    SetListContainerLoaded(vector<ContainerBox> pListContainerLoaded);
              /**
     		 *	ListContainerLoaded Property GET
     		 */
-             list<ContainerBox> GetListContainerLoaded();
+             vector<ContainerBox> GetListContainerLoaded();
              
              /**
     		 *	ListStacks Property SET
     		 *	@param pListStacks
     		 */
-             void    SetListStacks(list<StackContainer> pListStacks);
+             void    SetListStacks(vector<StackContainer> pListStacks);
              /**
     		 *	ListStacks Property GET
     		 */
-             list<StackContainer> GetListStacks();
+             vector<StackContainer> GetListStacks();
              
              
              /**
     		 *	ListCells Property SET
     		 *	@param pListCells
     		 */
-             void    SetListCells(list<Cell> pListCells);
+             void    SetListCells(vector<Cell> pListCells);
              /**
     		 *	ListCells Property GET
     		 */
-             list<Cell> GetListCells();
+             vector<Cell> GetListCells();
        
        
              // ------------------------ Methods ----------------------------------
@@ -178,6 +194,15 @@ class StowageInfo
     		 *	Destructor
     		 */
     		~StowageInfo();
+    		/**
+    		 * Number of Slots
+    		 */
+    		int fnuSlots();
+    		
+    		/**
+    		 * Charge Data
+    		 */
+    		void ChargeData();
                           
 };
 

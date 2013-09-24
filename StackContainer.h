@@ -9,7 +9,6 @@
 #define StackContainer_h
 
 #include "Cell.h"
-#include <list>
 
 using namespace std;
 
@@ -21,7 +20,6 @@ class StackContainer
 		int _stackId;
 		double _maxWeigth;
 		double _maxHeigth;
-		list<Cell> _cellList;
 
 	public: 
         // ------------------------ Properties -------------------------------
@@ -64,17 +62,6 @@ class StackContainer
 		 *	MaxHeigth Property GET
 		 */
 		double	GetMaxHeigth();
-		
-		
-		/**
-		 *	CellList Property SET
-		 *	@param pCellList
-		 */
-		void	SetCellList(list<Cell> pCellList);
-		/**
-		 *	CellList Property GET
-		 */
-		list<Cell>	GetCellList();
 		
 		// ------------------------ Methods ----------------------------------
 		/**

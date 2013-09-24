@@ -50,7 +50,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <list>
+#include <vector>
 using namespace std;
 
 class BLReadFiles
@@ -62,7 +62,7 @@ class BLReadFiles
     		 * @param pContainers: number of container
     		 * @param pAreLoad: containers are loaded
     		 */
-             list<ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoad);
+             vector<ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoad);
               
       
       public:

@@ -9,7 +9,6 @@
 #define Cell_h
 
 #include "ContainerBox.h"
-#include <list>
 
 using namespace std;
 
@@ -24,8 +23,7 @@ class Cell
         int         _capFore;
         int         _capAft;
         int         _cap40;
-        int         _numLocation;				
-		list<ContainerBox>  _containerList;
+        int         _numLocation;
 
 	public:
 		// ------------------------ Properties -------------------------------
@@ -99,16 +97,6 @@ class Cell
 		 *	NumLocation Property GET
 		 */
 		int     GetNumLocation();
-
-		/**
-		 *	ContainerList Property SET
-		 *	@param pContainerlist	
-		 */
-		void	SetContainerList(list<ContainerBox> pContainerList);
-		/**
-		 *	ContainerList Property GET
-		 */
-		list<ContainerBox>	GetContainerList();
 
 		// ------------------------ Methods ----------------------------------
 		/**

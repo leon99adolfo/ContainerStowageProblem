@@ -42,16 +42,6 @@ double	StackContainer::GetMaxHeigth()
        return _maxHeigth;                
 }
 
-void StackContainer::StackContainer::SetCellList(list<Cell> pCellList)
-{
-     _cellList = pCellList;   
-}
-
-list<Cell>	 StackContainer::GetCellList()
-{
-    return _cellList;   
-}
-
 // ------------------------ Methods ----------------------------------
 
 

@@ -17,18 +17,18 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName)
     string sbTagDummy;
     // Variables for discharges ports 
     int nuPortDischarge;
-    list<int> listPortDischarge;
+    vector<int> listPortDischarge;
     // Variables for locations
     int nuLocation;
-    list<int> listLocations;
+    vector<int> listLocations;
     // Variables for stacks
     int nuLocationStack;
     double nuMaxWeigth, nuMaxHeigth;
-    list<StackContainer> listStacks;
+    vector<StackContainer> listStacks;
     // variables for cell
     int nuStackIdCell, nuIsReeferFore, nuIsReeferAft, nuCapFore, 
         nuCapAft, nuCap40, nuLocationCell;
-    list<Cell> listCells;
+    vector<Cell> listCells;
 
     // Open file
     archivoAr.open(pFileName.c_str() , ios::out);
@@ -156,13 +156,13 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName)
     return response;               
 }
 
-list<ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoaded)
+vector<ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoaded)
 {
      // Variables for container load
     int nuStackIdCont, nuCellIdCont, nuPositionCont, nuLengthCont, nuPortDischargeCont,
         nuIsReeferCont, nuLocationCont;
     double dbWeigthCont, dbHeigthCont;
-    list<ContainerBox> listContainer;
+    vector<ContainerBox> listContainer;
     
     // Read Container Load
     for(int x = 0; x < pContainers; x++)
