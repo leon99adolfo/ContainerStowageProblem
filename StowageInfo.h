@@ -40,15 +40,31 @@ class StowageInfo
                             
       public:
              /* Calculated variables */
-              int         _nuMinLength;  // minimum length
-              int         _nuMaxLength;  // maximum length
-              double      _nuMinHeight;  // minimum height
-              double      _nuMaxHeight;  // maximum height
-              double      _nuMinWeight;  // minimum weight
-              double      _nuMaxWeight;  // maximum weight
-              double      _nuMinStackHeight; // Minimum height of the stack
-              double      _nuMaxStackHeight; // Maximum height of the stack
-                            
+            int         _nuMinLength;  // minimum length
+            int         _nuMaxLength;  // maximum length
+            double      _nuMinHeight;  // minimum height
+            double      _nuMaxHeight;  // maximum height
+            double      _nuMinWeight;  // minimum weight
+            double      _nuMaxWeight;  // maximum weight
+            double      _nuMinStackHeight; // Minimum height of the stack
+            double      _nuMaxStackHeight; // Maximum height of the stack
+			/* Model variables */
+			vector<int>			Stacks;			// Stack index set
+			vector<int>			Slots;			// Slot index set
+            vector<int>			Cont;        	// Container index set
+            vector<int>			Slots_A;     	// Aft slots index set
+            vector<int>			Slots_F;     	// Fore slots index set
+            vector<vector<int>>	Slots_K;     	// Slots of stack K index set
+            vector<vector<int>>	Slots_K_A;   	// Aft slots of stack K index set
+			vector<vector<int>>	Slots_K_F;		// Fore slots of stack K index set
+			vector<int>        	Slots_R;     	// Reefer slot index set
+			vector<int>    		Slots_NR;    	// Non Reefer slot index set
+			vector<int>    		Slots_NRC;   	// Slots in cell with no reefer plugs index set
+            vector<int>        	Slots_20;    	// 20' capacity slots index set
+            vector<int>      	Slots_40;    	// 40' capacity slots index set
+			vector<int>        	Cont_V;      	// Virtual containers index set
+            vector<int>        	Cont_L;      	// Loaded containers index set
+			
              // ------------------------ Properties -------------------------------
     		 /**
     		 *	NumPortsDischarge Property SET

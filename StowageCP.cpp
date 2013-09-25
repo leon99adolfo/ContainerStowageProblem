@@ -26,7 +26,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
         
    //---------------------------- sorts the arguments -------------------------- 
    // The cells 
-   vector<Cell> listCells = pStowageInfo.GetListCells();
+   /*vector<Cell> listCells = pStowageInfo.GetListCells();
    // List of cells
    map<int,int> listStacksIdx;
    // iterations
@@ -44,27 +44,20 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
         // no found stack
         if(listStacksIdx.find( nuStackIdTmp ) == listStacksIdx.end())
         {
-             // insert stack
-             int nuValueStack = (listStacksIdx.size() == 0) ? 0 : listStacksIdx.size() + 1;
-             listStacksIdx[ nuStackIdTmp ] = nuValueStack;               
-             Stacks[ nuValueStack ] = nuStackIdTmp;
+            // insert stack
+            int nuValueStack = (listStacksIdx.size() == 0) ? 0 : listStacksIdx.size() + 1;
+            listStacksIdx[ nuStackIdTmp ] = nuValueStack;               
+            Stacks[ nuValueStack ] = nuStackIdTmp;
              
-             //Slots_K.push_back(IntArgs( ));
+            //Slots_K.push_back(IntArgs( ));
+			
              
              
         }
         else
         {
             
-        }
-        
-        
-            
-   }
+		}
+   }*/
    
-   
-   
-   
-   
-              
 }

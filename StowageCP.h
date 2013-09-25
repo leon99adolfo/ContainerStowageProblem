@@ -18,21 +18,21 @@ class StowageCP: public Space
 {
       private:
               // Index Set and Constant of the CP model
-              IntArgs          Stacks;      // Stack index set
-              IntArgs          Slots;       // Slot index set
-              IntArgs          Cont;        // Container index set
-              IntArgs          Slots_A;     // Aft slots index set
-              IntArgs          Slots_F;     // Fore slots index set
-              vector<IntArgs>  Slots_K;     // Slots of stack K index set
-              IntArgs          Slots_K_A;   // Aft slots of stack K index set
-              IntArgs        Slots_K_F;   // Fore slots of stack K index set
-              IntArgs        Slots_R;     // Reefer slot index set
-              IntArgs        Slots_NR;    // Non Reefer slot index set
-              IntArgs        Slots_NRC;   // Slots in cell with no reefer plugs index set
-              IntArgs        Slots_20;    // 20' capacity slots index set
-              IntArgs        Slots_40;    // 40' capacity slots index set
-              IntArgs        Cont_V;      // Virtual containers index set
-              IntArgs        Cont_L;      // Loaded containers index set
+              IntArgs          	Stacks;      // Stack index set
+              IntArgs          	Slots;       // Slot index set
+              IntArgs          	Cont;        // Container index set
+              IntArgs          	Slots_A;     // Aft slots index set
+              IntArgs          	Slots_F;     // Fore slots index set
+              vector<IntArgs>  	Slots_K;     // Slots of stack K index set
+              vector<IntArgs>  	Slots_K_A;   // Aft slots of stack K index set
+              vector<IntArgs>  	Slots_K_F;   // Fore slots of stack K index set
+              IntArgs        	Slots_R;     // Reefer slot index set
+              IntArgs        	Slots_NR;    // Non Reefer slot index set
+              IntArgs        	Slots_NRC;   // Slots in cell with no reefer plugs index set
+              IntArgs        	Slots_20;    // 20' capacity slots index set
+              IntArgs        	Slots_40;    // 40' capacity slots index set
+              IntArgs        	Cont_V;      // Virtual containers index set
+              IntArgs        	Cont_L;      // Loaded containers index set
               IntArgs        Cont_20;     // 20' containers index set
               IntArgs        Cont_40;     // 40' containers index set
               IntArgs        Cont_40_A;   // 40' containers index set (Aft)
