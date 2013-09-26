@@ -33,17 +33,17 @@ class StowageCP: public Space
               IntArgs        	Slots_40;    // 40' capacity slots index set
               IntArgs        	Cont_V;      // Virtual containers index set
               IntArgs        	Cont_L;      // Loaded containers index set
-              IntArgs        Cont_20;     // 20' containers index set
-              IntArgs        Cont_40;     // 40' containers index set
-              IntArgs        Cont_40_A;   // 40' containers index set (Aft)
-              IntArgs        Cont_40_F;   // 40' containers index set (Fore)
-              IntArgs        Cont_20_R;   // 20' reefer containers index set
-              IntArgs        Cont_40_R;   // 40' reefer containers index set
-              IntArgs        Cont_NR;     // Non-reefer containers index set
-              IntArgs        Weight;      // Weight of container i
-              IntArgs        POD;         // Ports of discharges of container i
-              IntArgs        Length;      // Leight of container i
-              IntArgs        Hength;      // Height of container i
+              IntArgs           Cont_20;     // 20' containers index set
+              IntArgs           Cont_40;     // 40' containers index set
+              IntArgs           Cont_40_A;   // 40' containers index set (Aft)
+              IntArgs           Cont_40_F;   // 40' containers index set (Fore)
+              IntArgs           Cont_20_R;   // 20' reefer containers index set
+              IntArgs           Cont_40_R;   // 40' reefer containers index set
+              IntArgs           Cont_NR;     // Non-reefer containers index set
+              //IntArgs        	Weight;      // Weight of container i
+              IntArgs        	POD;         // Ports of discharges of container i
+              IntArgs        	Length;      // Leight of container i
+              //IntArgs        	Height;      // Height of container i
               IntArgs        Cont_EP;     // Number of container with discharge port P.
               IntArgs        Cont_EWH;    // Number of container with equal weight and height
               int            ContNormal   // Number of normal containers

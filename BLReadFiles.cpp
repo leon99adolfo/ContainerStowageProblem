@@ -7,9 +7,7 @@ BLReadFiles::BLReadFiles(){}
 BLReadFiles::~BLReadFiles(){} 
 
 StowageInfo BLReadFiles::ChargeFile(string pFileName)
-{
-    // Variables
-    StowageInfo response;
+{    
     // Varibles of firts line
     int nuPortsDischarge, nuContainerLoad, nuContainerLoaded, 
         nuStacks, nuCell, nuLocations, nuTiers;
@@ -29,6 +27,7 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName)
     int nuStackIdCell, nuIsReeferFore, nuIsReeferAft, nuCapFore, 
         nuCapAft, nuCap40, nuLocationCell;
     vector<Cell> listCells;
+
 
     // Open file
     archivoAr.open(pFileName.c_str() , ios::out);
@@ -90,14 +89,21 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName)
     cout<<sbTagDummy<<endl;
  
     // Save Container Load
-    response.SetListContainerLoad(ReadContainer(nuContainerLoad, false));
+    response.SetListContainerLoad(ReadContainer(nuContainerLoad, false, 0));
     
     // Read Tag #CONTAINERS_TOLOADED
     archivoAr>>sbTagDummy;
     cout<<sbTagDummy<<endl;
     
     // Save Container Load
-    response.SetListContainerLoad(ReadContainer(nuContainerLoaded, true));
+    response.SetListContainerLoaded(ReadContainer(nuContainerLoaded, true,  response.GetListContainerLoad().size()));
+    
+    // re-fill virtuals container 
+	int nuContainerIndex = response.GetListContainerLoad().size() + response.GetListContainerLoaded().size();
+    for(int x = nuContainerIndex; x < (nuCell * 2); x++)
+	{
+        response.Cont_V.push_back(x);        
+    }
     
     // Read Tag #STACKS
     archivoAr>>sbTagDummy;
@@ -203,7 +209,7 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName)
 		if( stackFinded != response.Stacks.end() )
 		{
 			// stack position 
-			int nuPositionStack	:= stackFinded - response.Stacks.begin();
+			int nuPositionStack	= stackFinded - response.Stacks.begin();
 		
 			// Insert Stack K
 			response.Slots_K[ nuPositionStack ].push_back( idxFirstTemp );
@@ -246,13 +252,14 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName)
     return response;               
 }
 
-vector<ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoaded)
+vector<ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoaded, int pContainerIdx)
 {
      // Variables for container load
     int nuStackIdCont, nuCellIdCont, nuPositionCont, nuLengthCont, nuPortDischargeCont,
         nuIsReeferCont, nuLocationCont;
     double dbWeigthCont, dbHeigthCont;
     vector<ContainerBox> listContainer;
+    
     
     // Read Container Load
     for(int x = 0; x < pContainers; x++)
@@ -261,7 +268,7 @@ vector<ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoaded
                    nuLengthCont>>nuPortDischargeCont>>nuIsReeferCont>>nuLocationCont; 
                    
         cout<<nuStackIdCont<<" "<<nuCellIdCont<<" "<<nuPositionCont<<" "<<dbWeigthCont<<" "<<dbHeigthCont<<" "<<
-                   nuLengthCont<<" "<<nuPortDischargeCont<<" "<<nuIsReeferCont<<" "<<nuLocationCont<<endl;
+              nuLengthCont<<" "<<nuPortDischargeCont<<" "<<nuIsReeferCont<<" "<<nuLocationCont<<endl;
         
 		/* Fill Object Container */
         ContainerBox objContainer;
@@ -278,8 +285,102 @@ vector<ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoaded
 		
         listContainer.push_back(objContainer);  
 
-		if( pAreLoaded ) 
-		
+        // Insert Cont_L and Cont_V
+		if( pAreLoaded )
+		{
+             response.Cont_L.push_back(pContainerIdx);     
+			
+			// Insert Cont_20 y Cont_40
+			if( nuLengthCont == 20 )
+			{
+				response.Cont_20.push_back(pContainerIdx);
+				
+				// Insert Cont_20_R
+				if( nuIsReeferCont = 1 )
+				{
+					response.Cont_20_R.push_back(pContainerIdx);
+				}
+				else
+				{
+					response.Cont_NR.push_back(pContainerIdx);
+				}
+				
+				// Insert 
+				//response.Weight.push_back(pContainerIdx);
+				
+			}
+			else
+			{			
+				// 40' Container Aft	
+				response.Cont_40_A.push_back(pContainerIdx);				
+				response.Cont_40.push_back(pContainerIdx);
+				
+				// Insert Cont_40_R
+				if( nuIsReeferCont = 1 )
+				{
+					response.Cont_40_R.push_back(pContainerIdx);
+					response.Cont_40_R.push_back(pContainerIdx + 1);
+				}
+				else
+				{
+					response.Cont_NR.push_back(pContainerIdx);
+					response.Cont_NR.push_back(pContainerIdx + 1);
+				}
+				
+				// 40' Container Fore
+				pContainerIdx++; 
+				response.Cont_L.push_back(pContainerIdx);
+				response.Cont_40_F.push_back(pContainerIdx);
+				response.Cont_40.push_back(pContainerIdx);
+			}
+			 
+        }
+        else
+        {
+            response.Cont_V.push_back(pContainerIdx);
+			
+			// Insert Cont_20 y Cont_40
+			if( nuLengthCont == 20 )
+			{
+				response.Cont_20.push_back(pContainerIdx);
+				
+				// Insert Cont_20_R
+				if( nuIsReeferCont = 1 )
+				{
+					response.Cont_20_R.push_back(pContainerIdx);
+				}
+				else
+				{
+					response.Cont_NR.push_back(pContainerIdx);
+				}
+			}
+			else
+			{			
+				// 40' Container Aft	
+				response.Cont_40_A.push_back(pContainerIdx);				
+				response.Cont_40.push_back(pContainerIdx);
+				
+				// Insert Cont_40_R
+				if( nuIsReeferCont = 1 )
+				{
+					response.Cont_40_R.push_back(pContainerIdx);
+					response.Cont_40_R.push_back(pContainerIdx + 1);
+				}
+				else
+				{
+					response.Cont_NR.push_back(pContainerIdx);
+					response.Cont_NR.push_back(pContainerIdx + 1);
+				}
+				
+				// 40' Container Fore
+				pContainerIdx++; 
+				response.Cont_V.push_back(pContainerIdx);
+				response.Cont_40_F.push_back(pContainerIdx);
+				response.Cont_40.push_back(pContainerIdx);
+			}
+        }
+        
+		pContainerIdx++; 
 		
     }
     

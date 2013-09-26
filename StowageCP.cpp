@@ -1,4 +1,4 @@
-#include "StowageCP.h"
+/*#include "StowageCP.h"
 
 StowageCP::StowageCP(StowageInfo pStowageInfo):
               // Domain Variables
@@ -26,7 +26,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
         
    //---------------------------- sorts the arguments -------------------------- 
    // The cells 
-   /*vector<Cell> listCells = pStowageInfo.GetListCells();
+   vector<Cell> listCells = pStowageInfo.GetListCells();
    // List of cells
    map<int,int> listStacksIdx;
    // iterations
@@ -58,6 +58,6 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
         {
             
 		}
-   }*/
+   }
    
-}
+}*/

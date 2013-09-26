@@ -56,13 +56,15 @@ using namespace std;
 class BLReadFiles
 {
       private:
-              ifstream archivoAr;
+              // Variables
+              ifstream archivoAr;             
+              StowageInfo response;
               /**
     		 * This method charge container data in file
     		 * @param pContainers: number of container
     		 * @param pAreLoad: containers are loaded
     		 */
-             vector<ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoad);
+             vector<ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoad, int pContainerIdx);
               
       
       public:

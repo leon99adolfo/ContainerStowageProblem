@@ -54,9 +54,9 @@ class StowageInfo
             vector<int>			Cont;        	// Container index set
             vector<int>			Slots_A;     	// Aft slots index set
             vector<int>			Slots_F;     	// Fore slots index set
-            vector<vector<int>>	Slots_K;     	// Slots of stack K index set
-            vector<vector<int>>	Slots_K_A;   	// Aft slots of stack K index set
-			vector<vector<int>>	Slots_K_F;		// Fore slots of stack K index set
+            vector<vector<int> >Slots_K;     	// Slots of stack K index set
+            vector<vector<int> >Slots_K_A;   	// Aft slots of stack K index set
+			vector<vector<int> >Slots_K_F;		// Fore slots of stack K index set
 			vector<int>        	Slots_R;     	// Reefer slot index set
 			vector<int>    		Slots_NR;    	// Non Reefer slot index set
 			vector<int>    		Slots_NRC;   	// Slots in cell with no reefer plugs index set
@@ -64,6 +64,17 @@ class StowageInfo
             vector<int>      	Slots_40;    	// 40' capacity slots index set
 			vector<int>        	Cont_V;      	// Virtual containers index set
             vector<int>        	Cont_L;      	// Loaded containers index set
+            vector<int>         Cont_20;        // 20' containers index set
+            vector<int>         Cont_40;        // 40' containers index set
+            vector<int>         Cont_40_A;      // 40' containers index set (Aft)
+            vector<int>         Cont_40_F;      // 40' containers index set (Fore)
+            vector<int>         Cont_20_R;      // 20' reefer containers index set
+            vector<int>         Cont_40_R;      // 40' reefer containers index set
+            vector<int>         Cont_NR;        // Non-reefer containers index set
+			vector<double>    	Weight;      	// Weight of container i
+            vector<int>      	POD;         	// Ports of discharges of container i
+            vector<int>      	Length;      	// Leight of container i
+            vector<double>      Height;      	// Height of container i
 			
              // ------------------------ Properties -------------------------------
     		 /**
