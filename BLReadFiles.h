@@ -46,6 +46,7 @@
 #ifndef BLReadFiles_h
 #define BLReadFiles_h
 
+#include "Constants.h"
 #include "StowageInfo.h"
 #include <iostream>
 #include <fstream>
@@ -59,12 +60,15 @@ class BLReadFiles
               // Variables
               ifstream archivoAr;             
               StowageInfo response;
+              Constants objConstants;
+              int nuContainerIdx;
               /**
     		 * This method charge container data in file
     		 * @param pContainers: number of container
     		 * @param pAreLoad: containers are loaded
     		 */
-             vector<ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoad, int pContainerIdx);
+             vector<ContainerBox> ReadContainer(int pContainers, bool pAreLoad);
+             void ChargeContainerInfo(ContainerBox objContainer);
               
       
       public:

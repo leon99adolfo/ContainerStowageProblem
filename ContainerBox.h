@@ -5,6 +5,10 @@
  * @section DESCRIPTION
  * Container class.
  */
+ 
+#ifndef ContainerBox_h
+#define ContainerBox_h 
+ 
 class ContainerBox
 {
 	private:
@@ -137,3 +141,4 @@ class ContainerBox
 
 };
 
+#endif

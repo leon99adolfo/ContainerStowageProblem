@@ -133,7 +133,12 @@ vector<Cell> StowageInfo::GetListCells()
 }
 
 // ------------------------ Methods ----------------------------------
-StowageInfo::StowageInfo(){}
+StowageInfo::StowageInfo()
+{
+    ContNormal = 0;  
+    ContCUBE   = 0;                       
+}
+
 StowageInfo::~StowageInfo(){}
 
 int StowageInfo::fnuSlots()

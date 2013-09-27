@@ -1,8 +1,12 @@
 #include "BLReadFiles.h"
 
 
+
 // ------------------------ Methods ----------------------------------
-BLReadFiles::BLReadFiles(){}
+BLReadFiles::BLReadFiles()
+{
+    nuContainerIdx = 0;                             
+}
 
 BLReadFiles::~BLReadFiles(){} 
 
@@ -89,21 +93,21 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName)
     cout<<sbTagDummy<<endl;
  
     // Save Container Load
-    response.SetListContainerLoad(ReadContainer(nuContainerLoad, false, 0));
+    response.SetListContainerLoad(ReadContainer(nuContainerLoad, false));
     
     // Read Tag #CONTAINERS_TOLOADED
     archivoAr>>sbTagDummy;
     cout<<sbTagDummy<<endl;
     
     // Save Container Load
-    response.SetListContainerLoaded(ReadContainer(nuContainerLoaded, true,  response.GetListContainerLoad().size()));
+    response.SetListContainerLoaded(ReadContainer(nuContainerLoaded, true));
     
     // re-fill virtuals container 
-	int nuContainerIndex = response.GetListContainerLoad().size() + response.GetListContainerLoaded().size();
-    for(int x = nuContainerIndex; x < (nuCell * 2); x++)
+    for(int x = nuContainerIdx; x < (nuCell * 2); x++)
 	{
         response.Cont_V.push_back(x);        
     }
+    
     
     // Read Tag #STACKS
     archivoAr>>sbTagDummy;
@@ -169,7 +173,7 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName)
 		response.Slots_F.push_back( idxSecondTemp );
 		
 		// Insert slots reefer and not reefer
-		if( nuIsReeferAft  == 1 ) 
+		if( nuIsReeferAft  == objConstants.verdadero ) 
 		{
 			response.Slots_R.push_back( idxFirstTemp );
 		}
@@ -181,7 +185,7 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName)
 		}
 		
 		// Insert slots reefer and not reefer
-		if( nuIsReeferFore == 1 ) 
+		if( nuIsReeferFore == objConstants.verdadero) 
 		{
 			response.Slots_R.push_back( idxSecondTemp );
 		}
@@ -191,7 +195,7 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName)
 		}
 		
 		// Insert Slot 20' and 40' 
-		if(nuCap40 == 1)
+		if(nuCap40 == objConstants.verdadero)
 		{
 			response.Slots_40.push_back( idxFirstTemp );
 			response.Slots_40.push_back( idxSecondTemp );
@@ -205,22 +209,18 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName)
 		vector<int> TmpSlotsK;
 		vector<int> TmpSlotsKA;
 		vector<int> TmpSlotsKF;
-		vector<int>::iterator stackFinded = find(response.Stacks.begin(), response.Stacks.end(), nuStackIdCell);		
-		if( stackFinded != response.Stacks.end() )
+		map<int, vector<int> >::iterator stackFinded = response.Slots_K.find(nuStackIdCell);		
+		if( stackFinded != response.Slots_K.end() )
 		{
-			// stack position 
-			int nuPositionStack	= stackFinded - response.Stacks.begin();
-		
 			// Insert Stack K
-			response.Slots_K[ nuPositionStack ].push_back( idxFirstTemp );
-			response.Slots_K[ nuPositionStack ].push_back( idxSecondTemp );
+			response.Slots_K[ nuStackIdCell ].push_back( idxFirstTemp );
+			response.Slots_K[ nuStackIdCell ].push_back( idxSecondTemp );
 			
 			// Insert Stack K Aft 			
-			response.Slots_K_A[ nuPositionStack ].push_back( idxFirstTemp );
+			response.Slots_K_A[ nuStackIdCell ].push_back( idxFirstTemp );
 			
 			// Insert Stack K Fore 
-			response.Slots_K_F[ nuPositionStack ].push_back( idxSecondTemp );
-			
+			response.Slots_K_F[ nuStackIdCell ].push_back( idxSecondTemp );			
 		}
 		else
 		{
@@ -230,15 +230,15 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName)
 			// Insert Stack K
 			TmpSlotsK.push_back( idxFirstTemp );
 			TmpSlotsK.push_back( idxSecondTemp );
-			response.Slots_K.push_back( TmpSlotsK );			
+			response.Slots_K[nuStackIdCell] = TmpSlotsK;			
 			
 			// Insert Stack K Aft 
 			TmpSlotsKA.push_back( idxFirstTemp );
-			response.Slots_K_A.push_back( TmpSlotsKA );
+			response.Slots_K_A[nuStackIdCell] = TmpSlotsKA;
 			
 			// Insert Stack K Fore 
 			TmpSlotsKF.push_back( idxSecondTemp );
-			response.Slots_K_F.push_back( TmpSlotsKA );
+			response.Slots_K_F[nuStackIdCell] = TmpSlotsKF;
 			
 		}	
     }
@@ -252,7 +252,7 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName)
     return response;               
 }
 
-vector<ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoaded, int pContainerIdx)
+vector<ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoaded)
 {
      // Variables for container load
     int nuStackIdCont, nuCellIdCont, nuPositionCont, nuLengthCont, nuPortDischargeCont,
@@ -285,105 +285,146 @@ vector<ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoaded
 		
         listContainer.push_back(objContainer);  
 
+
+        // find Container
+        map<int, int>::iterator ContainerByPort = response.Cont_EP.find(nuPortDischargeCont);
+        if( ContainerByPort != response.Cont_EP.end() )
+		{
+            response.Cont_EP[nuPortDischargeCont] += 1;     
+        }
+        else
+        {
+            response.Cont_EP[nuPortDischargeCont] = 1;
+        }
+                
+        // find Container with equal weight
+        map<double, int>::iterator ContainerByWeigth = response.Cont_EW.find(dbWeigthCont);
+        if( ContainerByWeigth != response.Cont_EW.end() )
+		{
+            response.Cont_EW[dbWeigthCont] += 1;     
+        }
+        else
+        {
+            response.Cont_EW[dbWeigthCont] = 1;
+        }
+
+        // find Container with equal height
+        map<double, int>::iterator ContainerByHeigth = response.Cont_EH.find(dbHeigthCont);
+        if( ContainerByHeigth != response.Cont_EH.end() )
+		{
+            response.Cont_EH[dbHeigthCont] += 1;     
+        }
+        else
+        {
+            response.Cont_EH[dbHeigthCont] = 1;
+        }
+                
+        // Is High Cube?
+        if( objConstants.highCube == dbHeigthCont )
+        {
+            response.ContCUBE++;    
+        }
+        else
+        {
+            response.ContNormal++;    
+        }
+
         // Insert Cont_L and Cont_V
 		if( pAreLoaded )
 		{
-             response.Cont_L.push_back(pContainerIdx);     
-			
-			// Insert Cont_20 y Cont_40
-			if( nuLengthCont == 20 )
-			{
-				response.Cont_20.push_back(pContainerIdx);
-				
-				// Insert Cont_20_R
-				if( nuIsReeferCont = 1 )
-				{
-					response.Cont_20_R.push_back(pContainerIdx);
-				}
-				else
-				{
-					response.Cont_NR.push_back(pContainerIdx);
-				}
-				
-				// Insert 
-				//response.Weight.push_back(pContainerIdx);
-				
-			}
-			else
-			{			
-				// 40' Container Aft	
-				response.Cont_40_A.push_back(pContainerIdx);				
-				response.Cont_40.push_back(pContainerIdx);
-				
-				// Insert Cont_40_R
-				if( nuIsReeferCont = 1 )
-				{
-					response.Cont_40_R.push_back(pContainerIdx);
-					response.Cont_40_R.push_back(pContainerIdx + 1);
-				}
-				else
-				{
-					response.Cont_NR.push_back(pContainerIdx);
-					response.Cont_NR.push_back(pContainerIdx + 1);
-				}
-				
-				// 40' Container Fore
-				pContainerIdx++; 
-				response.Cont_L.push_back(pContainerIdx);
-				response.Cont_40_F.push_back(pContainerIdx);
-				response.Cont_40.push_back(pContainerIdx);
-			}
+             response.Cont_L.push_back(nuContainerIdx);     
+			 // Charge container information
+			 ChargeContainerInfo(objContainer);
 			 
         }
         else
         {
-            response.Cont_V.push_back(pContainerIdx);
+            response.Cont_V.push_back(nuContainerIdx);
 			
-			// Insert Cont_20 y Cont_40
-			if( nuLengthCont == 20 )
-			{
-				response.Cont_20.push_back(pContainerIdx);
-				
-				// Insert Cont_20_R
-				if( nuIsReeferCont = 1 )
-				{
-					response.Cont_20_R.push_back(pContainerIdx);
-				}
-				else
-				{
-					response.Cont_NR.push_back(pContainerIdx);
-				}
-			}
-			else
-			{			
-				// 40' Container Aft	
-				response.Cont_40_A.push_back(pContainerIdx);				
-				response.Cont_40.push_back(pContainerIdx);
-				
-				// Insert Cont_40_R
-				if( nuIsReeferCont = 1 )
-				{
-					response.Cont_40_R.push_back(pContainerIdx);
-					response.Cont_40_R.push_back(pContainerIdx + 1);
-				}
-				else
-				{
-					response.Cont_NR.push_back(pContainerIdx);
-					response.Cont_NR.push_back(pContainerIdx + 1);
-				}
-				
-				// 40' Container Fore
-				pContainerIdx++; 
-				response.Cont_V.push_back(pContainerIdx);
-				response.Cont_40_F.push_back(pContainerIdx);
-				response.Cont_40.push_back(pContainerIdx);
-			}
+			// Charge container information
+		    ChargeContainerInfo(objContainer);
         }
         
-		pContainerIdx++; 
+		nuContainerIdx++; 
 		
     }
     
     return listContainer;     
+}
+
+
+void BLReadFiles::ChargeContainerInfo(ContainerBox objContainer)
+{
+    // Insert Container Weight 
+	response.Weight[nuContainerIdx] = objContainer.GetWeight();
+	
+	// Insert Container POD 
+	response.POD[nuContainerIdx] = objContainer.GetPortDischarge();
+	
+	// Insert Container Length
+	response.Length[nuContainerIdx] = objContainer.GetLength();
+	
+	// Insert Container Height
+	response.Height[nuContainerIdx] = objContainer.GetHeight();
+	
+	// Insert Cont_20_R
+	if( objContainer.GetIsReefer() == objConstants.verdadero )
+	{
+		response.Cont_20_R.push_back(nuContainerIdx);
+	}
+	else
+	{
+		response.Cont_NR.push_back(nuContainerIdx);
+	} 
+     
+    // Insert Cont_20 y Cont_40
+	if( objContainer.GetLength() == objConstants.container20 )
+	{
+		response.Cont_20.push_back(nuContainerIdx);
+	}
+	else
+	{	
+        if(objContainer.GetIsCharged())
+        {
+            // Insert Container loaded
+		    response.Cont_L.push_back(nuContainerIdx + 1);                             
+        }
+        else
+        {
+            // Insert Container virtual
+		    response.Cont_V.push_back(nuContainerIdx + 1); 
+        }
+             
+		// Insert 40' Container		
+		response.Cont_40.push_back(nuContainerIdx + 1);
+	
+		// 40' Container Aft and Container Fore	
+		response.Cont_40_F.push_back(nuContainerIdx + 1);
+
+		// Insert Container Weight 
+        response.Weight[nuContainerIdx + 1] = objContainer.GetWeight();
+	
+	    // Insert Container POD 
+	    response.POD[nuContainerIdx + 1] = objContainer.GetPortDischarge();
+	
+	    // Insert Container Length
+	    response.Length[nuContainerIdx + 1] = objContainer.GetLength();
+	
+	    // Insert Container Height
+     	response.Height[nuContainerIdx + 1] = objContainer.GetHeight();
+		
+		// Insert Cont_40_R
+		if( objContainer.GetIsReefer() == objConstants.verdadero )
+		{
+			response.Cont_40_R.push_back(nuContainerIdx + 1);
+		}
+		else
+		{
+			response.Cont_NR.push_back(nuContainerIdx + 1);
+		}
+		
+		nuContainerIdx++;
+	}    
+     
 }
 

@@ -44,14 +44,14 @@ class StowageCP: public Space
               IntArgs        	POD;         // Ports of discharges of container i
               IntArgs        	Length;      // Leight of container i
               //IntArgs        	Height;      // Height of container i
-              IntArgs        Cont_EP;     // Number of container with discharge port P.
-              IntArgs        Cont_EWH;    // Number of container with equal weight and height
-              int            ContNormal   // Number of normal containers
-              int            ContCUBE     // Number of high-cube containers
-              IntArgs        Stack_K_W;   // Weight  limit of stack K
-              IntArgs        Stack_K_H;   // Height  limit of stack K
-              IntArgs        Classes;     // Set of stack classes
-              IntArgs        Class;       // Set of stacks of class i
+              IntArgs           Cont_EP;     // Number of container with discharge port P.
+              IntArgs           Cont_EWH;    // Number of container with equal weight and height
+              int               ContNormal   // Number of normal containers
+              int               ContCUBE     // Number of high-cube containers
+              IntArgs           Stack_K_W;   // Weight  limit of stack K
+              IntArgs           Stack_K_H;   // Height  limit of stack K
+              IntArgs           Classes;     // Set of stack classes
+              IntArgs           Class;       // Set of stacks of class i
                                     
       protected:
                 IntVarArray     C;   // Slot index of container i.
@@ -76,3 +76,5 @@ class StowageCP: public Space
               */             
              StowageCP(StowageInfo pStowageInfo);
 };
+
+#endif

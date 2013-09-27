@@ -1,7 +1,7 @@
 [Project]
 FileName=ContainerStowage.dev
 Name=ContainerStowage
-UnitCount=13
+UnitCount=14
 Type=1
 Ver=1
 ObjFiles=
@@ -169,6 +169,16 @@ BuildCmd=
 
 [Unit13]
 FileName=StowageCP.h
+CompileCpp=1
+Folder=Logic/Header
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit14]
+FileName=Constants.h
 CompileCpp=1
 Folder=Logic/Header
 Compile=1

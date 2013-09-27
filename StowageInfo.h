@@ -11,6 +11,7 @@
 #include "StackContainer.h"
 #include <iostream>
 #include <vector>
+#include <map>
 
 using namespace std;
 
@@ -54,9 +55,9 @@ class StowageInfo
             vector<int>			Cont;        	// Container index set
             vector<int>			Slots_A;     	// Aft slots index set
             vector<int>			Slots_F;     	// Fore slots index set
-            vector<vector<int> >Slots_K;     	// Slots of stack K index set
-            vector<vector<int> >Slots_K_A;   	// Aft slots of stack K index set
-			vector<vector<int> >Slots_K_F;		// Fore slots of stack K index set
+            map<int, vector<int> >Slots_K;     	// Slots of stack K index set
+            map<int, vector<int> >Slots_K_A;   	// Aft slots of stack K index set
+			map<int, vector<int> >Slots_K_F;		// Fore slots of stack K index set
 			vector<int>        	Slots_R;     	// Reefer slot index set
 			vector<int>    		Slots_NR;    	// Non Reefer slot index set
 			vector<int>    		Slots_NRC;   	// Slots in cell with no reefer plugs index set
@@ -71,10 +72,15 @@ class StowageInfo
             vector<int>         Cont_20_R;      // 20' reefer containers index set
             vector<int>         Cont_40_R;      // 40' reefer containers index set
             vector<int>         Cont_NR;        // Non-reefer containers index set
-			vector<double>    	Weight;      	// Weight of container i
-            vector<int>      	POD;         	// Ports of discharges of container i
-            vector<int>      	Length;      	// Leight of container i
-            vector<double>      Height;      	// Height of container i
+			map<int, double>    Weight;      	// Weight of container i
+            map<int, int> 		POD;         	// Ports of discharges of container i
+            map<int, int>      	Length;      	// Leight of container i
+            map<int, double>    Height;      	// Height of container i
+            map<int, int>       Cont_EP;        // Number of container with discharge port P.
+            map<double, int>    Cont_EW;        // Number of container with equal weight 
+            map<double, int>    Cont_EH;        // Number of container with equal height
+            int                 ContNormal;     // Number of normal containers
+            int                 ContCUBE;       // Number of high-cube containers
 			
              // ------------------------ Properties -------------------------------
     		 /**
