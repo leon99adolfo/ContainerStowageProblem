@@ -86,7 +86,10 @@ class BLReadFiles
     		 * @param pFileName: Name of the file
     		 */
              StowageInfo ChargeFile(string pFileName);
-             
+             /**
+             *  Printing
+             */
+             void PrintingData();             
               
 };
 

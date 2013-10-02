@@ -12,6 +12,9 @@ int main(int argc, char *argv[])
     
     objStowageInfo.ChargeData();
     
+    //objBLReadFiles.PrintingData();
+    
+    
     
     system("PAUSE");
     return EXIT_SUCCESS;

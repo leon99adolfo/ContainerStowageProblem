@@ -181,7 +181,7 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName)
 		{
 			response.Slots_NR.push_back( idxFirstTemp );
 			// Slots in cell with no plug reefer
-			if( nuIsReeferFore != 1 ) response.Slots_NRC.push_back(x);
+			if( nuIsReeferFore != objConstants.verdadero ) response.Slots_NRC.push_back(x);
 		}
 		
 		// Insert slots reefer and not reefer
@@ -427,4 +427,189 @@ void BLReadFiles::ChargeContainerInfo(ContainerBox objContainer)
 	}    
      
 }
+
+void BLReadFiles::PrintingData()
+{
+    // Stack index set
+    cout<<"Stack index set"<<endl;
+    for(int x = 0; x < response.Stacks.size() ; x++)
+        cout<<response.Stacks[x]<<" ";
+    
+    // Slot index set
+    cout<<endl<<"Slot index set"<<endl;
+    for(int x = 0; x < response.Slots.size() ; x++)
+        cout<<response.Slots[x]<<" ";
+     
+    // Container index set
+    cout<<endl<<"Container index set"<<endl;
+    for(int x = 0; x < response.Cont.size() ; x++)
+        cout<<response.Cont[x]<<" ";
+    
+    // Aft slots index set
+    cout<<endl<<"Aft slots index set"<<endl;
+    for(int x = 0; x < response.Slots_A.size() ; x++)
+        cout<<response.Slots_A[x]<<" ";	
+    
+    // Aft slots index set
+    cout<<endl<<"Fore slots index set"<<endl;
+    for(int x = 0; x < response.Slots_F.size() ; x++)
+        cout<<response.Slots_F[x]<<" ";
+    
+    // Slots of stack K index set
+    cout<<endl<<"Slots of stack K index set"<<endl;
+    for (map<int, vector<int> >::iterator it=response.Slots_K.begin(); it != response.Slots_K.end(); ++it)
+    {        
+        cout<<endl<<"Slots of the stack K: "<<it->first<<endl;
+        for(int y = 0; y < (it->second).size() ; y++)
+        { 
+            cout<<(it->second)[y]<<" ";
+        }
+    }
+    
+    // Aft slots of stack K index set
+    cout<<endl<<"Aft slots of stack K index set"<<endl;
+    for (map<int, vector<int> >::iterator it=response.Slots_K_A.begin(); it != response.Slots_K_A.end(); ++it)
+    {        
+        cout<<endl<<"Slots of the stack K: "<<it->first<<endl;
+        for(int y = 0; y < (it->second).size() ; y++)
+        { 
+            cout<<(it->second)[y]<<" ";
+        }
+    }
+     	
+    // Fore slots of stack K index set
+    cout<<endl<<"Fore slots of stack K index set"<<endl;
+    for (map<int, vector<int> >::iterator it=response.Slots_K_F.begin(); it != response.Slots_K_F.end(); ++it)
+    {        
+        cout<<endl<<"Slots of the stack K: "<<it->first<<endl;
+        for(int y = 0; y < (it->second).size() ; y++)
+        { 
+            cout<<(it->second)[y]<<" ";
+        }
+    } 	
+     
+    // Reefer slot index set
+    cout<<endl<<"Reefer slot index set"<<endl;
+    for(int x = 0; x < response.Slots_R.size() ; x++)
+        cout<<response.Slots_R[x]<<" "; 	
+     
+    // Non Reefer slot index set
+    cout<<endl<<"Non Reefer slot index set"<<endl;
+    for(int x = 0; x < response.Slots_NR.size() ; x++)
+        cout<<response.Slots_NR[x]<<" "; 
+        
+    // Slots in cell with no reefer plugs index set
+    cout<<endl<<"Slots in cell with no reefer plugs index set"<<endl;
+    for(int x = 0; x < response.Slots_NRC.size() ; x++)
+        cout<<response.Slots_NRC[x]<<" ";     
+     	
+    // 20' capacity slots index set
+    cout<<endl<<"20' capacity slots index set"<<endl;
+    for(int x = 0; x < response.Slots_20.size() ; x++)
+        cout<<response.Slots_20[x]<<" ";  	
+     	
+    // 40' capacity slots index set
+    cout<<endl<<"40' capacity slots index set"<<endl;
+    for(int x = 0; x < response.Slots_40.size() ; x++)
+        cout<<response.Slots_40[x]<<" "; 
+        
+    // Virtual containers index set
+    cout<<endl<<"Virtual containers index set"<<endl;
+    for(int x = 0; x < response.Cont_V.size() ; x++)
+        cout<<response.Cont_V[x]<<" ";     
+         	
+    // Loaded containers index set
+    cout<<endl<<"Loaded containers index set"<<endl;
+    for(int x = 0; x < response.Cont_L.size() ; x++)
+        cout<<response.Cont_L[x]<<" ";      	
+         	
+    // 20' containers index set
+    cout<<endl<<"20' containers index set"<<endl;
+    for(int x = 0; x < response.Cont_20.size() ; x++)
+        cout<<response.Cont_20[x]<<" "; 
+        
+    // 40' containers index set
+    cout<<endl<<"40' containers index set"<<endl;
+    for(int x = 0; x < response.Cont_40.size() ; x++)
+        cout<<response.Cont_40[x]<<" "; 
+        
+    // 40' containers index set
+    cout<<endl<<"40' containers index set (Aft)"<<endl;
+    for(int x = 0; x < response.Cont_40_A.size() ; x++)
+        cout<<response.Cont_40_A[x]<<" "; 
+        
+    // 40' containers index set
+    cout<<endl<<"40' containers index set (Fore)"<<endl;
+    for(int x = 0; x < response.Cont_40_F.size() ; x++)
+        cout<<response.Cont_40_F[x]<<" "; 
+        
+    // 40' reefer containers index set
+    cout<<endl<<"40' reefer containers index set"<<endl;
+    for(int x = 0; x < response.Cont_40_R.size() ; x++)
+        cout<<response.Cont_40_R[x]<<" "; 
+        
+    // 20' reefer containers index set
+    cout<<endl<<"20' reefer containers index set"<<endl;
+    for(int x = 0; x < response.Cont_20_R.size() ; x++)
+        cout<<response.Cont_20_R[x]<<" "; 
+        
+    // Non-reefer containers index set
+    cout<<endl<<"Non-reefer containers index set"<<endl;
+    for(int x = 0; x < response.Cont_NR.size() ; x++)
+        cout<<response.Cont_NR[x]<<" ";     
+     
+    // Weight of container i        	
+    cout<<endl<<"Weight of container i"<<endl;
+    for (map<int, double>::iterator it=response.Weight.begin(); it != response.Weight.end(); ++it)
+    {         	
+        cout<<"Container: "<<it->first<<" peso: "<<it->second<<endl;
+    }  
+            	
+	// Ports of discharges of container i        	
+    cout<<endl<<"Ports of discharges of container i"<<endl;
+    for (map<int, int>::iterator it=response.POD.begin(); it != response.POD.end(); ++it)
+    {         	
+        cout<<"Container: "<<it->first<<" POD: "<<it->second<<endl;
+    }
+    
+    // Lenght of container i       	
+    cout<<endl<<"Lenght of container i "<<endl;
+    for (map<int, int>::iterator it=response.Length.begin(); it != response.Length.end(); ++it)
+    {         	
+        cout<<"Container: "<<it->first<<" Length: "<<it->second<<endl;
+    }
+    
+    // Height of container i       	
+    cout<<endl<<"Height of container i "<<endl;
+    for (map<int, double>::iterator it=response.Height.begin(); it != response.Height.end(); ++it)
+    {         	
+        cout<<"Container: "<<it->first<<" Height: "<<it->second<<endl;
+    }
+    
+    // Number of container with discharge port P.     	
+    cout<<endl<<"Number of container with discharge port P"<<endl;
+    for (map<int, int>::iterator it=response.Cont_EP.begin(); it != response.Cont_EP.end(); ++it)
+    {         	
+        cout<<"POD: "<<it->first<<" Contador : "<<it->second<<endl;
+    }
+	
+	// Number of container with equal weight      	
+    cout<<endl<<"Number of container with equal weight "<<endl;
+    for (map<double, int>::iterator it=response.Cont_EW.begin(); it != response.Cont_EW.end(); ++it)
+    {         	
+        cout<<"Weight: "<<it->first<<" Contador : "<<it->second<<endl;
+    }
+    
+    // Number of container with equal height      	
+    cout<<endl<<"Number of container with equal height "<<endl;
+    for (map<double, int>::iterator it=response.Cont_EH.begin(); it != response.Cont_EH.end(); ++it)
+    {         	
+        cout<<"Height: "<<it->first<<" Contador : "<<it->second<<endl;
+    }
+    
+    cout<<"Number of normal containers: "<<response.ContNormal<<endl;
+    cout<<"Number of normal cube: "<<response.ContCUBE<<endl;   
+     
+} 
+
 
