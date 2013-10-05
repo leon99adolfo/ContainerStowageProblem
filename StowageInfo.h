@@ -228,11 +228,6 @@ class StowageInfo
     		 */
     		~StowageInfo();
     		/**
-    		 * Number of Slots
-    		 */
-    		int fnuSlots();
-    		
-    		/**
     		 * Charge Data
     		 */
     		void ChargeData();

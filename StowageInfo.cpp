@@ -141,11 +141,6 @@ StowageInfo::StowageInfo()
 
 StowageInfo::~StowageInfo(){}
 
-int StowageInfo::fnuSlots()
-{
-    return _listCells.size() * 2;
-}
-
 void StowageInfo::ChargeContainer(vector<ContainerBox> pListContainer, bool pValFirst)
 {
      for(int x = 0; x < pListContainer.size(); x++)
