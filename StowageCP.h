@@ -17,7 +17,7 @@ class StowageCP: public Space
 {
       private:
 				// Index Set and Constant of the CP model
-				IntArgs				Stacks;		// Stack index set
+				/*IntArgs				Stacks;		// Stack index set
 				IntArgs          	Slots;      // Slot index set
 				IntArgs          	Cont;       // Container index set
 				IntArgs          	Slots_A;    // Aft slots index set
@@ -38,20 +38,20 @@ class StowageCP: public Space
 				IntArgs           	Cont_40_F;  // 40' containers index set (Fore)
 				IntArgs           	Cont_20_R;  // 20' reefer containers index set
 				IntArgs           	Cont_40_R;  // 40' reefer containers index set
-				IntArgs           	Cont_NR;    // Non-reefer containers index set
-				map<int, IntArgs>	Weight;     // Weight of container i
-				map<int, IntArgs> 	POD;        // Ports of discharges of container i
-				map<int, IntArgs>	Length;     // Leight of container i
-				map<int, IntArgs>	Height;     // Height of container i
-				IntArgs           	Cont_EP;   	// Number of container with discharge port P.
-				IntArgs           	Cont_EW;	// Number of container with equal weight
-				IntArgs           	Cont_EH;    // Number of container with equal height
+				IntArgs           	Cont_NR;    // Non-reefer containers index set*/
+				IntArgs				Weight;     // Weight of container i
+				IntArgs 			POD;        // Ports of discharges of container i
+				IntArgs				Length;     // Lenght of container i
+				IntArgs				Height;     // Height of container i
+				/*map<int, IntArgs>   Cont_EP;   	// Number of container with discharge port P.
+				map<double, IntArgs>Cont_EW;	// Number of container with equal weight
+				map<double, IntArgs>Cont_EH;    // Number of container with equal height
 				IntArgs          	ContNormal; // Number of normal containers
 				IntArgs           	ContCUBE;   // Number of high-cube containers
 				IntArgs           	Stack_K_W;  // Weight  limit of stack K
 				IntArgs           	Stack_K_H;  // Height  limit of stack K
 				IntArgs           	Classes;    // Set of stack classes
-				IntArgs           	Class;      // Set of stacks of class i
+				IntArgs           	Class;      // Set of stacks of class i*/
                                    
       protected:
                 IntVarArray     C;   // Slot index of container i.
@@ -60,14 +60,14 @@ class StowageCP: public Space
                 FloatVarArray   H;   // Heigth of container stowed in slot j.
                 FloatVarArray   W;   // Weigth of container stowed in slot j.
                 IntVarArray     P;   // POD of container stowed in slot j.
-                FloatVarArray   HS;  // Current heigth of stack k.
+                /*FloatVarArray   HS;  // Current heigth of stack k.
                 IntVar          OV;  // Number of overstowing containers.
                 IntVar          OU;  // Number of used stacks.
                 IntVarArray     OP;  // Number of different discharge ports in each stack.
                 IntVar          OR;  // Number of non-reffers stowed in reffer cells.
                 IntVar          O;   // Solution Cost.
                 IntVarArray     CV;  // Virtual containers
-                IntVarArray     SLE; // Slots with the same features in stack i.
+                IntVarArray     SLE; // Slots with the same features in stack i.*/
   
       public:
             /**

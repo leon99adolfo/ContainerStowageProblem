@@ -8,7 +8,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
               L  (*this, pStowageInfo.Slots.size(), pStowageInfo._nuMinLength, pStowageInfo._nuMaxLength),
               H  (*this, pStowageInfo.Slots.size(), pStowageInfo._nuMinHeight, pStowageInfo._nuMaxHeight),
               W  (*this, pStowageInfo.Slots.size(), pStowageInfo._nuMinWeight, pStowageInfo._nuMaxWeight),
-              P  (*this, pStowageInfo.Slots.size(), 1, pStowageInfo.GetNumPortsDischarge()),
+              P  (*this, pStowageInfo.Slots.size(), 1, pStowageInfo.GetNumPortsDischarge())/*,
               HS (*this, pStowageInfo.GetNumStacks(), pStowageInfo._nuMinStackHeight, pStowageInfo._nuMaxStackHeight),
               OV (*this, 1, 0, pStowageInfo.Cont.size()),
               OU (*this, 1, 0, pStowageInfo.GetNumStacks()),
@@ -16,8 +16,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
               OR (*this, 1, 0, pStowageInfo.Slots_R.size()),
               O  (*this, 1, 0, ((100 * pStowageInfo.Cont.size()) + (20 * pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks()) +
                                 (10 * pStowageInfo.GetNumStacks()) + (5 * pStowageInfo.Slots_R.size()) ),
-              CV (*this, pStowageInfo.Cont_V.size(), 0, 1)
-              //SLE(*this, , ,),
+              CV (*this, pStowageInfo.Cont_V.size(), 0, 1)*/
 {
 
 	// Charge Information in global variables
@@ -28,11 +27,23 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	
 	
 	
-	
 	// elements Length
-	element(*this, S, L, 
+	for(int x = 0; x < pStowageInfo.Slots.size() ; x++)
+		element(*this, Length, S[x], L[x]); 
 	
-	
+	// elements Height
+	for(int x = 0; x < pStowageInfo.Slots.size() ; x++)
+		element(*this, Height, S[x], H[x]);
+		
+	// elements Weight
+	for(int x = 0; x < pStowageInfo.Slots.size() ; x++)
+		element(*this, Weight, S[x], W[x]);
+		
+	// elements POD
+	for(int x = 0; x < pStowageInfo.Slots.size() ; x++)
+		element(*this, POD, S[x], P[x]);
+		
+		
 }
 
 
@@ -41,7 +52,7 @@ StowageCP::ChargeInformation(StowageInfo pStowageInfo)
 {
 //---------------------------- sorts the arguments -------------------------- 
     // Stack index set
-    Stacks = IntArgs( pStowageInfo.Stacks.size() );
+    /*Stacks = IntArgs( pStowageInfo.Stacks.size() );
     for(int x = 0; x < pStowageInfo.Stacks.size() ; x++)
         Stacks[x] = pStowageInfo.Stacks[x];   
     
@@ -146,60 +157,85 @@ StowageCP::ChargeInformation(StowageInfo pStowageInfo)
     // 40' containers index set
     Cont_40_A = IntArgs( pStowageInfo.Cont_40_A.size() );
     for(int x = 0; x < pStowageInfo.Cont_40_A.size() ; x++)
-        Cont_40_A = pStowageInfo.Cont_40_A[x]; 
+        Cont_40_A[x] = pStowageInfo.Cont_40_A[x]; 
         
     // 40' containers index set
     Cont_40_F = IntArgs( pStowageInfo.Cont_40_F.size() );
     for(int x = 0; x < pStowageInfo.Cont_40_F.size() ; x++)
-        Cont_40_F = pStowageInfo.Cont_40_F[x]; 
+        Cont_40_F[x] = pStowageInfo.Cont_40_F[x]; 
         
     // 40' reefer containers index set
     Cont_40_R = IntArgs( pStowageInfo.Cont_40_R.size() );
     for(int x = 0; x < pStowageInfo.Cont_40_R.size() ; x++)
-        Cont_40_R = pStowageInfo.Cont_40_R[x]; 
+        Cont_40_R[x] = pStowageInfo.Cont_40_R[x]; 
         
     // 20' reefer containers index set
-    = endl<<"20' reefer containers index set"<<endl;
+    Cont_20_R = IntArgs( pStowageInfo.Cont_20_R.size() );
     for(int x = 0; x < pStowageInfo.Cont_20_R.size() ; x++)
-        = pStowageInfo.Cont_20_R[x]; 
+        Cont_20_R[x]= pStowageInfo.Cont_20_R[x]; 
         
     // Non-reefer containers index set
     Cont_NR = IntArgs( pStowageInfo.Cont_NR.size() );
     for(int x = 0; x < pStowageInfo.Cont_NR.size() ; x++)
-        Cont_NR = pStowageInfo.Cont_NR[x];     
-     
-    // Weight of container i   
-    for (map<int, double>::iterator it=pStowageInfo.Weight.begin(); it != pStowageInfo.Weight.end(); ++it)
-    {     
-		IntArgs WeightTmp(1)
-		WeightTmp[0] = (it->second);
-		Weight[it->first] = WeightTmp;
-    }
+        Cont_NR[x] = pStowageInfo.Cont_NR[x];     
+    */
+    // Weight of container i 
+	Weight = IntArgs( pStowageInfo.Slots.size() );
+	for(int x = 0; x < pStowageInfo.Slots.size() ; x++)
+	{
+		if( pStowageInfo.Weight.find(0) == pStowageInfo.Weight.end() )
+		{
+			Weight[x] = 0;
+		}
+		else
+		{
+			Weight[x] = pStowageInfo.Weight[x];
+		}
+	}
     
 	// Ports of discharges of container i
-    for (map<int, int>::iterator it=pStowageInfo.POD.begin(); it != pStowageInfo.POD.end(); ++it)
-    {         	
-        IntArgs PODTmp(1)
-		PODTmp[0] = (it->second);
-		POD[it->first] = PODTmp;
-    }
+	POD = IntArgs( pStowageInfo.Slots.size() );
+	for(int x = 0; x < pStowageInfo.Slots.size() ; x++)
+	{
+		if( pStowageInfo.POD.find(0) == pStowageInfo.POD.end() )
+		{
+			POD[x] = 0;
+		}
+		else
+		{
+			POD[x] = pStowageInfo.POD[x];
+		}
+	}
     
-    // Lenght of container i
-    for (map<int, int>::iterator it=pStowageInfo.Length.begin(); it != pStowageInfo.Length.end(); ++it)
-    {         	
-        IntArgs LengthTmp(1)
-		LengthTmp[0] = (it->second);
-		Length[it->first] = LengthTmp;
-    }
+	// Lenght of container i
+	Length = IntArgs( pStowageInfo.Slots.size() );
+	for(int x = 0; x < pStowageInfo.Slots.size() ; x++)
+	{
+		if( pStowageInfo.Length.find(0) == pStowageInfo.Length.end() )
+		{
+			Length[x] = 0;
+		}
+		else
+		{
+			Length[x] = pStowageInfo.Length[x];
+		}
+	}
     
-    // Height of container i       	
-    for (map<int, double>::iterator it=pStowageInfo.Height.begin(); it != pStowageInfo.Height.end(); ++it)
-    {         	
-        IntArgs HeightTmp(1)
-		HeightTmp[0] = (it->second);
-		Height[it->first] = HeightTmp;
-    }
+    // Height of container i  
+	Height = IntArgs( pStowageInfo.Slots.size() );
+	for(int x = 0; x < pStowageInfo.Slots.size() ; x++)
+	{
+		if( pStowageInfo.Height.find(0) == pStowageInfo.Height.end() )
+		{
+			Height[x] = 0;
+		}
+		else
+		{
+			Height[x] = pStowageInfo.Height[x];
+		}
+	}
     
+	/*
     // Number of container with discharge port P.
     for (map<int, int>::iterator it=pStowageInfo.Cont_EP.begin(); it != pStowageInfo.Cont_EP.end(); ++it)
     {         	
@@ -229,5 +265,5 @@ StowageCP::ChargeInformation(StowageInfo pStowageInfo)
 	
 	ContCUBE = IntArgs(1);
 	ContCUBE[0] = pStowageInfo.ContCUBE;
-
+	*/
 }
