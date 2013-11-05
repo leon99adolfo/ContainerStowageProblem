@@ -135,7 +135,7 @@ class ContainerBox
 		/**
 		 *	Destructor
 		 */
-		~ContainerBox();
+		//~ContainerBox();
 
 
 

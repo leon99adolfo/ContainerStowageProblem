@@ -17,8 +17,8 @@ class Constants
              static const int    falso          = 0;
              static const int    container20    = 20;            
              static const int    container40    = 40;
-             static const double normalCube     = 2.590800;
-             static const double highCube       = 2.895600;
+             //static const double normalCube     = 2.590800;
+             //static const double highCube       = 2.895600;
            
 };
 

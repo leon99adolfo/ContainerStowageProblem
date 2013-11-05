@@ -92,22 +92,22 @@ vector<int> StowageInfo::GetListLocations()
           return _listLocations;       
 }
 
-void    StowageInfo::SetListContainerLoad(vector<ContainerBox> pListContainerLoad)
+void    StowageInfo::SetListContainerLoad(map<int, ContainerBox> pListContainerLoad)
 {
         _listContainerLoad = pListContainerLoad;        
 }
 
-vector<ContainerBox> StowageInfo::GetListContainerLoad()
+map<int, ContainerBox> StowageInfo::GetListContainerLoad()
 {
         return _listContainerLoad;                 
 }
 
-void    StowageInfo::SetListContainerLoaded(vector<ContainerBox> pListContainerLoaded)
+void    StowageInfo::SetListContainerLoaded(map<int, ContainerBox> pListContainerLoaded)
 {
         _listContainerLoaded = pListContainerLoaded;        
 }
 
-vector<ContainerBox> StowageInfo::GetListContainerLoaded()
+map<int, ContainerBox> StowageInfo::GetListContainerLoaded()
 {
         return _listContainerLoaded;                 
 }
@@ -139,48 +139,38 @@ StowageInfo::StowageInfo()
     ContCUBE   = 0;                       
 }
 
-StowageInfo::~StowageInfo(){}
+//StowageInfo::~StowageInfo(){}
 
-void StowageInfo::ChargeContainer(vector<ContainerBox> pListContainer, bool pValFirst)
+void StowageInfo::ChargeContainer(map<int, ContainerBox> pListContainer, bool pValFirst)
 {
-     for(int x = 0; x < pListContainer.size(); x++)
+	 bool boFirst = true;
+	 for(map<int, ContainerBox >::iterator it=pListContainer.begin(); it != pListContainer.end(); ++it)
      {
-          if(x == 0 && pValFirst)
-          {
-               _nuMinLength = _nuMaxLength = pListContainer.at(x).GetLength();
-               _nuMinHeight = _nuMaxHeight = pListContainer.at(x).GetHeight();
-               _nuMinWeight = _nuMaxWeight = pListContainer.at(x).GetWeight();     
+          if(boFirst && pValFirst)
+          {	
+			   boFirst = false;
+               _nuMaxLength = (it->second).GetLength();
+               _nuMaxHeight = (it->second).GetHeight();               
+               _nuMaxWeight = (it->second).GetWeight();     
           }
           else
           {
-               //  Minimum and maximum Length
-               if(pListContainer.at(x).GetLength() < _nuMinLength)
+               //  Maximum Length
+               if((it->second).GetLength() > _nuMaxLength)
                {
-                    _nuMinLength = pListContainer.at(x).GetLength();
-               }
-               else if(pListContainer.at(x).GetLength() > _nuMaxLength)
-               {
-                    _nuMaxLength = pListContainer.at(x).GetLength();                   
+                    _nuMaxLength = (it->second).GetLength();                   
                }
                
-               //  Minimum and maximum Heigth
-               if(pListContainer.at(x).GetHeight() < _nuMinHeight)
+               //  Maximum Heigth
+               if((it->second).GetHeight() > _nuMaxHeight)
                {
-                    _nuMinHeight = pListContainer.at(x).GetHeight();
-               }
-               else if(pListContainer.at(x).GetHeight() > _nuMaxHeight)
-               {
-                    _nuMaxHeight = pListContainer.at(x).GetHeight();                   
+                    _nuMaxHeight = (it->second).GetHeight();                   
                }
                
-               //  Minimum and maximum Weigth
-               if(pListContainer.at(x).GetWeight() < _nuMinWeight)
+               //  Maximum Weigth
+               if((it->second).GetWeight() > _nuMaxWeight)
                {
-                    _nuMinWeight = pListContainer.at(x).GetWeight();
-               }
-               else if(pListContainer.at(x).GetWeight() > _nuMaxWeight)
-               {
-                    _nuMaxWeight = pListContainer.at(x).GetWeight();                   
+                    _nuMaxWeight = (it->second).GetWeight();                   
                }    
           }
      }  
@@ -193,11 +183,8 @@ void StowageInfo::ChargeData()
      // Container loaded
      ChargeContainer(_listContainerLoaded, false);  
      
-     cout<<"_nuMinLength: "<<_nuMinLength<<endl;
      cout<<"_nuMaxLength: "<<_nuMaxLength<<endl;
-     cout<<"_nuMinHeight: "<<_nuMinHeight<<endl;
      cout<<"_nuMaxHeight: "<<_nuMaxHeight<<endl;
-     cout<<"_nuMinWeight: "<<_nuMinWeight<<endl;
      cout<<"_nuMaxWeight: "<<_nuMaxWeight<<endl;
         
      // Stacks

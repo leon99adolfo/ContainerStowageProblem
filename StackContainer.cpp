@@ -47,4 +47,4 @@ double	StackContainer::GetMaxHeigth()
 
 
 StackContainer::StackContainer(){}
-StackContainer::~StackContainer(){}
+//StackContainer::~StackContainer(){}

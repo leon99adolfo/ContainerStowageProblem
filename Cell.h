@@ -106,7 +106,7 @@ class Cell
 		/**
 		 *	Destructor
 		 */
-		~Cell();
+		//~Cell();
 
 		
 };

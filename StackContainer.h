@@ -71,7 +71,7 @@ class StackContainer
 		/**
 		 *	Destructor
 		 */
-		~StackContainer();
+		//~StackContainer();
 		
 };
 

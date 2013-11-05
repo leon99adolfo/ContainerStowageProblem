@@ -77,5 +77,5 @@ int     Cell::GetNumLocation()
 
 // ------------------------ Methods ----------------------------------
 Cell::Cell(){}
-Cell::~Cell(){}
+//Cell::~Cell(){}
 

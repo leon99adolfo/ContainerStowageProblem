@@ -1,4 +1,0 @@
-ContainerStowageProblem
-=======================
-
-Container Stowage Problem

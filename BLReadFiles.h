@@ -67,20 +67,19 @@ class BLReadFiles
     		 * @param pContainers: number of container
     		 * @param pAreLoad: containers are loaded
     		 */
-             vector<ContainerBox> ReadContainer(int pContainers, bool pAreLoad);
+             map<int, ContainerBox> ReadContainer(int pContainers, bool pAreLoad);
              void ChargeContainerInfo(ContainerBox objContainer);
-              
+             
       
       public:
              // ------------------------ Methods ----------------------------------
     		/**
     		 *	Constructor
     		 */
-             BLReadFiles();
+             BLReadFiles(void);
              /**
     		 *	Destructor
     		 */
-             ~BLReadFiles(); 
              /**
     		 * This method charge data in file
     		 * @param pFileName: Name of the file

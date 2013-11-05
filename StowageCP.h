@@ -5,9 +5,11 @@
  * @section DESCRIPTION
  * Model Stowage Problem.
  */
-
+#ifndef StowageCP_h
+#define StowageCP_h
 
 #include <gecode/int.hh>
+#include <gecode/minimodel.hh>
 #include "StowageInfo.h"
 ///#include <gecode/search.hh>
 
@@ -25,17 +27,17 @@ class StowageCP: public Space
 				map<int, IntArgs> 	Slots_K;    // Slots of stack K index set
 				map<int, IntArgs>	Slots_K_A;  // Aft slots of stack K index set
 				map<int, IntArgs>	Slots_K_F;  // Fore slots of stack K index set
-				IntArgs        		Slots_R;    // Reefer slot index set
+				IntArgs        	Slots_R;    // Reefer slot index set 
 				IntArgs        		Slots_NR;   // Non Reefer slot index set
 				IntArgs        		Slots_NRC;  // Slots in cell with no reefer plugs index set
 				IntArgs        		Slots_20;   // 20' capacity slots index set
 				IntArgs        		Slots_40;   // 40' capacity slots index set
-				IntArgs        		Cont_V;     // Virtual containers index set
+				/*IntArgs        		Cont_V;     // Virtual containers index set */
 				IntArgs        		Cont_L;     // Loaded containers index set
-				IntArgs           	Cont_20;    // 20' containers index set
+				/*IntArgs           	Cont_20;    // 20' containers index set
 				IntArgs           	Cont_40;    // 40' containers index set
 				IntArgs           	Cont_40_A;  // 40' containers index set (Aft)
-				IntArgs           	Cont_40_F;  // 40' containers index set (Fore)
+				IntArgs           	Cont_40_F;  // 40' containers index set (Fore) */
 				IntArgs           	Cont_20_R;  // 20' reefer containers index set
 				IntArgs           	Cont_40_R;  // 40' reefer containers index set
 				IntArgs           	Cont_NR;    // Non-reefer containers index set*/
@@ -57,8 +59,8 @@ class StowageCP: public Space
                 IntVarArray     C;   // Slot index of container i.
                 IntVarArray     S;   // Container index of slot j.
                 IntVarArray     L;   // Length of container stowed in slot j.
-                FloatVarArray   H;   // Heigth of container stowed in slot j.
-                FloatVarArray   W;   // Weigth of container stowed in slot j.
+                IntVarArray   	H;   // Heigth of container stowed in slot j.
+                IntVarArray   	W;   // Weigth of container stowed in slot j.
                 IntVarArray     P;   // POD of container stowed in slot j.
                 /*FloatVarArray   HS;  // Current heigth of stack k.
                 IntVar          OV;  // Number of overstowing containers.
@@ -79,7 +81,22 @@ class StowageCP: public Space
 			/**
 			* Charge Information in global variables
 			*/
-			ChargeInformation(StowageInfo pStowageInfo);
+			void ChargeInformation(StowageInfo pStowageInfo);
+			
+			/** 
+			* Constructor overload
+			*/
+			StowageCP(bool share, StowageCP& s);
+  
+			/**
+			*	Space
+			*/
+			virtual Space* copy(bool share);
+			
+			/**
+			*	Printing solutions
+			*/
+			void print(void) const;
 };
 
 #endif

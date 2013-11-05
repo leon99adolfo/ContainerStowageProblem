@@ -28,8 +28,8 @@ class StowageInfo
               int                    _numTiers;
               vector<int>            _listPortsDischarges;
               vector<int>            _listLocations;
-              vector<ContainerBox>   _listContainerLoad;
-              vector<ContainerBox>   _listContainerLoaded;
+              map<int, ContainerBox> _listContainerLoad;
+              map<int, ContainerBox> _listContainerLoaded;
               vector<StackContainer> _listStacks;
               vector<Cell>           _listCells;
               
@@ -37,15 +37,13 @@ class StowageInfo
               /**
                * Charge container in memory
                */
-              void ChargeContainer(vector<ContainerBox> pListContainer, bool pValFirst);
+              void ChargeContainer(map<int, ContainerBox> pListContainer, bool pValFirst);
                             
       public:
              /* Calculated variables */
-            int         _nuMinLength;  // minimum length
+            int			_nuMaxPOD;	   // maximum POD
             int         _nuMaxLength;  // maximum length
-            double      _nuMinHeight;  // minimum height
             double      _nuMaxHeight;  // maximum height
-            double      _nuMinWeight;  // minimum weight
             double      _nuMaxWeight;  // maximum weight
             double      _nuMinStackHeight; // Minimum height of the stack
             double      _nuMaxStackHeight; // Maximum height of the stack
@@ -57,7 +55,7 @@ class StowageInfo
             vector<int>			Slots_F;     	// Fore slots index set
             map<int, vector<int> >Slots_K;     	// Slots of stack K index set
             map<int, vector<int> >Slots_K_A;   	// Aft slots of stack K index set
-			map<int, vector<int> >Slots_K_F;		// Fore slots of stack K index set
+			map<int, vector<int> >Slots_K_F;	// Fore slots of stack K index set
 			vector<int>        	Slots_R;     	// Reefer slot index set
 			vector<int>    		Slots_NR;    	// Non Reefer slot index set
 			vector<int>    		Slots_NRC;   	// Slots in cell with no reefer plugs index set
@@ -179,22 +177,22 @@ class StowageInfo
     		 *	ListContainerLoad Property SET
     		 *	@param pListContainerLoad
     		 */
-             void    SetListContainerLoad(vector<ContainerBox> pListContainerLoad);
+             void    SetListContainerLoad(map<int, ContainerBox> pListContainerLoad);
              /**
     		 *	ListContainerLoad Property GET
     		 */
-             vector<ContainerBox> GetListContainerLoad();
+             map<int, ContainerBox> GetListContainerLoad();
              
              
              /**
     		 *	ListContainerLoaded Property SET
     		 *	@param pListContainerLoaded
     		 */
-             void    SetListContainerLoaded(vector<ContainerBox> pListContainerLoaded);
+             void    SetListContainerLoaded(map<int, ContainerBox> pListContainerLoaded);
              /**
     		 *	ListContainerLoaded Property GET
     		 */
-             vector<ContainerBox> GetListContainerLoaded();
+             map<int, ContainerBox> GetListContainerLoaded();
              
              /**
     		 *	ListStacks Property SET
@@ -226,7 +224,7 @@ class StowageInfo
     		/**
     		 *	Destructor
     		 */
-    		~StowageInfo();
+    		//~StowageInfo();
     		/**
     		 * Charge Data
     		 */

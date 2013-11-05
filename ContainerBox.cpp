@@ -105,4 +105,4 @@ bool	ContainerBox::GetIsCharged()
 
 // ------------------------ Methods ----------------------------------
 ContainerBox::ContainerBox(){}
-ContainerBox::~ContainerBox(){}
+//ContainerBox::~ContainerBox(){}

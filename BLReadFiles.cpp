@@ -1,14 +1,10 @@
 #include "BLReadFiles.h"
 
-
-
 // ------------------------ Methods ----------------------------------
-BLReadFiles::BLReadFiles()
+BLReadFiles::BLReadFiles(void)
 {
     nuContainerIdx = 0;                             
 }
-
-BLReadFiles::~BLReadFiles(){} 
 
 StowageInfo BLReadFiles::ChargeFile(string pFileName)
 {    
@@ -64,10 +60,21 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName)
     
     // Read discharges ports 
     for(int x = 0; x < nuPortsDischarge; x++)
-	{
-         archivoAr>>nuPortDischarge;   
-         cout<<nuPortDischarge<<endl;     
-         listPortDischarge.push_back(nuPortDischarge);		
+	{	
+        archivoAr>>nuPortDischarge;
+        if(x == 0)
+        {
+			response._nuMaxPOD = nuPortDischarge;
+		}
+		
+		// save maximum POD
+		if( response._nuMaxPOD < nuPortDischarge )
+		{
+			response._nuMaxPOD = nuPortDischarge;
+		}
+		           
+        cout<<nuPortDischarge<<endl;     
+        listPortDischarge.push_back(nuPortDischarge);		
 	}
 	
 	// Save discharges ports
@@ -99,7 +106,7 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName)
     archivoAr>>sbTagDummy;
     cout<<sbTagDummy<<endl;
     
-    // Save Container Load
+    // Save Container Loaded
     response.SetListContainerLoaded(ReadContainer(nuContainerLoaded, true));
     
     // re-fill virtuals container 
@@ -142,7 +149,7 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName)
         cout<<nuStackIdCell<<" "<<nuIsReeferFore<<" "<<nuIsReeferAft<<" "<<nuCapFore<<" "<<
               nuCapAft<<" "<<nuCap40<<" "<<nuLocationCell<<endl;
 
-		/* Fill Object */
+		// Fill Object 
         Cell objCell;
         objCell.SetStackId(nuStackIdCell);
         objCell.SetIsReeferFore(nuIsReeferFore);
@@ -154,7 +161,7 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName)
          
         listCells.push_back(objCell);
 		
-		/* Fill index set */
+		// Fill index set
 		int	idxFirstTemp	= ( x * 2 );
 		int	idxSecondTemp 	= ( x * 2 ) + 1;
 		
@@ -252,13 +259,13 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName)
     return response;               
 }
 
-vector<ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoaded)
+map<int, ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoaded)
 {
      // Variables for container load
     int nuStackIdCont, nuCellIdCont, nuPositionCont, nuLengthCont, nuPortDischargeCont,
         nuIsReeferCont, nuLocationCont;
     double dbWeigthCont, dbHeigthCont;
-    vector<ContainerBox> listContainer;
+    map<int, ContainerBox> listContainer;
     
     
     // Read Container Load
@@ -270,7 +277,7 @@ vector<ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoaded
         cout<<nuStackIdCont<<" "<<nuCellIdCont<<" "<<nuPositionCont<<" "<<dbWeigthCont<<" "<<dbHeigthCont<<" "<<
               nuLengthCont<<" "<<nuPortDischargeCont<<" "<<nuIsReeferCont<<" "<<nuLocationCont<<endl;
         
-		/* Fill Object Container */
+		// Fill Object Container 
         ContainerBox objContainer;
         objContainer.SetStackId(nuStackIdCont);
         objContainer.SetCellId(nuCellIdCont);
@@ -283,7 +290,7 @@ vector<ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoaded
         objContainer.SetLocation(nuLocationCont);
         objContainer.SetIsCharged(pAreLoaded);
 		
-        listContainer.push_back(objContainer);  
+        listContainer[ nuContainerIdx ] = objContainer;  
 
 
         // find Container
@@ -320,7 +327,7 @@ vector<ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoaded
         }
                 
         // Is High Cube?
-        if( objConstants.highCube == dbHeigthCont )
+        if( 2.895600 == dbHeigthCont )
         {
             response.ContCUBE++;    
         }
@@ -332,18 +339,15 @@ vector<ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoaded
         // Insert Cont_L and Cont_V
 		if( pAreLoaded )
 		{
-             response.Cont_L.push_back(nuContainerIdx);     
-			 // Charge container information
-			 ChargeContainerInfo(objContainer);
-			 
+            response.Cont_L.push_back(nuContainerIdx); 			 
         }
         else
         {
-            response.Cont_V.push_back(nuContainerIdx);
-			
-			// Charge container information
-		    ChargeContainerInfo(objContainer);
+            response.Cont_V.push_back(nuContainerIdx);	
         }
+        
+        // Charge container information
+		ChargeContainerInfo(objContainer);
         
 		nuContainerIdx++; 
 		
@@ -366,21 +370,23 @@ void BLReadFiles::ChargeContainerInfo(ContainerBox objContainer)
 	
 	// Insert Container Height
 	response.Height[nuContainerIdx] = objContainer.GetHeight();
+	 
 	
-	// Insert Cont_20_R
-	if( objContainer.GetIsReefer() == objConstants.verdadero )
-	{
-		response.Cont_20_R.push_back(nuContainerIdx);
-	}
-	else
-	{
-		response.Cont_NR.push_back(nuContainerIdx);
-	} 
-     
     // Insert Cont_20 y Cont_40
 	if( objContainer.GetLength() == objConstants.container20 )
 	{
 		response.Cont_20.push_back(nuContainerIdx);
+		
+		// Insert Cont_20_R
+		if( objContainer.GetIsReefer() == objConstants.verdadero )
+		{
+			response.Cont_20_R.push_back(nuContainerIdx);
+		}
+		else
+		{
+			response.Cont_NR.push_back(nuContainerIdx);
+		} 	
+		 
 	}
 	else
 	{	
@@ -416,10 +422,12 @@ void BLReadFiles::ChargeContainerInfo(ContainerBox objContainer)
 		// Insert Cont_40_R
 		if( objContainer.GetIsReefer() == objConstants.verdadero )
 		{
+			response.Cont_40_R.push_back(nuContainerIdx);
 			response.Cont_40_R.push_back(nuContainerIdx + 1);
 		}
 		else
 		{
+			response.Cont_NR.push_back(nuContainerIdx);
 			response.Cont_NR.push_back(nuContainerIdx + 1);
 		}
 		
@@ -512,7 +520,7 @@ void BLReadFiles::PrintingData()
     cout<<endl<<"40' capacity slots index set"<<endl;
     for(int x = 0; x < response.Slots_40.size() ; x++)
         cout<<response.Slots_40[x]<<" "; 
-        
+        	
     // Virtual containers index set
     cout<<endl<<"Virtual containers index set"<<endl;
     for(int x = 0; x < response.Cont_V.size() ; x++)
