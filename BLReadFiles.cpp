@@ -120,7 +120,7 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName)
     archivoAr>>sbTagDummy;
     cout<<sbTagDummy<<endl;
     
-    // Read stacks 
+    // Read stacks
     for(int x = 0; x < nuStacks; x++)
 	{
         archivoAr>>nuMaxWeigth>>nuMaxHeigth>>nuLocationStack; 
@@ -290,8 +290,8 @@ map<int, ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoad
         objContainer.SetLocation(nuLocationCont);
         objContainer.SetIsCharged(pAreLoaded);
 		
-        listContainer[ nuContainerIdx ] = objContainer;  
-
+        listContainer[ nuContainerIdx ] = objContainer;          
+        if( objContainer.GetLength() == objConstants.container40 ) listContainer[ nuContainerIdx + 1 ] = objContainer;
 
         // find Container
         map<int, int>::iterator ContainerByPort = response.Cont_EP.find(nuPortDischargeCont);
@@ -390,6 +390,8 @@ void BLReadFiles::ChargeContainerInfo(ContainerBox objContainer)
 	}
 	else
 	{	
+		 
+		
         if(objContainer.GetIsCharged())
         {
             // Insert Container loaded
@@ -402,9 +404,11 @@ void BLReadFiles::ChargeContainerInfo(ContainerBox objContainer)
         }
              
 		// Insert 40' Container		
-		response.Cont_40.push_back(nuContainerIdx + 1);
+		response.Cont_40.push_back(nuContainerIdx);
+		//response.Cont_40.push_back(nuContainerIdx + 1); No se utilizara este valor, no es necesario
 	
 		// 40' Container Aft and Container Fore	
+		response.Cont_40_A.push_back(nuContainerIdx);
 		response.Cont_40_F.push_back(nuContainerIdx + 1);
 
 		// Insert Container Weight 

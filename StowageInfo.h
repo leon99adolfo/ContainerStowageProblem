@@ -45,7 +45,6 @@ class StowageInfo
             int         _nuMaxLength;  // maximum length
             double      _nuMaxHeight;  // maximum height
             double      _nuMaxWeight;  // maximum weight
-            double      _nuMinStackHeight; // Minimum height of the stack
             double      _nuMaxStackHeight; // Maximum height of the stack
 			/* Model variables */
 			vector<int>			Stacks;			// Stack index set

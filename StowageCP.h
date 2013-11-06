@@ -34,9 +34,9 @@ class StowageCP: public Space
 				IntArgs        		Slots_40;   // 40' capacity slots index set
 				/*IntArgs        		Cont_V;     // Virtual containers index set */
 				IntArgs        		Cont_L;     // Loaded containers index set
-				/*IntArgs           	Cont_20;    // 20' containers index set
+				IntArgs           	Cont_20;    // 20' containers index set
 				IntArgs           	Cont_40;    // 40' containers index set
-				IntArgs           	Cont_40_A;  // 40' containers index set (Aft)
+				/*IntArgs           	Cont_40_A;  // 40' containers index set (Aft)
 				IntArgs           	Cont_40_F;  // 40' containers index set (Fore) */
 				IntArgs           	Cont_20_R;  // 20' reefer containers index set
 				IntArgs           	Cont_40_R;  // 40' reefer containers index set
@@ -62,8 +62,8 @@ class StowageCP: public Space
                 IntVarArray   	H;   // Heigth of container stowed in slot j.
                 IntVarArray   	W;   // Weigth of container stowed in slot j.
                 IntVarArray     P;   // POD of container stowed in slot j.
-                /*FloatVarArray   HS;  // Current heigth of stack k.
-                IntVar          OV;  // Number of overstowing containers.
+                IntVarArray     HS;  // Current heigth of stack k.
+                /*IntVar          OV;  // Number of overstowing containers.
                 IntVar          OU;  // Number of used stacks.
                 IntVarArray     OP;  // Number of different discharge ports in each stack.
                 IntVar          OR;  // Number of non-reffers stowed in reffer cells.

@@ -178,40 +178,33 @@ void StowageInfo::ChargeContainer(map<int, ContainerBox> pListContainer, bool pV
 
 void StowageInfo::ChargeData()
 {
-     // Container load
-     ChargeContainer(_listContainerLoad, true);
-     // Container loaded
-     ChargeContainer(_listContainerLoaded, false);  
+    // Container load
+    ChargeContainer(_listContainerLoad, true);
+    // Container loaded
+    ChargeContainer(_listContainerLoaded, false);  
      
-     cout<<"_nuMaxLength: "<<_nuMaxLength<<endl;
-     cout<<"_nuMaxHeight: "<<_nuMaxHeight<<endl;
-     cout<<"_nuMaxWeight: "<<_nuMaxWeight<<endl;
+    cout<<"_nuMaxLength: "<<_nuMaxLength<<endl;
+    cout<<"_nuMaxHeight: "<<_nuMaxHeight<<endl;
+    cout<<"_nuMaxWeight: "<<_nuMaxWeight<<endl;
         
-     // Stacks
-     for(int x = 0; x < _listStacks.size(); x++)
-     {
-          if(x == 0)
-          {
-               _nuMinStackHeight = _nuMaxStackHeight = _listStacks.at(x).GetMaxHeigth();
-          }
-          else
-          {
-               //  Minimum and maximum Length
-               if(_listStacks.at(x).GetMaxHeigth() < _nuMinStackHeight)
-               {
-                    _nuMinStackHeight = _listStacks.at(x).GetMaxHeigth();
-               }
-               else if(_listStacks.at(x).GetMaxHeigth() > _nuMaxStackHeight)
-               {
-                    _nuMaxStackHeight = _listStacks.at(x).GetMaxHeigth();                   
-               }  
-          }
-     }   
+    // Stacks
+    for(int x = 0; x < _listStacks.size(); x++)
+    {
+        if(x == 0)
+        {
+            _nuMaxStackHeight = _listStacks.at(x).GetMaxHeigth();
+        }
+        else
+        {
+            //  Maximum Length
+            if(_listStacks.at(x).GetMaxHeigth() > _nuMaxStackHeight)
+            {
+                _nuMaxStackHeight = _listStacks.at(x).GetMaxHeigth();                   
+            }  
+        }
+    }   
      
-     cout<<"_nuMinStackHeight: "<<_nuMinStackHeight<<endl;
-     cout<<"_nuMaxStackHeight: "<<_nuMaxStackHeight<<endl;
-     
-           
+    cout<<"_nuMaxStackHeight: "<<_nuMaxStackHeight<<endl;
 }
 
 
