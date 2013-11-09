@@ -81,7 +81,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		if( objContainer.GetLength() == 40 ) x++;
 		
 	}	
-
+	
 	//-------------------------- Regular Constraints and Height Constraints ----------------------------------
 	// regular constraint
 	REG r = *REG(20) + *REG(40) + *REG(0);
@@ -95,6 +95,21 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		for(int x = 0; x < size; x++)
 		{
 			int slot = (it->second)[x];
+			
+			// This is slos40 ?			
+			bool boIsSlot40 = false;
+			for (int y = 0; y < pStowageInfo.Slots_40.size(); y++)
+			{
+				if( slot == pStowageInfo.Slots_40[y] )
+				{
+					boIsSlot40 = true;
+					y = pStowageInfo.Slots_40.size();
+				}
+			}	
+			
+			// Restriction container 40
+			rel(*this, S[slot], IRT_EQ, S[slot + 1]);
+					
 			// Get Length
 			IntVar varTmpLength( L[slot] );
 			LTempLength[x] = varTmpLength;
@@ -102,8 +117,10 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			IntVar varTmpHeight( H[slot] );
 			HTempHeight[x] = varTmpHeight;
 		}
+		
 		extensional(*this, LTempLength, d);  // regular constraint
-		//linear(*this, HTempHeight, IRT_LQ, HS[ (it->first) - 1 ]); // Height limit constraint
+		linear(*this, HTempHeight, IRT_LQ, HS[ (it->first) - 1 ]); // Height limit constraint
+		
     }
 	// regular constraint Stack-Fore
 	for (map<int, vector<int> >::iterator it=pStowageInfo.Slots_K_F.begin(); it != pStowageInfo.Slots_K_F.end(); ++it)
@@ -122,7 +139,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			HTempHeight[x] = varTmpHeight;
 		}
 		extensional(*this, LTempLength, d);  // regular constraint
-		//linear(*this, HTempHeight, IRT_LQ, HS[ (it->first) - 1 ] ); // Height limit constraint
+		linear(*this, HTempHeight, IRT_LQ, HS[ (it->first) - 1 ] ); // Height limit constraint
     }
 	
 	
@@ -136,10 +153,6 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		}
 	}
 	
-	
-	/*rel(*this, C[ 44 ], IRT_EQ, 20 );
-	rel(*this, C[ 45 ], IRT_EQ, 20 );
-*/	
 	//----------------------------------------- cell no-reffer Constraints ----------------------------------
 	// Slot ¬NRC	
     for(int x = 0; x < pStowageInfo.Slots_NRC.size() ; x++)
@@ -173,7 +186,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			dom(*this, S[ pStowageInfo.Slots_40[x] ], SetCont40);
 		}
 	}
-	/*
+	
 	//----------------------------------------- Weight limit Constraints ----------------------------------
 	// weight constraints
 	for (map<int, vector<int> >::iterator it=pStowageInfo.Slots_K.begin(); it != pStowageInfo.Slots_K.end(); ++it)
@@ -185,7 +198,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			int slot = (it->second)[x];
 			
 			bool boIsSlot40 = false;
-			for (y = 0; y < pStowageInfo.Slots_40.size(); y++)
+			for (int y = 0; y < pStowageInfo.Slots_40.size(); y++)
 			{
 				if( slot == pStowageInfo.Slots_40[y] )
 				{
@@ -207,7 +220,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		}	
 		
 		double dbMaxWeight = pStowageInfo.GetListStacks()[ ((it->first) - 1 ) ].GetMaxWeigth();		
-		linear(*this, WTempWeight, IRT_LQ, (dbMaxWeight * 10000) ); // Weight limit constraint
+		linear(*this, WTempWeight, IRT_LQ, dbMaxWeight ); // Weight limit constraint
     }
 	/*
 	// post branching
@@ -244,7 +257,7 @@ void StowageCP::print(void) const
     cout <<"S"<< S << endl;
 	cout <<"L"<< L << endl;
 	cout <<"H"<< H << endl;
-	//cout <<"W"<< W << endl;
+	cout <<"W"<< W << endl;
 	cout <<"P"<< P << endl;
 	cout <<"HS"<< HS << endl;
 }
@@ -332,7 +345,7 @@ void StowageCP::ChargeInformation(StowageInfo pStowageInfo)
 	Cont_L = IntArgs( pStowageInfo.Cont_L );
     	
     // 20' containers index set
-    Cont_20 = IntArgs( pStowageInfo.Cont_20 ); 
+    Cont_20 = IntArgs( pStowageInfo.Cont_20 );  
         
     // 40' containers index set
     Cont_40 = IntArgs( pStowageInfo.Cont_40	); 

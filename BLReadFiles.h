@@ -67,7 +67,7 @@ class BLReadFiles
     		 * @param pContainers: number of container
     		 * @param pAreLoad: containers are loaded
     		 */
-             map<int, ContainerBox> ReadContainer(int pContainers, bool pAreLoad);
+             map<int, ContainerBox> ReadContainer(int pContainers, bool pAreLoad, bool pIsVirtual);
              void ChargeContainerInfo(ContainerBox objContainer);
              
       

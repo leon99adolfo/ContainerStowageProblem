@@ -11,7 +11,8 @@ int main(int argc, char *argv[])
 {
     BLReadFiles objBLReadFiles;
     StowageInfo objStowageInfo = 
-                objBLReadFiles.ChargeFile("/home/adolfo/Universidad/maestria/tesis/inst/inputBay0_3_11_1.txt");
+                //objBLReadFiles.ChargeFile("/home/adolfo/Universidad/maestria/tesis/inst/inputBay0_3_11_1.txt");
+                objBLReadFiles.ChargeFile("/home/adolfo/Universidad/maestria/tesis/inst/inputBay0_4_15_1.txt");
     
     objStowageInfo.ChargeData();
     
