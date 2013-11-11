@@ -63,12 +63,14 @@ class StowageCP: public Space
                 IntVarArray   	W;   // Weigth of container stowed in slot j.
                 IntVarArray     P;   // POD of container stowed in slot j.
                 IntVarArray     HS;  // Current heigth of stack k.
+                BoolVarArray    CV;  // Virtual containers
+                //BoolVarArray   	NCV; // Invert Virtual containers 
                 /*IntVar          OV;  // Number of overstowing containers.
                 IntVar          OU;  // Number of used stacks.
                 IntVarArray     OP;  // Number of different discharge ports in each stack.
                 IntVar          OR;  // Number of non-reffers stowed in reffer cells.
                 IntVar          O;   // Solution Cost.
-                IntVarArray     CV;  // Virtual containers
+                
                 IntVarArray     SLE; // Slots with the same features in stack i.*/
   
       public:
