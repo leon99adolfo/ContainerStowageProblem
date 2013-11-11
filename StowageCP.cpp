@@ -122,6 +122,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 					}	
 					else
 					{	
+						// Assign Variables
 						IntVarArray	weightArrayTmp( *this, 2, 0, pStowageInfo._nuMaxWeight );
 						weightArrayTmp[0] = W[slot+2];
 						weightArrayTmp[1] = W[slot+3];						
