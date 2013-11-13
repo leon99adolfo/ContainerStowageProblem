@@ -2,14 +2,14 @@
 
 StowageCP::StowageCP(StowageInfo pStowageInfo):
               // Domain Variables
-              C  (*this, pStowageInfo.Cont.size(), 0, (pStowageInfo.Cont.size() - 1)),
+              C  (*this, pStowageInfo.Cont.size(), 0, (pStowageInfo.Slots.size() - 1)),
               S  (*this, pStowageInfo.Slots.size(), 0, (pStowageInfo.Slots.size() - 1)),
               L  (*this, pStowageInfo.Slots.size(), 0, pStowageInfo._nuMaxLength),
               H  (*this, pStowageInfo.Slots.size(), 0, pStowageInfo._nuMaxHeight * 10000),
               W  (*this, pStowageInfo.Slots.size(), 0, pStowageInfo._nuMaxWeight),
               P  (*this, pStowageInfo.Slots.size(), 0, pStowageInfo._nuMaxPOD),
               HS (*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo._nuMaxStackHeight * 10000),
-              CV (*this, pStowageInfo.Slots.size(), 0, 1)/*,
+              CV (*this, pStowageInfo.Slots.size(), 0, 1)/*
               OV (*this, 1, 0, pStowageInfo.Cont.size()),
               OU (*this, 1, 0, pStowageInfo.GetNumStacks()),
               OP (*this, pStowageInfo.GetNumStacks(), 1, pStowageInfo.GetNumPortsDischarge()),
@@ -23,7 +23,23 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	ChargeInformation(pStowageInfo);
 	
 	// Channeling constraint
-	//channel(*this, C, S);
+	//channel(*this, S, CT);
+	/*BoolVarArray CTmp(*this, pStowageInfo.Slots.size(), 0, 1);
+	IntVarArgs CTmp2(*this, pStowageInfo.Slots.size(), 0, (pStowageInfo.Slots.size() -1));*/
+	/*for(int x = 0; x < 1 ; x++)
+	{
+		for(int y = 0; y < pStowageInfo.Slots.size() ; y++)
+		{
+			rel(*this, S[y], IRT_EQ, x, eqv(CTmp[y]));	
+			IntVarArgs x;
+			x << IntVar(*this, y, y);		
+			dom(*this, CTmp2[y], y, imp(CTmp[y]));  
+		}
+		
+		member(*this, CTmp2, C[x]);
+	}*/
+	
+	
 	
 	//----------------------------------------- Element Constraints -------------------------------
 	// elements Length
@@ -58,21 +74,23 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			if(stack > (it->first))
 			{
 				// count slots
-				cantSlots += (pStowageInfo.Slots_K[(it->first)].size() - 1);
+				cantSlots += pStowageInfo.Slots_K[(it->first)].size();				
 			}
 		}
+		
+		//cantSlots -= 1;
 		
 		switch (position)
 		{
 			case -1:
-				rel(*this, S[( cell * 2 ) + 1 + cantSlots], IRT_EQ, Cont_L[x]);
+				rel(*this, S[( (cell -1) * 2 ) + 1 + cantSlots], IRT_EQ, Cont_L[x]);
 				break;
 			case 0:
-				rel(*this, S[( cell * 2 ) + cantSlots], IRT_EQ, Cont_L[x]);
-				rel(*this, S[( cell * 2 ) + 1 + cantSlots], IRT_EQ, Cont_L[x]);
+				rel(*this, S[( (cell -1) * 2 ) + cantSlots], IRT_EQ, Cont_L[x]);
+				rel(*this, S[( (cell -1) * 2 ) + 1 + cantSlots], IRT_EQ, Cont_L[x]);
 				break;
 			case 1:
-				rel(*this, S[( cell * 2 ) + cantSlots], IRT_EQ, Cont_L[x]);
+				rel(*this, S[( (cell -1) * 2 ) + cantSlots], IRT_EQ, Cont_L[x]);
 				break;
 		}
 		
@@ -151,7 +169,12 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			}			
 			
 			// Restriction container 40
-			rel(*this, S[slot], IRT_EQ, S[slot + 1]);
+			if(boIsSlot40) 
+			{
+				rel(*this, S[slot], IRT_EQ, S[slot + 1]);
+				rel(*this, H[slot], IRT_EQ, H[slot + 1]);
+				rel(*this, P[slot], IRT_EQ, P[slot + 1]);				
+			}
 					
 			// Get Length
 			IntVar varTmpLength( L[slot] );
@@ -273,6 +296,37 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
     {				
 		// Is virtual?
 		rel(*this, S[x], IRT_EQ, 0, eqv(CV[x]) );		
+	}
+
+
+
+	//////////////////////////////////////////////////////////////////////////////////////////////////
+	// constraints improve the propagation power
+	//////////////////////////////////////////////////////////////////////////////////////////////////
+
+	//----------------------------------------- constraint exactly ----------------------------------
+
+	// Constraint for POD
+    for (map<int, int>::iterator it=pStowageInfo.Cont_EP.begin(); it != pStowageInfo.Cont_EP.end(); ++it)
+    {
+		//cout<<"puerto: "<<it->first<<" cant:"<<it->second<<endl;
+		//if( it->first != 0 ) exactly(*this, P, it->first, it->second);		
+	}
+
+	// Constraint for Weights
+    for (map<double, int>::iterator it=pStowageInfo.Cont_EW.begin(); it != pStowageInfo.Cont_EW.end(); ++it)
+    {
+		int wTmp = it->first;
+		//cout<<"wTmp: "<<wTmp<<" cant: "<<it->second<<endl;
+		//if( it->first != 0 ) exactly(*this, W, wTmp, it->second);
+	}
+
+	// Constraint for Heights
+    for (map<double, int>::iterator it=pStowageInfo.Cont_EH.begin(); it != pStowageInfo.Cont_EH.end(); ++it)
+    {
+		int hTmp = it->first * 10000 ;
+		//cout<<"wTmp: "<<hTmp<<" cant: "<<it->second<<endl;
+		//if( it->first != 0 ) exactly(*this, W, hTmp, it->second);
 	}
 
 	/*

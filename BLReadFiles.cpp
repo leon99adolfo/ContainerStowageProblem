@@ -319,33 +319,75 @@ map<int, ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoad
         map<int, int>::iterator ContainerByPort = response.Cont_EP.find(nuPortDischargeCont);
         if( ContainerByPort != response.Cont_EP.end() )
 		{
-            response.Cont_EP[nuPortDischargeCont] += 1;
+			if( nuLengthCont == 40)	
+			{
+				response.Cont_EP[nuPortDischargeCont] += 2;
+			}
+			else
+			{
+				response.Cont_EP[nuPortDischargeCont] += 1;
+			}
         }
         else
         {
-            response.Cont_EP[nuPortDischargeCont] = 1;
+			if( nuLengthCont == 40)
+			{
+				response.Cont_EP[nuPortDischargeCont] = 2;
+			}
+			else
+			{
+				response.Cont_EP[nuPortDischargeCont] = 1;
+			}
         }
                 
         // find Container with equal weight
         map<double, int>::iterator ContainerByWeigth = response.Cont_EW.find(dbWeigthCont);
         if( ContainerByWeigth != response.Cont_EW.end() )
 		{
-            response.Cont_EW[dbWeigthCont] += 1;     
+			if( nuLengthCont == 40)
+			{
+				response.Cont_EW[nuPortDischargeCont] += 2;
+			}
+			else
+			{
+				response.Cont_EW[dbWeigthCont] += 1;     
+			}
         }
         else
         {
-            response.Cont_EW[dbWeigthCont] = 1;
+			if( nuLengthCont == 40)	
+			{
+				response.Cont_EW[nuPortDischargeCont] = 2;
+			}
+			else
+			{
+				response.Cont_EW[dbWeigthCont] = 1;
+			}
         }
 
         // find Container with equal height
         map<double, int>::iterator ContainerByHeigth = response.Cont_EH.find(dbHeigthCont);
         if( ContainerByHeigth != response.Cont_EH.end() )
 		{
-            response.Cont_EH[dbHeigthCont] += 1;     
+			if( nuLengthCont == 40)	
+			{
+				response.Cont_EH[nuPortDischargeCont] += 2;
+			}
+			else
+			{
+				response.Cont_EH[dbHeigthCont] += 1;  
+			}
         }
         else
         {
-            response.Cont_EH[dbHeigthCont] = 1;
+            if( nuLengthCont == 40)
+            {
+				response.Cont_EH[nuPortDischargeCont] = 2;
+			}
+			else
+			{
+				response.Cont_EH[dbHeigthCont] = 1;
+			}
         }
                 
         // Is High Cube?

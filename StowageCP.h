@@ -38,15 +38,11 @@ class StowageCP: public Space
 				IntArgs           	Cont_40;    // 40' containers index set
 				/*IntArgs           	Cont_40_A;  // 40' containers index set (Aft)
 				IntArgs           	Cont_40_F;  // 40' containers index set (Fore) */
-				IntArgs           	Cont_20_R;  // 20' reefer containers index set
-				IntArgs           	Cont_40_R;  // 40' reefer containers index set
-				IntArgs           	Cont_NR;    // Non-reefer containers index set*/
 				IntArgs				Weight;     // Weight of container i
 				IntArgs 			POD;        // Ports of discharges of container i
 				IntArgs				Length;     // Lenght of container i
 				IntArgs				Height;     // Height of container i
-				/*map<int, IntArgs>   Cont_EP;   	// Number of container with discharge port P.
-				map<double, IntArgs>Cont_EW;	// Number of container with equal weight
+				/*
 				map<double, IntArgs>Cont_EH;    // Number of container with equal height
 				IntArgs          	ContNormal; // Number of normal containers
 				IntArgs           	ContCUBE;   // Number of high-cube containers
