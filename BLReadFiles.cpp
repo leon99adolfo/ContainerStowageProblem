@@ -346,7 +346,7 @@ map<int, ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoad
 		{
 			if( nuLengthCont == 40)
 			{
-				response.Cont_EW[nuPortDischargeCont] += 2;
+				response.Cont_EW[dbWeigthCont] += 2;
 			}
 			else
 			{
@@ -355,9 +355,10 @@ map<int, ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoad
         }
         else
         {
+			
 			if( nuLengthCont == 40)	
 			{
-				response.Cont_EW[nuPortDischargeCont] = 2;
+				response.Cont_EW[dbWeigthCont] = 2;
 			}
 			else
 			{
@@ -371,7 +372,7 @@ map<int, ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoad
 		{
 			if( nuLengthCont == 40)	
 			{
-				response.Cont_EH[nuPortDischargeCont] += 2;
+				response.Cont_EH[dbHeigthCont] += 2;
 			}
 			else
 			{
@@ -382,7 +383,7 @@ map<int, ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoad
         {
             if( nuLengthCont == 40)
             {
-				response.Cont_EH[nuPortDischargeCont] = 2;
+				response.Cont_EH[dbHeigthCont] = 2;
 			}
 			else
 			{

@@ -310,7 +310,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
     for (map<int, int>::iterator it=pStowageInfo.Cont_EP.begin(); it != pStowageInfo.Cont_EP.end(); ++it)
     {
 		//cout<<"puerto: "<<it->first<<" cant:"<<it->second<<endl;
-		//if( it->first != 0 ) exactly(*this, P, it->first, it->second);		
+		if( it->first != 0 ) exactly(*this, P, it->first, it->second);		
 	}
 
 	// Constraint for Weights
@@ -318,7 +318,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
     {
 		int wTmp = it->first;
 		//cout<<"wTmp: "<<wTmp<<" cant: "<<it->second<<endl;
-		//if( it->first != 0 ) exactly(*this, W, wTmp, it->second);
+		if( it->first != 0 ) exactly(*this, W, wTmp, it->second);
 	}
 
 	// Constraint for Heights
@@ -326,7 +326,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
     {
 		int hTmp = it->first * 10000 ;
 		//cout<<"wTmp: "<<hTmp<<" cant: "<<it->second<<endl;
-		//if( it->first != 0 ) exactly(*this, W, hTmp, it->second);
+		if( it->first != 0 ) exactly(*this, H, hTmp, it->second);
 	}
 
 	/*
