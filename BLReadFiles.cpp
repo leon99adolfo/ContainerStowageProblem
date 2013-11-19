@@ -467,14 +467,14 @@ void BLReadFiles::ChargeContainerInfo(ContainerBox objContainer)
              
 		// Insert 40' Container
 		response.Cont_40.push_back(nuContainerIdx);
-		//response.Cont_40.push_back(nuContainerIdx + 1); No se utilizara este valor, no es necesario
+		response.Cont_40.push_back(nuContainerIdx + 1);
 	
 		// 40' Container Aft and Container Fore	
 		response.Cont_40_A.push_back(nuContainerIdx);
 		response.Cont_40_F.push_back(nuContainerIdx + 1);
 
 		// Insert Container Weight 
-        response.Weight[nuContainerIdx + 1] = objContainer.GetWeight();
+        response.Weight[nuContainerIdx + 1] = 0;//objContainer.GetWeight();
 	
 	    // Insert Container POD 
 	    response.POD[nuContainerIdx + 1] = objContainer.GetPortDischarge();
