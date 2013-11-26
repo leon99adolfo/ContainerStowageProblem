@@ -62,6 +62,7 @@ class StowageCP: public Space
                 IntVarArray     P;   // POD of container stowed in slot j.
                 IntVarArray     HS;  // Current heigth of stack k.
                 BoolVarArray    CV;  // Virtual containers
+                BoolVarArray    CFEU;// Is container 40'?
                 //BoolVarArray   	NCV; // Invert Virtual containers 
                 /*IntVar          OV;  // Number of overstowing containers.
                 IntVar          OU;  // Number of used stacks.

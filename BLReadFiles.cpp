@@ -216,8 +216,8 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName)
 		}
 		else
 		{
-			response.Slots_20.push_back( idxFirstTemp );
-			response.Slots_20.push_back( idxSecondTemp );
+			//response.Slots_20.push_back( idxFirstTemp );
+			//response.Slots_20.push_back( idxSecondTemp );
 		}
 			
 		vector<int> TmpSlotsK;

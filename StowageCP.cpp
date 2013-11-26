@@ -7,8 +7,9 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
               H  (*this, pStowageInfo.Slots.size(), 0, pStowageInfo._nuMaxHeight * 10000),
               W  (*this, pStowageInfo.Slots.size(), 0, pStowageInfo._nuMaxWeight),
               P  (*this, pStowageInfo.Slots.size(), 0, pStowageInfo._nuMaxPOD),
-              HS (*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo._nuMaxStackHeight * 10000),
-              CV (*this, pStowageInfo.Slots.size(), 0, 1)/*
+              HS (*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo._nuMaxStackHeight * 10000),            
+              CV (*this, pStowageInfo.Slots.size(), 0, 1),
+              CFEU(*this,(pStowageInfo.Slots.size()/2), 0, 1)    /*
               OV (*this, 1, 0, pStowageInfo.Cont.size()),
               OU (*this, 1, 0, pStowageInfo.GetNumStacks()),
               OP (*this, pStowageInfo.GetNumStacks(), 1, pStowageInfo.GetNumPortsDischarge()),
@@ -20,31 +21,6 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 
 	// Charge Information in global variables
 	ChargeInformation(pStowageInfo);
-	
-	// Channeling constraint
-	//rel(*this, S[0], IRT_EQ, 2);
-	
-	/*
-	IntVarArgs prueba(*this, 5, 0, 8);
-	IntVarArgs prueba2(*this, 5, 0, 8);
-	
-	rel(*this, prueba[0], IRT_EQ, 1);
-	rel(*this, prueba[1], IRT_EQ, 3);
-	//rel(*this, prueba[2], IRT_EQ, 0);
-	rel(*this, prueba[3], IRT_EQ, 4);
-	rel(*this, prueba[4], IRT_EQ, 2);
-	
-	sorted(*this, prueba2, prueba);
-	
-	cout<<"Prueba: "<<prueba<<endl;
-	cout<<"Prueba2: "<<prueba2<<endl;
-	
-	//rel(*this, prueba2[0], IRT_LQ, 0);
-	//rel(*this, prueba2[4], IRT_GQ, 3);
-	
-	cout<<"Prueba: "<<prueba<<endl;
-	cout<<"Prueba2: "<<prueba2<<endl;*/
-	
 	
 	//----------------------------------------- Element Constraints -------------------------------
 	// elements Length
@@ -102,22 +78,32 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	// regular constraint
 	REG r = *REG(20) + *REG(40) + *REG(0);
 	DFA d(r);
+	int countCont = 0;
 	// regular constraint Stack-Aft
 	for (map<int, vector<int> >::iterator it=pStowageInfo.Slots_K_A.begin(); it != pStowageInfo.Slots_K_A.end(); ++it)
     {
 		int size = pStowageInfo.Slots_K_A[(it->first)].size();
 		IntVarArray	LTempLength( *this, size );
 		IntVarArray	HTempHeight( *this, size );
+		IntVarArray	WTempWeight( *this, size, 0, pStowageInfo._nuMaxWeight*2);
 		for(int x = 0; x < size; x++)
 		{
 			int slot = (it->second)[x];
+			
+			// Get slots in cell
+			IntVarArray slotsCellWeight(*this, 2);
+			IntVar varTmpWeight0( W[slot] );
+			IntVar varTmpWeight1( W[slot + 1] );
+			slotsCellWeight[0] = varTmpWeight0;
+			slotsCellWeight[1] = varTmpWeight1;
+			// sum slots in cell
+			linear(*this, slotsCellWeight, IRT_EQ, WTempWeight[x]);
+						
 			// Restriction container 40
-			/*if(boIsSlot40) 
-			{
-				rel(*this, S[slot], IRT_EQ, S[slot + 1]);
-				rel(*this, H[slot], IRT_EQ, H[slot + 1]);
-				rel(*this, P[slot], IRT_EQ, P[slot + 1]);				
-			}*/
+			rel(*this, L[slot], IRT_EQ, 40, eqv(CFEU[countCont]));
+			linear(*this, IntVarArgs()<<S[slot]<<IntVar(*this, 1, 1), IRT_EQ, S[slot+1], imp(CFEU[countCont]));
+			countCont++;
+			
 					
 			// Get Length
 			IntVar varTmpLength( L[slot] );
@@ -129,7 +115,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		
 		extensional(*this, LTempLength, d);  // regular constraint
 		linear(*this, HTempHeight, IRT_LQ, HS[ (it->first) - 1 ]); // Height limit constraint
-		
+		rel(*this, WTempWeight, IRT_GQ); // weight ordered constraint
     }
 	// regular constraint Stack-Fore
 	for (map<int, vector<int> >::iterator it=pStowageInfo.Slots_K_F.begin(); it != pStowageInfo.Slots_K_F.end(); ++it)
@@ -213,7 +199,6 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		
 		double dbMaxWeight = pStowageInfo.GetListStacks()[ ((it->first) - 1 ) ].GetMaxWeigth();		
 		linear(*this, WTempWeight, IRT_LQ, dbMaxWeight ); // Weight limit constraint
-		//rel(*this, WTempWeight, IRT_GQ); // Weight Ordered
     }
     
     //----------------------------------------- virtual containers ----------------------------------
@@ -273,6 +258,7 @@ StowageCP::StowageCP(bool share, StowageCP& s): Space(share, s)
 	P.update(*this, share, s.P);
 	HS.update(*this, share, s.HS);
 	CV.update(*this, share, s.CV);
+	CFEU.update(*this, share, s.CFEU);
 }
   
 Space* StowageCP::copy(bool share) 
@@ -290,6 +276,7 @@ void StowageCP::print(void) const
 	cout <<"P"<< P << endl << endl;
 	cout <<"HS"<< HS << endl << endl;
 	cout <<"CV"<< CV << endl << endl;
+	cout <<"CFEU"<< CFEU << endl << endl;
 }
 
 void StowageCP::ChargeInformation(StowageInfo pStowageInfo)
