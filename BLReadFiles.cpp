@@ -209,15 +209,16 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName)
 		}
 		
 		// Insert Slot 20' and 40' 
-		if(nuCap40 == objConstants.verdadero)
+		if(nuCap40 == objConstants.verdadero && nuCapAft == objConstants.falso && nuCapFore == objConstants.falso)
 		{
 			response.Slots_40.push_back( idxFirstTemp );
 			response.Slots_40.push_back( idxSecondTemp );
 		}
-		else
+		
+		if(nuCap40 == objConstants.falso)
 		{
-			//response.Slots_20.push_back( idxFirstTemp );
-			//response.Slots_20.push_back( idxSecondTemp );
+			if(nuCapAft == objConstants.verdadero) response.Slots_20.push_back( idxFirstTemp );
+			if(nuCapFore == objConstants.verdadero) response.Slots_20.push_back( idxSecondTemp );
 		}
 			
 		vector<int> TmpSlotsK;
