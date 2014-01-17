@@ -8,16 +8,18 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
               W  (*this, pStowageInfo.Slots.size(), 0, pStowageInfo._nuMaxWeight),
               P  (*this, pStowageInfo.Slots.size(), 0, pStowageInfo._nuMaxPOD),
               HS (*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo._nuMaxStackHeight * 10000),            
-              CV (*this, pStowageInfo.Slots.size(), 0, 1),
+              NVC (*this, pStowageInfo.Slots.size(), 0, 1),
               CFEU_A(*this,(pStowageInfo.Slots.size()/2), 0, 1),
-              CFEU_F(*this,(pStowageInfo.Slots.size()/2), 0, 1)   /*
-              OV (*this, 1, 0, pStowageInfo.Cont.size()),
+              CFEU_F(*this,(pStowageInfo.Slots.size()/2), 0, 1),
+              OV (*this, 0, pStowageInfo.Slots.size()),
+			  OVT(*this, pStowageInfo.Slots.size(), 0, 1),
+			  OCNS(*this, 0, pStowageInfo.Slots.size()),  /*,
               OU (*this, 1, 0, pStowageInfo.GetNumStacks()),
               OP (*this, pStowageInfo.GetNumStacks(), 1, pStowageInfo.GetNumPortsDischarge()),
-              OR (*this, 1, 0, pStowageInfo.Slots_R.size()),
-              O  (*this, 1, 0, ((100 * pStowageInfo.Cont.size()) + (20 * pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks()) +
-                                (10 * pStowageInfo.GetNumStacks()) + (5 * pStowageInfo.Slots_R.size()) ),
-              */
+              OR (*this, 1, 0, pStowageInfo.Slots_R.size()),*/
+              O  (*this, 0, (120 * pStowageInfo.Cont.size() -1) + (100 * pStowageInfo.Cont.size() -1) )
+              /*((100 * pStowageInfo.Cont.size()) + (20 * pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks()) +
+                                (10 * pStowageInfo.GetNumStacks()) + (5 * pStowageInfo.Slots_R.size()) )*/
 {
 
 	// Charge Information in global variables
@@ -87,6 +89,9 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		IntVarArray	LTempLength( *this, size );
 		IntVarArray	HTempHeight( *this, size );
 		IntVarArray	WTempWeight( *this, size, 0, pStowageInfo._nuMaxWeight*2);
+		IntVarArgs PTempPODAft;
+		IntVarArgs PTempPODFore;
+		IntVarArgs PTempPODAftFore;
 		for(int x = 0; x < size; x++)
 		{
 			int slot = (it->second)[x];
@@ -102,10 +107,61 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 						
 			// Restriction container 40 Aft
 			rel(*this, L[slot], IRT_EQ, 40, eqv(CFEU_A[countCont]));
-			linear(*this, IntVarArgs()<<S[slot]<<IntVar(*this, 1, 1), IRT_EQ, S[slot+1], imp(CFEU_A[countCont]));
-			countCont++;
+			linear(*this, IntVarArgs()<<S[slot]<<IntVar(*this, 1, 1), IRT_EQ, S[slot+1], imp(CFEU_A[countCont]));			
 			
-					
+			// ---------------------------------------------------------------------------------------
+			// This restriction is goal (POD)
+			PTempPODAft<<P[slot];
+			PTempPODFore<<P[slot+1];
+			PTempPODAftFore<<P[slot]<<P[slot+1];
+			BoolVar	IsOverStowed20A(*this, 0, 1), 
+					IsOverStowed20F(*this, 0, 1), 
+					IsOverStowed40(*this, 0, 1);
+			// Get minimun value
+			IntVar 	minPODAft(*this, 0, pStowageInfo._nuMaxPOD), 
+					minPODFore(*this, 0, pStowageInfo._nuMaxPOD),  
+					minPODAftFore(*this, 0, pStowageInfo._nuMaxPOD);
+			// Restriction min
+			min(*this, PTempPODAft, minPODAft);
+			min(*this, PTempPODAft, minPODFore);
+			min(*this, PTempPODAft, minPODAftFore);
+			// This restriction is goal (POD)
+			rel(*this, P[slot], IRT_GR, minPODAft, eqv(IsOverStowed20A)); 
+			rel(*this, P[slot], IRT_GR, minPODFore, eqv(IsOverStowed20F)); 
+			rel(*this, P[slot], IRT_GR, minPODAftFore, eqv(IsOverStowed40));			
+			// Get solution Bool
+			BoolVar OverStow40(*this, 0, 1), OverStow20A(*this, 0, 1), OverStow20F(*this, 0, 1),
+					NotOverStow40(*this, 0, 1), NotOverStow20A(*this, 0, 1), NotOverStow20F(*this, 0, 1),
+					NegIsOverStowed40(*this, 0, 1), NegCFEU_A(*this, 0, 1), NegIsOverStowed20A(*this, 0, 1),
+					NegIsOverStowed20F(*this, 0, 1);
+											
+			rel(*this, NegIsOverStowed40, IRT_EQ, BoolVar(*this, 0, 0), eqv(IsOverStowed40));
+			rel(*this, NegCFEU_A, IRT_EQ, BoolVar(*this, 0, 0), eqv(CFEU_A[countCont]));
+			rel(*this, NegIsOverStowed20A, IRT_EQ, BoolVar(*this, 0, 0), eqv(IsOverStowed20A));
+			rel(*this, NegIsOverStowed20F, IRT_EQ, BoolVar(*this, 0, 0), eqv(IsOverStowed20F));
+								
+			rel(*this, CFEU_A[countCont], BOT_AND, IsOverStowed40, OverStow40);
+			rel(*this, CFEU_A[countCont], BOT_AND, NegIsOverStowed40, NotOverStow40);
+			rel(*this, NegCFEU_A, BOT_AND, IsOverStowed20A, OverStow20A);
+			rel(*this, NegCFEU_A, BOT_AND, NegIsOverStowed20A, NotOverStow20A);
+			rel(*this, NegCFEU_A, BOT_AND, IsOverStowed20F, OverStow20F);
+			rel(*this, NegCFEU_A, BOT_AND, NegIsOverStowed20F, NotOverStow20F);
+			
+			// This restriction is goal (POD) for container 40			
+			rel(*this, OVT[countCont*2], IRT_EQ, 1, imp( OverStow40 ));
+			rel(*this, OVT[(countCont*2) + 1], IRT_EQ, 1, imp( OverStow40 ));
+			rel(*this, OVT[(countCont*2)], IRT_EQ, 0, imp( NotOverStow40 ));
+			rel(*this, OVT[(countCont*2) + 1], IRT_EQ, 0, imp( NotOverStow40 ));
+			// This restriction is goal (POD) for container 20 aft
+			rel(*this, OVT[countCont*2], IRT_EQ, 1, imp( OverStow20A ));
+			rel(*this, OVT[countCont*2], IRT_EQ, 0, imp( NotOverStow20A ));
+			// This restriction is goal (POD) for container 20 fore
+			rel(*this, OVT[(countCont*2) + 1], IRT_EQ, 1, imp( OverStow20F  ));
+			rel(*this, OVT[(countCont*2) + 1], IRT_EQ, 0, imp( NotOverStow20F ));
+			
+			// ---------------------------------------------------------------------------------------
+			
+			countCont++;
 			// Get Length
 			IntVar varTmpLength( L[slot] );
 			LTempLength[x] = varTmpLength;
@@ -208,15 +264,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		
 		double dbMaxWeight = pStowageInfo.GetListStacks()[ ((it->first) - 1 ) ].GetMaxWeigth();		
 		linear(*this, WTempWeight, IRT_LQ, dbMaxWeight ); // Weight limit constraint
-    }
-    
-    //----------------------------------------- virtual containers ----------------------------------
-    //IntVar ctrue
-    for(int x = 0; x < pStowageInfo.Slots.size() ; x++)
-    {				
-		// Is virtual?
-		rel(*this, S[x], IRT_EQ, 0, eqv(CV[x]) );		
-	}
+    }    
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// constraints improve the propagation power
@@ -224,6 +272,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 
 	//----------------------------------------- constraint exactly ----------------------------------
 
+	/*
 	// Constraint for POD
     for (map<int, int>::iterator it=pStowageInfo.Cont_EP.begin(); it != pStowageInfo.Cont_EP.end(); ++it)
     {
@@ -246,19 +295,35 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		//cout<<"wTmp: "<<hTmp<<" cant: "<<it->second<<endl;
 		//if( it->first != 0 ) exactly(*this, H, hTmp, it->second);
 	}
-
-	/*
+	*/
+	
+	//////////////////////////////////////////////////////////////////////////////////////////////////
+	// Objective 
+	//////////////////////////////////////////////////////////////////////////////////////////////////
+		
+	// Number of container stowed    
+    for(int x = 0; x < pStowageInfo.Slots.size() ; x++)
+    {				
+		// the container isn't virtual?
+		rel(*this, S[x], IRT_NQ, 0, eqv(NVC[x]) );		
+	}
+	
+	IntVar CS(*this, 0, pStowageInfo.Slots.size());	// containers stowed
+	linear(*this, NVC, IRT_EQ, CS);	
+	rel(*this, OCNS == pStowageInfo.Cont.size() - CS - 1); // (-1) for container virtual
+		
+	// Get Over-stowing container
+	linear(*this, OVT, IRT_EQ, OV); 
+	
+	// Cost function
+	rel(*this, O == 120 * OCNS + 100 * OV);
+		
 	// post branching
     branch(*this, S, INT_VAR_SIZE_MIN(), INT_VAL_MIN());
-    branch(*this, L, INT_VAR_SIZE_MIN(), INT_VAL_MIN());
-    branch(*this, H, INT_VAR_SIZE_MIN(), INT_VAL_MIN());
-    branch(*this, W, INT_VAR_SIZE_MIN(), INT_VAL_MIN());
-    branch(*this, P, INT_VAR_SIZE_MIN(), INT_VAL_MIN());
-    */
 }
 
 // search support
-StowageCP::StowageCP(bool share, StowageCP& s): Space(share, s) 
+StowageCP::StowageCP(bool share, StowageCP& s): IntMinimizeSpace(share, s)
 {
 	S.update(*this, share, s.S);
 	L.update(*this, share, s.L);
@@ -266,9 +331,13 @@ StowageCP::StowageCP(bool share, StowageCP& s): Space(share, s)
 	W.update(*this, share, s.W);
 	P.update(*this, share, s.P);
 	HS.update(*this, share, s.HS);
-	CV.update(*this, share, s.CV);
 	CFEU_A.update(*this, share, s.CFEU_A);
 	CFEU_F.update(*this, share, s.CFEU_F);
+	OV.update(*this, share, s.OV);
+	OVT.update(*this, share, s.OVT);
+	NVC.update(*this, share, s.NVC);
+	OCNS.update(*this, share, s.OCNS);
+	O.update(*this, share, s.O);
 }
   
 Space* StowageCP::copy(bool share) 
@@ -284,13 +353,24 @@ void StowageCP::print(void) const
 	cout <<"H"<< H << endl << endl;
 	cout <<"W"<< W << endl << endl;
 	cout <<"P"<< P << endl << endl;
-	cout <<"HS"<< HS << endl << endl;
-	cout <<"CV"<< CV << endl << endl;
+	cout <<"HS"<< HS << endl << endl;	
 	cout <<"CFEU_A"<< CFEU_A << endl << endl;
 	cout <<"CFEU_F"<< CFEU_F << endl << endl;
+	cout <<"OVT"<< OVT << endl << endl;
+	cout <<"OV "<< OV << endl << endl;
+	cout <<"NVC"<< NVC << endl << endl;
+	cout <<"OCNS "<< OCNS << endl << endl;
+	cout <<"O "<< O << endl << endl;
 	
 }
 
+// cost funtion
+IntVar StowageCP::cost(void) const 
+{
+    return O;
+}
+
+// charge information
 void StowageCP::ChargeInformation(StowageInfo pStowageInfo)
 {
 //---------------------------- sorts the arguments -------------------------- 

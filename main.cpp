@@ -9,18 +9,23 @@ using namespace Gecode;
 
 int main(int argc, char *argv[])
 {
+	//int file_count = 0;
+	string full_path = "/home/adolfo/Universidad/maestria/tesis/inst2/";
+	string archivo;
     BLReadFiles objBLReadFiles;
+    
+    cout<<"ingrese el archivo: "<<endl;
+    cin>>archivo;
+    
     StowageInfo objStowageInfo = 
-                objBLReadFiles.ChargeFile("/home/adolfo/Universidad/maestria/tesis/inst/inputBay0_3_11_1.txt");
-                //objBLReadFiles.ChargeFile("/home/adolfo/Universidad/maestria/tesis/inst/inputBay0_4_15_1.txt");
-                //objBLReadFiles.ChargeFile("/home/adolfo/Universidad/maestria/tesis/inst/inputBay0_12_48_1.txt");
+                objBLReadFiles.ChargeFile(full_path+archivo);
                 
     
     objStowageInfo.ChargeData();
     
 	// create model and search engine
 	StowageCP* m = new StowageCP( objStowageInfo );
-	DFS<StowageCP> e(m);
+	BAB<StowageCP> e(m);
 	delete m;
 	// search and print all solutions
 	while (StowageCP* s = e.next()) {

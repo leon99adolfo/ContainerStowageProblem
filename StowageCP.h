@@ -10,13 +10,12 @@
 
 #include <gecode/int.hh>
 #include <gecode/minimodel.hh>
-#include <gecode/set.hh>
+#include <gecode/search.hh>
 #include "StowageInfo.h"
-///#include <gecode/search.hh>
 
 using namespace Gecode;
 
-class StowageCP: public Space
+class StowageCP: public IntMinimizeSpace
 {
       private:
 				// Index Set and Constant of the CP model
@@ -55,23 +54,25 @@ class StowageCP: public Space
 				IntArgs           	Class;      // Set of stacks of class i*/
                                    
       protected:
-                IntVarArray     S;   // Container index of slot j.
-                IntVarArray     L;   // Length of container stowed in slot j.
-                IntVarArray   	H;   // Heigth of container stowed in slot j.
-                IntVarArray   	W;   // Weigth of container stowed in slot j.
-                IntVarArray     P;   // POD of container stowed in slot j.
-                IntVarArray     HS;  // Current heigth of stack k.
-                BoolVarArray    CV;  // Virtual containers
-                BoolVarArray    CFEU_A;// Is container 40' Aft?
-                BoolVarArray    CFEU_F;// Is container 40' Fore?
+                IntVarArray     S;   	// Container index of slot j.
+                IntVarArray     L;   	// Length of container stowed in slot j.
+                IntVarArray   	H;   	// Height of container stowed in slot j.
+                IntVarArray   	W;   	// Weight of container stowed in slot j.
+                IntVarArray     P;   	// POD of container stowed in slot j.
+                IntVarArray     HS;  	// Current height of stack k.
+                BoolVarArray     NVC;  	// No Virtual containers
+                BoolVarArray    CFEU_A;	// Is container 40' Aft?
+                BoolVarArray    CFEU_F;	// Is container 40' Fore?
                 //BoolVarArray   	NCV; // Invert Virtual containers 
-                /*IntVar          OV;  // Number of overstowing containers.
-                IntVar          OU;  // Number of used stacks.
+                IntVar          OV;  	// Number of over-stowing containers.
+				IntVarArray     OVT; 	// Container j over-stowing temporal.
+				IntVar			OCNS; 	// Number of container not stowed.
+                /*IntVar          OU;  // Number of used stacks.
                 IntVarArray     OP;  // Number of different discharge ports in each stack.
-                IntVar          OR;  // Number of non-reffers stowed in reffer cells.
+                IntVar          OR;  // Number of non-reefers stowed in reefer cells.*/
                 IntVar          O;   // Solution Cost.
                 
-                IntVarArray     SLE; // Slots with the same features in stack i.*/
+                //IntVarArray     SLE; // Slots with the same features in stack i.
   
       public:
             /**
@@ -99,6 +100,11 @@ class StowageCP: public Space
 			*	Printing solutions
 			*/
 			void print(void) const;
+			
+			/**
+			*	Cost function
+			*/
+			virtual IntVar cost(void) const;
 };
 
 #endif
