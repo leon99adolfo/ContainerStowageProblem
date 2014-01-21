@@ -67,8 +67,8 @@ class StowageCP: public IntMinimizeSpace
 				IntVarArray     OVT; 	// Container j over-stowing temporal.
 				IntVar			OCNS; 	// Number of container not stowed.				
                 IntVar          OU;  // Number of used stacks. 
-                /*IntVarArray     OP;  // Number of different discharge ports in each stack.
-                IntVar          OR;  // Number of container non-reefers stowed in reefer cells.*/
+                IntVarArray     OP;  // Number of different discharge ports in each stack.
+                //IntVar          OR;  // Number of container non-reefers stowed in reefer cells.
                 IntVar          O;   // Solution Cost.
                 
                 //IntVarArray     SLE; // Slots with the same features in stack i.

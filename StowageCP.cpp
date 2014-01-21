@@ -14,10 +14,12 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
               OV (*this, 0, pStowageInfo.Slots.size()),
 			  OVT(*this, pStowageInfo.Slots.size(), 0, 1),
 			  OCNS(*this, 0, pStowageInfo.Slots.size()), 
-              OU (*this, 0, pStowageInfo.GetNumStacks()),/*
-              OP (*this, pStowageInfo.GetNumStacks(), 1, pStowageInfo.GetNumPortsDischarge()),
-              OR (*this, 1, 0, pStowageInfo.Slots_R.size()),*/
-              O  (*this, 0, (120 * pStowageInfo.Cont.size() -1) + (100 * pStowageInfo.Cont.size() -1) + 
+              OU (*this, 0, pStowageInfo.GetNumStacks()),
+              OP (*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo.GetNumPortsDischarge()),
+              //OR (*this, 1, 0, pStowageInfo.Slots_R.size()),
+              O  (*this, 0, (120 * pStowageInfo.Cont.size() -1) + 
+							(100 * pStowageInfo.Cont.size() -1) + 
+							(20 * pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks()) + 
 							(10 * pStowageInfo.GetNumStacks()) )
               /*((100 * pStowageInfo.Cont.size()) + (20 * pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks()) +
                                 (10 * pStowageInfo.GetNumStacks()) + (5 * pStowageInfo.Slots_R.size()) )*/
@@ -83,6 +85,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	REG r = *REG(20) + *REG(40) + *REG(0);
 	DFA d(r);
 	int countCont = 0;
+	int countStaks = 0;
 	// regular constraint Stack-Aft
 	for (map<int, vector<int> >::iterator it=pStowageInfo.Slots_K_A.begin(); it != pStowageInfo.Slots_K_A.end(); ++it)
     {
@@ -90,9 +93,12 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		IntVarArray	LTempLength( *this, size );
 		IntVarArray	HTempHeight( *this, size );
 		IntVarArray	WTempWeight( *this, size, 0, pStowageInfo._nuMaxWeight*2);
+		
+		// Variables POD
 		IntVarArgs PTempPODAft;
 		IntVarArgs PTempPODFore;
 		IntVarArgs PTempPODAftFore;
+		
 		for(int x = 0; x < size; x++)
 		{
 			int slot = (it->second)[x];
@@ -124,8 +130,8 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 					minPODAftFore(*this, 0, pStowageInfo._nuMaxPOD);
 			// Restriction min
 			min(*this, PTempPODAft, minPODAft);
-			min(*this, PTempPODAft, minPODFore);
-			min(*this, PTempPODAft, minPODAftFore);
+			min(*this, PTempPODFore, minPODFore);
+			min(*this, PTempPODAftFore, minPODAftFore);
 			// This restriction is goal (POD)
 			rel(*this, P[slot], IRT_GR, minPODAft, eqv(IsOverStowed20A)); 
 			rel(*this, P[slot], IRT_GR, minPODFore, eqv(IsOverStowed20F)); 
@@ -170,10 +176,23 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			IntVar varTmpHeight( H[slot] );
 			HTempHeight[x] = varTmpHeight;
 		}
-		
+				
 		extensional(*this, LTempLength, d);  // regular constraint
 		linear(*this, HTempHeight, IRT_LQ, HS[ (it->first) - 1 ]); // Height limit constraint
 		rel(*this, WTempWeight, IRT_GQ); // weight ordered constraint
+		
+		// Goal OP
+		IntVar 	stackPODs(*this, 1, pStowageInfo.GetNumPortsDischarge() + 1),
+				minPODStack(*this, 0, pStowageInfo._nuMaxPOD);
+		BoolVar	existPODnull(*this, 0, 1),
+				existPOD(*this, 0, 1);
+		nvalues(*this, PTempPODAftFore, IRT_EQ, stackPODs);
+		min(*this, PTempPODAftFore, minPODStack);
+		rel(*this, minPODStack, IRT_EQ, 0, eqv(existPODnull));
+		rel(*this, minPODStack, IRT_NQ, 0, eqv(existPOD));
+		linear(*this, IntVarArgs()<<stackPODs<<IntVar(*this, -2, -2), IRT_EQ, OP[countStaks], imp(existPODnull)); // equal and null POD 
+		linear(*this, IntVarArgs()<<stackPODs<<IntVar(*this, -1, -1), IRT_EQ, OP[countStaks], imp(existPOD)); // equal POD  				
+		countStaks++;
     }
     
     countCont = 0;
@@ -329,8 +348,12 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	// Get empty stack
 	linear(*this, OUT, IRT_EQ, OU);
 	
+	// Get Different POD
+	IntVar OPT(*this, 0, pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks());
+	linear(*this, OP, IRT_EQ, OPT);
+	
 	// Cost function
-	rel(*this, O == 120 * OCNS + 100 * OV + 10 * OU);
+	rel(*this, O == 120 * OCNS + 100 * OV + 20 * OPT + 10 * OU);
 		
 	// post branching
     branch(*this, S, INT_VAR_SIZE_MIN(), INT_VAL_MIN());
@@ -352,6 +375,7 @@ StowageCP::StowageCP(bool share, StowageCP& s): IntMinimizeSpace(share, s)
 	NVC.update(*this, share, s.NVC);
 	OCNS.update(*this, share, s.OCNS);
 	OU.update(*this, share, s.OU);
+	OP.update(*this, share, s.OP);
 	O.update(*this, share, s.O);
 }
   
@@ -376,6 +400,7 @@ void StowageCP::print(void) const
 	cout <<"NVC"<< NVC << endl << endl;
 	cout <<"OCNS "<< OCNS << endl << endl;
 	cout <<"OU "<< OU << endl << endl;
+	cout <<"OP "<< OP << endl << endl;	
 	cout <<"O "<< O << endl << endl;
 	
 }
