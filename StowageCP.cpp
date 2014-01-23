@@ -16,13 +16,12 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			  OCNS(*this, 0, pStowageInfo.Slots.size()), 
               OU (*this, 0, pStowageInfo.GetNumStacks()),
               OP (*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo.GetNumPortsDischarge()),
-              //OR (*this, 1, 0, pStowageInfo.Slots_R.size()),
+              OR (*this, 0, pStowageInfo.Slots_R.size()),
               O  (*this, 0, (120 * pStowageInfo.Cont.size() -1) + 
 							(100 * pStowageInfo.Cont.size() -1) + 
 							(20 * pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks()) + 
-							(10 * pStowageInfo.GetNumStacks()) )
-              /*((100 * pStowageInfo.Cont.size()) + (20 * pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks()) +
-                                (10 * pStowageInfo.GetNumStacks()) + (5 * pStowageInfo.Slots_R.size()) )*/
+							(10 * pStowageInfo.GetNumStacks()) +
+							(5 * pStowageInfo.Slots_R.size()) )
 {
 
 	// Charge Information in global variables
@@ -114,6 +113,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 						
 			// Restriction container 40 Aft
 			rel(*this, L[slot], IRT_EQ, 40, eqv(CFEU_A[countCont]));
+			rel(*this, S[slot+1], IRT_NQ, 0, imp(CFEU_A[countCont]));
 			linear(*this, IntVarArgs()<<S[slot]<<IntVar(*this, 1, 1), IRT_EQ, S[slot+1], imp(CFEU_A[countCont]));			
 			
 			// ---------------------------------------------------------------------------------------
@@ -208,7 +208,11 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			
 			// Restriction container 40 Fore
 			rel(*this, L[slot], IRT_EQ, 40, eqv(CFEU_F[countCont]));
-			linear(*this, IntVarArgs()<<S[slot]<<IntVar(*this, -1, -1), IRT_EQ, S[slot-1], imp(CFEU_F[countCont]));
+			rel(*this, S[slot-1], IRT_NQ, 0, imp(CFEU_F[countCont]));
+			
+			BoolVar contNVCandCFEUF(*this, 0, 1);
+			rel(*this, NVC[slot-1], BOT_AND, CFEU_F[countCont], contNVCandCFEUF);
+			linear(*this, IntVarArgs()<<S[slot]<<IntVar(*this, -1, -1), IRT_EQ, S[slot-1], imp(contNVCandCFEUF));
 			countCont++;
 			
 			// Get Length
@@ -325,7 +329,6 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	// Objective 
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 
-	//IntArgs difContainer(pStowageInfo.Slots.size());
 	// Number of container stowed    
     for(int x = 0; x < pStowageInfo.Slots.size() ; x++)
     {	
@@ -352,8 +355,22 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	IntVar OPT(*this, 0, pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks());
 	linear(*this, OP, IRT_EQ, OPT);
 	
+	// Container no-reffer in slots reffer
+	BoolVarArray StowedSlotR(*this, pStowageInfo.Cont_NR.size(), 0, 1); 
+	for(int x = 0; x < pStowageInfo.Slots_R.size() ; x++)
+	{
+		BoolVarArray isContNRSlotR(*this, pStowageInfo.Cont_NR.size(), 0, 1); 
+		for(int y = 0; y < pStowageInfo.Cont_NR.size() ; y++)
+		{
+			rel(*this, S[ pStowageInfo.Slots_R[x] ], IRT_EQ, pStowageInfo.Cont_NR[y], eqv(isContNRSlotR[y]));
+		}
+		linear(*this, isContNRSlotR, IRT_NQ, 0, eqv(StowedSlotR[x]));		
+	}
+	
+	linear(*this, StowedSlotR, IRT_EQ, OR);
+	
 	// Cost function
-	rel(*this, O == 120 * OCNS + 100 * OV + 20 * OPT + 10 * OU);
+	rel(*this, O == 120 * OCNS + 100 * OV + 20 * OPT + 10 * OU + 5 * OR);
 		
 	// post branching
     branch(*this, S, INT_VAR_SIZE_MIN(), INT_VAL_MIN());
@@ -376,6 +393,7 @@ StowageCP::StowageCP(bool share, StowageCP& s): IntMinimizeSpace(share, s)
 	OCNS.update(*this, share, s.OCNS);
 	OU.update(*this, share, s.OU);
 	OP.update(*this, share, s.OP);
+	OR.update(*this, share, s.OR);
 	O.update(*this, share, s.O);
 }
   
@@ -401,6 +419,7 @@ void StowageCP::print(void) const
 	cout <<"OCNS "<< OCNS << endl << endl;
 	cout <<"OU "<< OU << endl << endl;
 	cout <<"OP "<< OP << endl << endl;	
+	cout <<"OR "<< OR << endl << endl;	
 	cout <<"O "<< O << endl << endl;
 	
 }

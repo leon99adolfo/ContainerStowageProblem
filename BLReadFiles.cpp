@@ -460,11 +460,6 @@ void BLReadFiles::ChargeContainerInfo(ContainerBox objContainer)
             // Insert Container loaded
 		    response.Cont_L.push_back(nuContainerIdx + 1);                             
         }
-        /*else
-        {
-            // Insert Container virtual
-		    response.Cont_V.push_back(nuContainerIdx + 1); 
-        }*/
              
 		// Insert 40' Container
 		response.Cont_40.push_back(nuContainerIdx);
