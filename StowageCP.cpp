@@ -355,7 +355,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	IntVar OPT(*this, 0, pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks());
 	linear(*this, OP, IRT_EQ, OPT);
 	
-	// Container no-reffer in slots reffer
+/*	// Container no-reffer in slots reffer
 	BoolVarArray StowedSlotR(*this, pStowageInfo.Cont_NR.size(), 0, 1); 
 	for(int x = 0; x < pStowageInfo.Slots_R.size() ; x++)
 	{
@@ -370,7 +370,9 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	linear(*this, StowedSlotR, IRT_EQ, OR);
 	
 	// Cost function
-	rel(*this, O == 120 * OCNS + 100 * OV + 20 * OPT + 10 * OU + 5 * OR);
+	rel(*this, O == 120 * OCNS + 100 * OV + 20 * OPT + 10 * OU + 5 * OR);*/
+	rel(*this, O == 120 * OCNS + 100 * OV + 20 * OPT + 10 * OU);
+	
 		
 	// post branching
     branch(*this, S, INT_VAR_SIZE_MIN(), INT_VAL_MIN());
