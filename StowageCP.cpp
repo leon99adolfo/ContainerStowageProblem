@@ -17,7 +17,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
               OU (*this, 0, pStowageInfo.GetNumStacks()),
               OP (*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo.GetNumPortsDischarge()),
               OR (*this, 0, pStowageInfo.Slots_R.size()),
-              O  (*this, 0, (120 * pStowageInfo.Cont.size() -1) + 
+              O  (*this, 0, (1000 * pStowageInfo.Cont.size() -1) + 
 							(100 * pStowageInfo.Cont.size() -1) + 
 							(20 * pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks()) + 
 							(10 * pStowageInfo.GetNumStacks()) +
@@ -62,6 +62,8 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 				cantSlots += pStowageInfo.Slots_K[(it->first)].size();				
 			}
 		}
+		
+		
 		
 		switch (position)
 		{
@@ -333,7 +335,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
     for(int x = 0; x < pStowageInfo.Slots.size() ; x++)
     {	
 		// the container isn't virtual?
-		rel(*this, S[x], IRT_NQ, 0, eqv(NVC[x]));
+		rel(*this, S[x], IRT_NQ, 0, eqv(NVC[x]));		
 		
 		for(int y = 0; y < pStowageInfo.Slots.size() ; y++)
 		{
@@ -343,7 +345,9 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	
 	IntVar CS(*this, 0, pStowageInfo.Slots.size());	// containers stowed
 	linear(*this, NVC, IRT_EQ, CS);	
-	rel(*this, OCNS == pStowageInfo.Cont.size() - CS - 1); // (-1) for container virtual
+	IntVar C40F(*this, 0, pStowageInfo.Slots.size());	// containers 40 stowed in fore 
+	linear(*this, CFEU_F, IRT_EQ, C40F);		
+	rel(*this, OCNS == pStowageInfo.Cont.size() - CS - C40F - 1); // (-1) for container virtual
 		
 	// Get Over-stowing container
 	linear(*this, OVT, IRT_EQ, OV); 
@@ -355,8 +359,8 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	IntVar OPT(*this, 0, pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks());
 	linear(*this, OP, IRT_EQ, OPT);
 	
-/*	// Container no-reffer in slots reffer
-	BoolVarArray StowedSlotR(*this, pStowageInfo.Cont_NR.size(), 0, 1); 
+	// Container no-reffer in slots reffer
+	BoolVarArray StowedSlotR(*this, pStowageInfo.Slots_R.size(), 0, 1); 
 	for(int x = 0; x < pStowageInfo.Slots_R.size() ; x++)
 	{
 		BoolVarArray isContNRSlotR(*this, pStowageInfo.Cont_NR.size(), 0, 1); 
@@ -366,12 +370,11 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		}
 		linear(*this, isContNRSlotR, IRT_NQ, 0, eqv(StowedSlotR[x]));		
 	}
-	
+		
 	linear(*this, StowedSlotR, IRT_EQ, OR);
 	
 	// Cost function
-	rel(*this, O == 120 * OCNS + 100 * OV + 20 * OPT + 10 * OU + 5 * OR);*/
-	rel(*this, O == 120 * OCNS + 100 * OV + 20 * OPT + 10 * OU);
+	rel(*this, O == 1000 * OCNS + 100 * OV + 20 * OPT + 10 * OU + 5 * OR);
 	
 		
 	// post branching

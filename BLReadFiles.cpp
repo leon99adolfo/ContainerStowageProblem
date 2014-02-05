@@ -407,10 +407,6 @@ map<int, ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoad
 		{
             response.Cont_L.push_back(nuContainerIdx); 			 
         }
-        /*else
-        {
-            response.Cont_V.push_back(nuContainerIdx);	
-        }*/
         
         // Charge container information
 		ChargeContainerInfo(objContainer);
