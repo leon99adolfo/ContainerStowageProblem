@@ -46,6 +46,9 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	
 	//----------------------------------------- Loaded Container Constraints -------------------------
 	// Loaded Container
+	map<int, int> slotByStackFore;
+	map<int, int> slotByStackAft;
+	
 	for(int x = 0; x < pStowageInfo.Cont_L.size() ; x++)
 	{	
 		ContainerBox objContainer = pStowageInfo.GetListContainerLoaded()[pStowageInfo.Cont_L[x]];
@@ -61,25 +64,31 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 				// count slots
 				cantSlots += pStowageInfo.Slots_K[(it->first)].size();				
 			}
-		}
+		}		
 		
-		
-		
+		int nuPositionF = ( (cell -1) * 2 ) + 1 + cantSlots; 
+		int nuPositionA = ( (cell -1) * 2 ) + cantSlots; 
+
 		switch (position)
-		{
-			case -1:
-				rel(*this, S[( (cell -1) * 2 ) + 1 + cantSlots], IRT_EQ, Cont_L[x]);
+		{	
+			case -1:			
+				rel(*this, S[nuPositionF], IRT_EQ, Cont_L[x]);
+				SaveContLoadedSlot(pStowageInfo, slotByStackFore, stack, nuPositionF);				
 				break;
 			case 0:
-				rel(*this, S[( (cell -1) * 2 ) + cantSlots], IRT_EQ, Cont_L[x]);
+				rel(*this, S[nuPositionA], IRT_EQ, Cont_L[x]);
+				SaveContLoadedSlot(pStowageInfo, slotByStackAft, stack, nuPositionA);
 				x++;
-				rel(*this, S[( (cell -1) * 2 ) + 1 + cantSlots], IRT_EQ, Cont_L[x]);  
+				rel(*this, S[nuPositionF], IRT_EQ, Cont_L[x]);
+				SaveContLoadedSlot(pStowageInfo, slotByStackFore, stack, nuPositionF);
 				break;
 			case 1:
-				rel(*this, S[( (cell -1) * 2 ) + cantSlots], IRT_EQ, Cont_L[x]);
+				rel(*this, S[nuPositionA], IRT_EQ, Cont_L[x]);
+				SaveContLoadedSlot(pStowageInfo, slotByStackAft, stack, nuPositionA);
 				break;
 		}		
-	}	
+	}
+	
 	
 	//-------------------------- Regular Constraints and Height Constraints ----------------------------------
 	// regular constraint
@@ -105,11 +114,30 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			int slot = (it->second)[x];
 			
 			// Get slots in cell
-			IntVarArray slotsCellWeight(*this, 2);
-			IntVar varTmpWeight0( W[slot] );
-			IntVar varTmpWeight1( W[slot + 1] );
-			slotsCellWeight[0] = varTmpWeight0;
-			slotsCellWeight[1] = varTmpWeight1;
+			IntVarArray slotsCellWeight(*this, 2);			
+			
+			// Aft slot 
+			if ( pStowageInfo.ContLoadedSlot.find(slot) != pStowageInfo.ContLoadedSlot.end())	
+			{
+				slotsCellWeight[0] = IntVar(*this, pStowageInfo._nuMaxWeight, pStowageInfo._nuMaxWeight);				
+			}
+			else
+			{			
+				IntVar varTmpWeight0( W[slot] );
+				slotsCellWeight[0] = varTmpWeight0;
+			}
+			
+			// Fore slot
+			if ( pStowageInfo.ContLoadedSlot.find(slot + 1) != pStowageInfo.ContLoadedSlot.end())	
+			{			
+				slotsCellWeight[1] = IntVar(*this, pStowageInfo._nuMaxWeight, pStowageInfo._nuMaxWeight);				
+			}
+			else
+			{			
+				IntVar varTmpWeight1( W[slot + 1] );
+				slotsCellWeight[1] = varTmpWeight1;
+			}
+			
 			// sum slots in cell
 			linear(*this, slotsCellWeight, IRT_EQ, WTempWeight[x]);
 						
@@ -433,6 +461,27 @@ void StowageCP::print(void) const
 IntVar StowageCP::cost(void) const 
 {
     return O;
+}
+
+// Save maximum slot by stack
+void StowageCP::SaveContLoadedSlot(StowageInfo& pStowageInfo, map<int, int>& pSlotByStack, int pStack, int pSlot)
+{
+	if ( pSlotByStack.find(pStack) != pSlotByStack.end())
+	{
+		if(pSlotByStack[pStack] < pSlot )
+		{
+			pStowageInfo.ContLoadedSlot[pSlotByStack[pStack]] = pSlotByStack[pStack];
+			pSlotByStack[pStack] = pSlot;
+		}					
+		else
+		{
+			pStowageInfo.ContLoadedSlot[pSlot] = pSlot; 
+		}
+	}
+	else
+	{
+		pSlotByStack[pStack] = pSlot;
+	}
 }
 
 // charge information

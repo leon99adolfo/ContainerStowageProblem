@@ -257,9 +257,10 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName)
 			
 		}	
     }
-    
-    response.SetListCells(listCells);
-    
+    	
+    response.SetListCells(listCells);    
+	response.ChargeData();
+	
     // Close file
     archivoAr.close();
     

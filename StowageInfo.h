@@ -74,6 +74,7 @@ class StowageInfo
             map<int, int>      	Length;      	// Leight of container i
             map<int, double>    Height;      	// Height of container i
             map<int, int>       Cont_EP;        // Number of container with discharge port P.
+			map<int, int>       ContLoadedSlot; // Containers loaded by slot.
             map<double, int>    Cont_EW;        // Number of container with equal weight 
             map<double, int>    Cont_EH;        // Number of container with equal height
             int                 ContNormal;     // Number of normal containers

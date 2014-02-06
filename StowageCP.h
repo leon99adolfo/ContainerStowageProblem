@@ -85,6 +85,11 @@ class StowageCP: public IntMinimizeSpace
 			*/
 			void ChargeInformation(StowageInfo pStowageInfo);
 			
+			/**
+			* This function save the maximum slot by stack
+			*/
+			void SaveContLoadedSlot(StowageInfo& pStowageInfo, map<int, int>& pSlotByStack, int pStack, int pSlot);
+			
 			/** 
 			* Constructor overload
 			*/
