@@ -196,7 +196,7 @@ void StowageInfo::ChargeData()
         }
         else
         {
-            //  Maximum Length
+            //  Maximum Height
             if(_listStacks.at(x).GetMaxHeigth() > _nuMaxStackHeight)
             {
                 _nuMaxStackHeight = _listStacks.at(x).GetMaxHeigth();                   
