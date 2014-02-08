@@ -157,6 +157,10 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			rel(*this, S[slot+1], IRT_NQ, 0, imp(CFEU_A[countCont]));
 			linear(*this, IntVarArgs()<<S[slot]<<IntVar(*this, 1, 1), IRT_EQ, S[slot+1], imp(CFEU_A[countCont]));		
 			
+			// Only stowed container 40 aft
+			for(int z = 0; z < pStowageInfo.Cont_40_F.size() ; z++)
+				rel(*this, S[slot], IRT_NQ, pStowageInfo.Cont_40_F[z]);
+							
 			// ---------------------------------------------------------------------------------------
 			// This restriction is goal (POD)
 			PTempPODAft<<P[slot];
@@ -212,10 +216,12 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			// Gravitatory center In X
 			rel(*this, GraviCentersX[(posY*2)] == W[slot] * posX);
 			posX++;
-			rel(*this, GraviCentersX[(posY*2) + 1], IRT_EQ, GraviCentersX[(posY*2)], imp(CFEU_A[countCont]));
-			IntVar GraviCentX(*this, 0, pStowageInfo._nuMaxWeight * posX);
-			rel(*this, GraviCentX == W[slot + 1] * posX);
-			rel(*this, GraviCentersX[(posY*2) + 1], IRT_EQ, GraviCentX, imp(NegCFEU_A));	
+			IntVar GraviCentX20(*this, 0, pStowageInfo._nuMaxWeight * posX);
+			rel(*this, GraviCentX20 == W[slot + 1] * posX);
+			IntVar GraviCentX40(*this, 0, pStowageInfo._nuMaxWeight * posX);
+			rel(*this, GraviCentX40 == W[slot] * posX);			
+			rel(*this, GraviCentersX[(posY*2) + 1], IRT_EQ, GraviCentX40, imp(CFEU_A[countCont]));			
+			rel(*this, GraviCentersX[(posY*2) + 1], IRT_EQ, GraviCentX20, imp(NegCFEU_A));	
 				
 			// Gravitatory center In Y
 			rel(*this, GraviCentersY[(posY*2)] == W[slot] * posY);		
@@ -224,8 +230,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			rel(*this, GraviCentY == W[slot + 1] * posY);
 			rel(*this, GraviCentersY[(posY*2) + 1], IRT_EQ, GraviCentY , imp(NegCFEU_A));
 			posY++;
-			
-			
+						
 			countCont++;
 			// Get Length
 			IntVar varTmpLength( L[slot] );
@@ -241,7 +246,8 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		
 		// Calculate gravity center
 		IntVar sumGraviCentersX(*this, 0, pStowageInfo._nuMaxWeight * size * 2);
-		linear(*this, GraviCentersX, IRT_EQ, GCX[countStaks]); //sumGraviCentersX);
+		linear(*this, GraviCentersX, IRT_EQ, sumGraviCentersX);
+		//rel(*this, GCX[countStaks], FRT_EQ, sumGraviCentersX);
 		/*div(*this, 	FloatVar(*this, sumGraviCentersX.min(), sumGraviCentersX.max()), 
 					FloatVar(*this, WeightTotal.min(), WeightTotal.max()), 
 					GCX[countStaks]);*/
@@ -285,6 +291,10 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			// Restriction container 40 Fore
 			rel(*this, L[slot], IRT_EQ, 40, eqv(CFEU_F[countCont]));
 			rel(*this, S[slot-1], IRT_NQ, 0, imp(CFEU_F[countCont]));
+			
+			// Only stowed container 40 fore
+			for(int z = 0; z < pStowageInfo.Cont_40_A.size() ; z++)
+				rel(*this, S[slot], IRT_NQ, pStowageInfo.Cont_40_A[z]);
 			
 			BoolVar contNVCandCFEUF(*this, 0, 1);
 			rel(*this, NVC[slot-1], BOT_AND, CFEU_F[countCont], contNVCandCFEUF);
@@ -420,7 +430,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	IntVar CS(*this, 0, pStowageInfo.Slots.size());	// containers stowed
 	linear(*this, NVC, IRT_EQ, CS);	
 	IntVar C40F(*this, 0, pStowageInfo.Slots.size());	// containers 40 stowed in fore 
-	linear(*this, CFEU_F, IRT_EQ, C40F);		
+	linear(*this, CFEU_F, IRT_EQ, C40F);
 	rel(*this, OCNS == pStowageInfo.Cont.size() - CS - C40F - 1); // (-1) for container virtual
 		
 	// Get Over-stowing container
@@ -566,7 +576,7 @@ void StowageCP::ChargeInformation(StowageInfo pStowageInfo)
 		{
 			Weight[x] = pStowageInfo.Weight[x];
 		}
-		cout<<"Weight["<<x<<"]: "<<Weight[x] <<endl;
+		//cout<<"Weight["<<x<<"]: "<<Weight[x] <<endl;
 	}
     
 	// Ports of discharges of container i
