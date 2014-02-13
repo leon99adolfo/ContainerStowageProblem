@@ -6,6 +6,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
               L  (*this, pStowageInfo.Slots.size(), 0, pStowageInfo._nuMaxLength),
               H  (*this, pStowageInfo.Slots.size(), 0, pStowageInfo._nuMaxHeight * 10000),
               W  (*this, pStowageInfo.Slots.size(), 0, pStowageInfo._nuMaxWeight),
+              WD (*this, pStowageInfo.Slots.size(), 0, pStowageInfo._nuMaxWeight),
               P  (*this, pStowageInfo.Slots.size(), 0, pStowageInfo._nuMaxPOD),
               HS (*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo._nuMaxStackHeight * 10000),            
               NVC (*this, pStowageInfo.Slots.size(), 0, 1),
@@ -13,6 +14,8 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
               CFEU_F(*this,(pStowageInfo.Slots.size()/2), 0, 1),
               GCX(*this, pStowageInfo.GetNumStacks(), 0, 100000000),//1),
               GCY(*this, pStowageInfo.GetNumStacks(), 0, 100000000),//pStowageInfo.GetNumTiers()),
+              SGCX(*this, pStowageInfo.GetNumStacks(), 0, 100000000),
+              WT(*this, pStowageInfo.GetNumStacks(), 0, 100000000),
               OV (*this, 0, pStowageInfo.Slots.size()),
 			  OVT(*this, pStowageInfo.Slots.size(), 0, 1),
 			  OCNS(*this, 0, pStowageInfo.Slots.size()), 
@@ -40,12 +43,20 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		
 	// elements Weight
 	for(int x = 0; x < pStowageInfo.Slots.size() ; x++)
+	{
 		element(*this, Weight, S[x], W[x]);
-		
+		for(int y = 0; y < pStowageInfo.Slots.size() ; y++)
+		{	
+			BoolVar IdxWD(*this, 0, 1);
+			rel(*this, S[x], IRT_EQ, y, eqv(IdxWD));
+			rel(*this, WD[x], FRT_EQ, Weight[y], imp(IdxWD));
+		}
+	}
+
 	// elements POD
 	for(int x = 0; x < pStowageInfo.Slots.size() ; x++)
 		element(*this, POD, S[x], P[x]);	
-	
+		
 	//----------------------------------------- Loaded Container Constraints -------------------------
 	// Loaded Container
 	map<int, int> slotByStackFore;
@@ -105,11 +116,11 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		IntVarArray	LTempLength( *this, size );
 		IntVarArray	HTempHeight( *this, size );
 		IntVarArray	WTempWeight( *this, size, 0, pStowageInfo._nuMaxWeight*2);
-		IntVarArgs WeightTotalArgs;
+		FloatVarArgs WeightTotalArgs;
 				
 		int posY = 0;
-		IntVarArray GraviCentersX( *this, size * 2, 0, pStowageInfo._nuMaxWeight);
-		IntVarArray GraviCentersY( *this, size * 2, 0, pStowageInfo._nuMaxWeight * size);
+		FloatVarArray GraviCentersX( *this, size * 2, 0, pStowageInfo._nuMaxWeight);
+		FloatVarArray GraviCentersY( *this, size * 2, 0, pStowageInfo._nuMaxWeight * size);
 		
 		// Variables POD
 		IntVarArgs PTempPODAft;
@@ -147,7 +158,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			}
 			
 			// full variable WeightTotal
-			WeightTotalArgs<<W[slot]<<W[slot + 1];
+			WeightTotalArgs<<WD[slot]<<WD[slot + 1];
 						
 			// sum slots in cell
 			linear(*this, slotsCellWeight, IRT_EQ, WTempWeight[x]);
@@ -214,21 +225,21 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			// ---------------------------------------------------------------------------------------
 			
 			// Gravitatory center In X
-			rel(*this, GraviCentersX[(posY*2)] == W[slot] * posX);
+			rel(*this, GraviCentersX[(posY*2)] == WD[slot] * posX);
 			posX++;
-			IntVar GraviCentX20(*this, 0, pStowageInfo._nuMaxWeight * posX);
-			rel(*this, GraviCentX20 == W[slot + 1] * posX);
-			IntVar GraviCentX40(*this, 0, pStowageInfo._nuMaxWeight * posX);
-			rel(*this, GraviCentX40 == W[slot] * posX);			
-			rel(*this, GraviCentersX[(posY*2) + 1], IRT_EQ, GraviCentX40, imp(CFEU_A[countCont]));			
-			rel(*this, GraviCentersX[(posY*2) + 1], IRT_EQ, GraviCentX20, imp(NegCFEU_A));	
+			FloatVar GraviCentX20(*this, 0, pStowageInfo._nuMaxWeight * posX);
+			rel(*this, GraviCentX20 == WD[slot + 1] * posX);
+			FloatVar GraviCentX40(*this, 0, pStowageInfo._nuMaxWeight * posX);
+			rel(*this, GraviCentX40 == WD[slot] * posX);			
+			rel(*this, GraviCentersX[(posY*2) + 1], FRT_EQ, GraviCentX40, imp(CFEU_A[countCont]));			
+			rel(*this, GraviCentersX[(posY*2) + 1], FRT_EQ, GraviCentX20, imp(NegCFEU_A));	
 				
 			// Gravitatory center In Y
-			rel(*this, GraviCentersY[(posY*2)] == W[slot] * posY);		
-			rel(*this, GraviCentersY[(posY*2) + 1], IRT_EQ, GraviCentersY[(posY*2)], imp(CFEU_A[countCont]));
-			IntVar GraviCentY(*this, 0, pStowageInfo._nuMaxWeight * posY);
-			rel(*this, GraviCentY == W[slot + 1] * posY);
-			rel(*this, GraviCentersY[(posY*2) + 1], IRT_EQ, GraviCentY , imp(NegCFEU_A));
+			rel(*this, GraviCentersY[(posY*2)] == WD[slot] * posY);		
+			rel(*this, GraviCentersY[(posY*2) + 1], FRT_EQ, GraviCentersY[(posY*2)], imp(CFEU_A[countCont]));
+			FloatVar GraviCentY(*this, 0, pStowageInfo._nuMaxWeight * posY);
+			rel(*this, GraviCentY == WD[slot + 1] * posY);
+			rel(*this, GraviCentersY[(posY*2) + 1], FRT_EQ, GraviCentY , imp(NegCFEU_A));
 			posY++;
 						
 			countCont++;
@@ -241,23 +252,20 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		}
 		
 		// calculate the all weigth by stack
-		IntVar WeightTotal(*this, 0, pStowageInfo._nuMaxWeight * size * 2);
-		linear(*this, WeightTotalArgs, IRT_EQ, WeightTotal);
+		FloatVar WeightTotal(*this, 0, pStowageInfo._nuMaxWeight * size * 2);
+		linear(*this, WeightTotalArgs, FRT_EQ, WeightTotal);
+		rel(*this, WT[countStaks] == WeightTotal);
+					
+		// Calculate gravity center in X
+		FloatVar sumGraviCentersX(*this, -1, pStowageInfo._nuMaxWeight * size * 2);
+		linear(*this, GraviCentersX, FRT_EQ, sumGraviCentersX);
+		rel(*this, SGCX[countStaks] == sumGraviCentersX);
+		div(*this, sumGraviCentersX, WeightTotal, GCX[countStaks]);
 		
-		// Calculate gravity center
-		IntVar sumGraviCentersX(*this, 0, pStowageInfo._nuMaxWeight * size * 2);
-		linear(*this, GraviCentersX, IRT_EQ, sumGraviCentersX);
-		//rel(*this, GCX[countStaks], FRT_EQ, sumGraviCentersX);
-		/*div(*this, 	FloatVar(*this, sumGraviCentersX.min(), sumGraviCentersX.max()), 
-					FloatVar(*this, WeightTotal.min(), WeightTotal.max()), 
-					GCX[countStaks]);*/
-		
-		IntVar sumGraviCentersY(*this, 0, pStowageInfo._nuMaxWeight * size * size * 2);
-		linear(*this, GraviCentersY, IRT_EQ, GCY[countStaks]);//sumGraviCentersY);
-		/*div(*this, 	FloatVar(*this, sumGraviCentersY.min(), sumGraviCentersY.max()), 
-					FloatVar(*this, WeightTotal.min(), WeightTotal.max()), 
-					GCY[countStaks]);*/
-				
+		// Calculate gravity center in Y
+		FloatVar sumGraviCentersY(*this, 0, pStowageInfo._nuMaxWeight * size * size * 2);
+		linear(*this, GraviCentersY, FRT_EQ, sumGraviCentersY);
+		div(*this, sumGraviCentersY, WeightTotal, GCY[countStaks]);				
 				
 		extensional(*this, LTempLength, d);  // regular constraint
 		linear(*this, HTempHeight, IRT_LQ, HS[ (it->first) - 1 ]); // Height limit constraint
@@ -472,6 +480,7 @@ StowageCP::StowageCP(bool share, StowageCP& s): IntMinimizeSpace(share, s)
 	L.update(*this, share, s.L);
 	H.update(*this, share, s.H);
 	W.update(*this, share, s.W);
+	WD.update(*this, share, s.WD);
 	P.update(*this, share, s.P);
 	HS.update(*this, share, s.HS);
 	CFEU_A.update(*this, share, s.CFEU_A);
@@ -486,6 +495,8 @@ StowageCP::StowageCP(bool share, StowageCP& s): IntMinimizeSpace(share, s)
 	OP.update(*this, share, s.OP);
 	OR.update(*this, share, s.OR);
 	O.update(*this, share, s.O);
+	SGCX.update(*this, share, s.SGCX);
+	WT.update(*this, share, s.WT);
 }
   
 Space* StowageCP::copy(bool share) 
@@ -500,6 +511,7 @@ void StowageCP::print(void) const
 	cout <<"L"<< L << endl << endl;
 	cout <<"H"<< H << endl << endl;
 	cout <<"W"<< W << endl << endl;
+	cout <<"WD"<< WD << endl << endl;
 	cout <<"P"<< P << endl << endl;
 	cout <<"HS"<< HS << endl << endl;	
 	cout <<"CFEU_A"<< CFEU_A << endl << endl;
@@ -513,8 +525,9 @@ void StowageCP::print(void) const
 	cout <<"OU "<< OU << endl << endl;
 	cout <<"OP "<< OP << endl << endl;	
 	cout <<"OR "<< OR << endl << endl;	
-	cout <<"O "<< O << endl << endl;
-	
+	cout <<"O "<< O << endl << endl;	
+	cout <<"SGCX "<< SGCX << endl << endl;	
+	cout <<"WT "<< WT << endl << endl;	
 }
 
 // cost funtion
@@ -576,7 +589,7 @@ void StowageCP::ChargeInformation(StowageInfo pStowageInfo)
 		{
 			Weight[x] = pStowageInfo.Weight[x];
 		}
-		//cout<<"Weight["<<x<<"]: "<<Weight[x] <<endl;
+		
 	}
     
 	// Ports of discharges of container i

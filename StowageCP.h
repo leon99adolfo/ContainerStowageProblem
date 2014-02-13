@@ -58,13 +58,16 @@ class StowageCP: public IntMinimizeSpace
                 IntVarArray     L;   	// Length of container stowed in slot j.
                 IntVarArray   	H;   	// Height of container stowed in slot j.
                 IntVarArray   	W;   	// Weight of container stowed in slot j.
+                FloatVarArray  	WD;   	// Weight of container stowed in slot j.
                 IntVarArray     P;   	// POD of container stowed in slot j.
                 IntVarArray     HS;  	// Current height of stack k.
                 BoolVarArray    NVC;  	// No Virtual containers
                 BoolVarArray    CFEU_A;	// Is container 40' Aft?
                 BoolVarArray    CFEU_F;	// Is container 40' Fore?   
                 FloatVarArray	GCX;	// Gravity center in axis X     
-                IntVarArray	GCY;	// Gravity center in axis Y
+                FloatVarArray	SGCX;
+                FloatVarArray	WT;
+                FloatVarArray	GCY;	// Gravity center in axis Y                
                 IntVar          OV;  	// Number of over-stowing containers.
 				IntVarArray     OVT; 	// Container j over-stowing temporal.
 				IntVar			OCNS; 	// Number of container not stowed.				
@@ -72,6 +75,7 @@ class StowageCP: public IntMinimizeSpace
                 IntVarArray     OP;  // Number of different discharge ports in each stack.
                 IntVar          OR;  // Number of container non-reefers stowed in reefer cells.
                 IntVar          O;   // Solution Cost.
+                
                 
                 //IntVarArray     SLE; // Slots with the same features in stack i.
   
@@ -101,7 +105,7 @@ class StowageCP: public IntMinimizeSpace
 			*	Space
 			*/
 			virtual Space* copy(bool share);
-			
+						
 			/**
 			*	Printing solutions
 			*/
