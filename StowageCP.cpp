@@ -15,6 +15,8 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
               GCX(*this, pStowageInfo.GetNumStacks(), 0, 1),
               GCY(*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo.GetNumTiers()),
               GCD(*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo.GetNumTiers()),
+              GCTD(*this, 0, pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks()),              
+              OGCTD(*this, 0, pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks()),
               OV (*this, 0, pStowageInfo.Slots.size()),
 			  OVT(*this, pStowageInfo.Slots.size(), 0, 1),
 			  OCNS(*this, 0, pStowageInfo.Slots.size()), 
@@ -293,6 +295,8 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		double GCSX = 0.5;
 		double GCSY = quarterStack / unitStack;
 		
+		//cout<<"unitStack: "<<unitStack<<" quarterStack: "<<quarterStack<<" GCSY: "<<GCSY<<endl;
+		
 		FloatVar cx(*this, -1, 1);
 		rel(*this, cx == GCX[countStaks] - GCSX);
 		FloatVar cx2(*this, 0, 1);
@@ -305,13 +309,20 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		
 		FloatVar sc(*this, 0, (pStowageInfo.GetNumTiers() * pStowageInfo.GetNumTiers()) + 1 );
 		rel(*this, sc == cx2 + cy2);
-		sqrt(*this, sc, GCD[countStaks] );
+		FloatVar GCDTemp(*this, 0, pStowageInfo.GetNumTiers());
+		sqrt(*this, sc, GCDTemp);
+		
+		BoolVar distCeroGC(*this, 0, 1);
+		rel(*this, GCY[countStaks], FRT_LQ, GCSY, eqv(distCeroGC));
+		rel(*this, GCD[countStaks], FRT_EQ, 0, imp(distCeroGC));
+		BoolVar NegDistCeroGC(*this, 0, 1);
+		rel(*this, distCeroGC, IRT_EQ, BoolVar(*this, 0, 0), eqv(NegDistCeroGC));
+		rel(*this, GCD[countStaks], FRT_EQ, GCDTemp, imp(NegDistCeroGC));
 		
 		// ---------------------------------------------------------------------------------------------		
 		extensional(*this, LTempLength, d);  // regular constraint
 		linear(*this, HTempHeight, IRT_LQ, HS[ (it->first) - 1 ]); // Height limit constraint
-		rel(*this, WTempWeight, IRT_GQ); // weight ordered constraint
-		
+		rel(*this, WTempWeight, IRT_GQ); // weight ordered constraint		
 		// ---------------------------------------------------------------------------------------------
 		
 		// Goal OP
@@ -506,10 +517,23 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		linear(*this, isContNRSlotR, IRT_NQ, 0, eqv(StowedSlotR[x]));		
 	}
 		
+	// objetive reffer
 	linear(*this, StowedSlotR, IRT_EQ, OR);
 	
+	// Total Distance   
+	linear(*this, GCD, FRT_EQ, GCTD);
+	
+	int countOper = ceil(pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() / 0.05);
+	BoolVarArray countGC(*this, countOper, 0, 1);
+	for(int x = 0; x < countOper ; x++)
+	{
+		rel(*this, GCTD, FRT_GQ, (x * 0.05), eqv(countGC[x]));
+	}
+	
+	linear(*this, countGC, IRT_EQ, OGCTD);
+	
 	// Cost function
-	rel(*this, O == 1000 * OCNS + 100 * OV + 20 * OPT + 10 * OU + 5 * OR);
+	rel(*this, O == 1000 * OCNS + 100 * OV + 20 * OPT + 10 * OU + 5 * OR + 5 * OGCTD);
 	
 		
 	// post branching
@@ -531,6 +555,7 @@ StowageCP::StowageCP(bool share, StowageCP& s): IntMinimizeSpace(share, s)
 	GCX.update(*this, share, s.GCX);
 	GCY.update(*this, share, s.GCY);
 	GCD.update(*this, share, s.GCD);
+	GCTD.update(*this, share, s.GCTD);
 	OV.update(*this, share, s.OV);
 	OVT.update(*this, share, s.OVT);
 	NVC.update(*this, share, s.NVC);
@@ -538,14 +563,18 @@ StowageCP::StowageCP(bool share, StowageCP& s): IntMinimizeSpace(share, s)
 	OU.update(*this, share, s.OU);
 	OP.update(*this, share, s.OP);
 	OR.update(*this, share, s.OR);
-	O.update(*this, share, s.O);	
+	OGCTD.update(*this, share, s.OGCTD);
+	O.update(*this, share, s.O);
+	
 }
   
+// Copy solution  
 Space* StowageCP::copy(bool share) 
 {
 	return new StowageCP(share,*this);
 }
-  // print solution
+  
+// print solution
 void StowageCP::print(void) const 
 {
 	cout << "Salida" << endl;
@@ -568,6 +597,8 @@ void StowageCP::print(void) const
 	cout <<"OU "<< OU << endl << endl;
 	cout <<"OP "<< OP << endl << endl;	
 	cout <<"OR "<< OR << endl << endl;	
+	cout <<"GCTD "<< GCTD << endl << endl;
+	cout <<"OGCTD "<< OGCTD << endl << endl;
 	cout <<"O "<< O << endl << endl;
 }
 

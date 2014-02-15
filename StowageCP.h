@@ -8,6 +8,7 @@
 #ifndef StowageCP_h
 #define StowageCP_h
 
+#include <math.h> 
 #include <gecode/int.hh>
 #include <gecode/minimodel.hh>
 #include <gecode/search.hh>
@@ -67,6 +68,8 @@ class StowageCP: public IntMinimizeSpace
                 FloatVarArray	GCX;	// Gravity center in axis X
                 FloatVarArray	GCY;	// Gravity center in axis Y                
                 FloatVarArray	GCD;	// Gravity center distance
+                FloatVar		GCTD;	// Gravity Center total distance
+                IntVar			OGCTD;	// Gravity Center total distance
                 IntVar          OV;  	// Number of over-stowing containers.
 				IntVarArray     OVT; 	// Container j over-stowing temporal.
 				IntVar			OCNS; 	// Number of container not stowed.				
@@ -115,7 +118,10 @@ class StowageCP: public IntMinimizeSpace
 			*/
 			virtual IntVar cost(void) const;
 			
-			 
+			/**
+			*	Wait Gravity Center Distance 
+			*/ 
+			static void waitGCTD(Gecode::Space& _home);
 };
 
 #endif
