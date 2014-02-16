@@ -8,14 +8,11 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
               W  (*this, pStowageInfo.Slots.size(), 0, pStowageInfo._nuMaxWeight),
               WD (*this, pStowageInfo.Slots.size(), 0, pStowageInfo._nuMaxWeight),
               P  (*this, pStowageInfo.Slots.size(), 0, pStowageInfo._nuMaxPOD),
-              HS (*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo._nuMaxStackHeight * 10000),            
+              HS (*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo._nuMaxStackHeight * 10000),
               NVC (*this, pStowageInfo.Slots.size(), 0, 1),
               CFEU_A(*this,(pStowageInfo.Slots.size()/2), 0, 1),
               CFEU_F(*this,(pStowageInfo.Slots.size()/2), 0, 1),
-              GCX(*this, pStowageInfo.GetNumStacks(), 0, 1),
-              GCY(*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo.GetNumTiers()),
               GCD(*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo.GetNumTiers()),
-              GCTD(*this, 0, pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks()),              
               OGCTD(*this, 0, pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks()),
               OV (*this, 0, pStowageInfo.Slots.size()),
 			  OVT(*this, pStowageInfo.Slots.size(), 0, 1),
@@ -110,6 +107,9 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	DFA d(r);
 	int countCont = 0;
 	int countStaks = 0;
+	FloatVarArray GCX(*this, pStowageInfo.GetNumStacks(), 0, 1);
+	FloatVarArray GCY(*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo.GetNumTiers());
+	FloatVar GCTD(*this, 0, pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks());
 	// regular constraint Stack-Aft
 	for (map<int, vector<int> >::iterator it=pStowageInfo.Slots_K_A.begin(); it != pStowageInfo.Slots_K_A.end(); ++it)
     {
@@ -552,10 +552,7 @@ StowageCP::StowageCP(bool share, StowageCP& s): IntMinimizeSpace(share, s)
 	HS.update(*this, share, s.HS);
 	CFEU_A.update(*this, share, s.CFEU_A);
 	CFEU_F.update(*this, share, s.CFEU_F);
-	GCX.update(*this, share, s.GCX);
-	GCY.update(*this, share, s.GCY);
 	GCD.update(*this, share, s.GCD);
-	GCTD.update(*this, share, s.GCTD);
 	OV.update(*this, share, s.OV);
 	OVT.update(*this, share, s.OVT);
 	NVC.update(*this, share, s.NVC);
@@ -565,7 +562,6 @@ StowageCP::StowageCP(bool share, StowageCP& s): IntMinimizeSpace(share, s)
 	OR.update(*this, share, s.OR);
 	OGCTD.update(*this, share, s.OGCTD);
 	O.update(*this, share, s.O);
-	
 }
   
 // Copy solution  
@@ -587,8 +583,6 @@ void StowageCP::print(void) const
 	cout <<"HS"<< HS << endl << endl;	
 	cout <<"CFEU_A"<< CFEU_A << endl << endl;
 	cout <<"CFEU_F"<< CFEU_F << endl << endl;
-	cout <<"GCX"<< GCX << endl << endl;
-	cout <<"GCY"<< GCY << endl << endl;
 	cout <<"GCD"<< GCD << endl << endl;
 	cout <<"OVT"<< OVT << endl << endl;
 	cout <<"OV "<< OV << endl << endl;
@@ -596,8 +590,7 @@ void StowageCP::print(void) const
 	cout <<"OCNS "<< OCNS << endl << endl;
 	cout <<"OU "<< OU << endl << endl;
 	cout <<"OP "<< OP << endl << endl;	
-	cout <<"OR "<< OR << endl << endl;	
-	cout <<"GCTD "<< GCTD << endl << endl;
+	cout <<"OR "<< OR << endl << endl;
 	cout <<"OGCTD "<< OGCTD << endl << endl;
 	cout <<"O "<< O << endl << endl;
 }

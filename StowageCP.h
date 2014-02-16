@@ -64,11 +64,8 @@ class StowageCP: public IntMinimizeSpace
                 IntVarArray     HS;  	// Current height of stack k.
                 BoolVarArray    NVC;  	// No Virtual containers
                 BoolVarArray    CFEU_A;	// Is container 40' Aft?
-                BoolVarArray    CFEU_F;	// Is container 40' Fore?   
-                FloatVarArray	GCX;	// Gravity center in axis X
-                FloatVarArray	GCY;	// Gravity center in axis Y                
+                BoolVarArray    CFEU_F;	// Is container 40' Fore?               
                 FloatVarArray	GCD;	// Gravity center distance
-                FloatVar		GCTD;	// Gravity Center total distance
                 IntVar			OGCTD;	// Gravity Center total distance
                 IntVar          OV;  	// Number of over-stowing containers.
 				IntVarArray     OVT; 	// Container j over-stowing temporal.
