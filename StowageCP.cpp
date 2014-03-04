@@ -26,10 +26,9 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 							(10 * pStowageInfo.GetNumStacks()) +
 							(5 * pStowageInfo.Slots_R.size()) )
 {
-
 	// Charge Information in global variables
 	ChargeInformation(pStowageInfo);
-	
+
 	//----------------------------------------- Element Constraints -------------------------------
 	// elements Length
 	for(int x = 0; x < pStowageInfo.Slots.size() ; x++)
@@ -54,7 +53,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	// elements POD
 	for(int x = 0; x < pStowageInfo.Slots.size() ; x++)
 		element(*this, POD, S[x], P[x]);	
-		
+
 	//----------------------------------------- Loaded Container Constraints -------------------------
 	// Loaded Container
 	map<int, int> slotByStackFore;
@@ -100,14 +99,12 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		}		
 	}
 	
-	
 	//-------------------------- Regular Constraints and Height Constraints ----------------------------------
 	// regular constraint
 	REG r = *REG(20) + *REG(40) + *REG(0);
 	DFA d(r);
 	int countCont = 0;
 	int countStaks = 0;
-	FloatVarArray GCX(*this, pStowageInfo.GetNumStacks(), 0, 1);
 	FloatVarArray GCY(*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo.GetNumTiers());
 	FloatVar GCTD(*this, 0, pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks());
 	// regular constraint Stack-Aft
@@ -126,12 +123,12 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		// Variables POD
 		IntVarArgs PTempPODAft;
 		IntVarArgs PTempPODFore;
-		IntVarArgs PTempPODAftFore;
+		IntVarArgs PTempPODAftFore;	
 		
 		for(int x = 0; x < size; x++)
 		{
 			int slot = (it->second)[x];
-			double posX = 0;
+			//double posX = 0;
 			
 			// Get slots in cell
 			IntVarArray slotsCellWeight(*this, 2);			
@@ -223,27 +220,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			rel(*this, OVT[(countCont*2) + 1], IRT_EQ, 1, imp( OverStow20F  ));
 			rel(*this, OVT[(countCont*2) + 1], IRT_EQ, 0, imp( NotOverStow20F ));
 			
-			// ---------------------------------------------------------------------------------------
-			
-			// Gravitatory center In X		
-			FloatVar GCX40A(*this, 0, pStowageInfo._nuMaxWeight/2);
-			rel(*this, GCX40A == WD[slot] * (posX/2));
-			rel(*this, GraviCentersX[(posY*2)], FRT_EQ, GCX40A, imp(CFEU_A[countCont]));
-			
-			FloatVar GCX20A(*this, 0, pStowageInfo._nuMaxWeight);
-			rel(*this, GCX20A == WD[slot] * posX);
-			rel(*this, GraviCentersX[(posY*2)], FRT_EQ, GCX20A, imp(NegCFEU_A));
-			
-			posX++;		
-			
-			FloatVar GCX40F(*this, 0, pStowageInfo._nuMaxWeight/2);
-			rel(*this, GCX40F == WD[slot] * (posX/2));			
-			rel(*this, GraviCentersX[(posY*2) + 1], FRT_EQ, GCX40F, imp(CFEU_A[countCont]));
-			
-			FloatVar GCX20F(*this, 0, pStowageInfo._nuMaxWeight);
-			rel(*this, GCX20F == WD[slot + 1] * posX);			
-			rel(*this, GraviCentersX[(posY*2) + 1], FRT_EQ, GCX20F, imp(NegCFEU_A));	
-				
+			// ---------------------------------------------------------------------------------------				
 			// Gravitatory center In Y
 			FloatVar GCY40AF(*this, 0, (pStowageInfo._nuMaxWeight/2) * posY);
 			rel(*this, GCY40AF == WD[slot] * (posY/2));			
@@ -270,57 +247,39 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			IntVar varTmpHeight( H[slot] );
 			HTempHeight[x] = varTmpHeight;
 		}
+			
+		double heigthStack =  pStowageInfo.GetListStacks().at(countStaks).GetMaxHeigth()*10000;
+		rel(*this, HS[countStaks], IRT_LQ, heigthStack); // Heigth limit	
 		
 		// ---------------------------------------------------------------------------------------------
 		// calculate the all weigth by stack
 		FloatVar WeightTotal(*this, 0, pStowageInfo._nuMaxWeight * size * 2);
-		linear(*this, WeightTotalArgs, FRT_EQ, WeightTotal);
-					
-		// Calculate gravity center in X
-		FloatVar sumGraviCentersX(*this, -1, pStowageInfo._nuMaxWeight * size * 2);
-		linear(*this, GraviCentersX, FRT_EQ, sumGraviCentersX);
-		div(*this, sumGraviCentersX, WeightTotal, GCX[countStaks]);
+		linear(*this, WeightTotalArgs, FRT_EQ, WeightTotal);		
 		
 		// Calculate gravity center in Y
 		FloatVar sumGraviCentersY(*this, 0, pStowageInfo._nuMaxWeight * size * size * 2);
 		linear(*this, GraviCentersY, FRT_EQ, sumGraviCentersY);
 		div(*this, sumGraviCentersY, WeightTotal, GCY[countStaks]);				
-		
-		double heigthStack =  pStowageInfo.GetListStacks().at(countStaks).GetMaxHeigth()*10000;
-		rel(*this, HS[countStaks], IRT_LQ, heigthStack); // Heigth limit	
 				
-		// calculate gravitu center distance		
+		// calculate gravity center distance		
 		double unitStack = heigthStack / pStowageInfo.GetNumTiers();
 		double quarterStack = heigthStack / 4;
-		double GCSX = 0.5;
 		double GCSY = quarterStack / unitStack;
 		
-		//cout<<"unitStack: "<<unitStack<<" quarterStack: "<<quarterStack<<" GCSY: "<<GCSY<<endl;
-		
-		FloatVar cx(*this, -1, 1);
-		rel(*this, cx == GCX[countStaks] - GCSX);
-		FloatVar cx2(*this, 0, 1);
-		sqr(*this, cx, cx2);
-		
 		FloatVar cy(*this, -1 * pStowageInfo.GetNumTiers(), pStowageInfo.GetNumTiers());
-		rel(*this, cy == GCY[countStaks] - GCSY);
-		FloatVar cy2(*this, 0, pStowageInfo.GetNumTiers() * pStowageInfo.GetNumTiers());
-		sqr(*this, cy, cy2);
-		
-		FloatVar sc(*this, 0, (pStowageInfo.GetNumTiers() * pStowageInfo.GetNumTiers()) + 1 );
-		rel(*this, sc == cx2 + cy2);
-		FloatVar GCDTemp(*this, 0, pStowageInfo.GetNumTiers());
-		sqrt(*this, sc, GCDTemp);
+		rel(*this, cy == GCY[countStaks] - GCSY);		
 		
 		BoolVar distCeroGC(*this, 0, 1);
 		rel(*this, GCY[countStaks], FRT_LQ, GCSY, eqv(distCeroGC));
 		rel(*this, GCD[countStaks], FRT_EQ, 0, imp(distCeroGC));
 		BoolVar NegDistCeroGC(*this, 0, 1);
 		rel(*this, distCeroGC, IRT_EQ, BoolVar(*this, 0, 0), eqv(NegDistCeroGC));
-		rel(*this, GCD[countStaks], FRT_EQ, GCDTemp, imp(NegDistCeroGC));
+		rel(*this, GCD[countStaks], FRT_EQ, cy, imp(NegDistCeroGC));
+		//rel(*this, GCD[countStaks], FRT_EQ, GCDTemp, imp(NegDistCeroGC));
 		
-		// ---------------------------------------------------------------------------------------------		
-		extensional(*this, LTempLength, d);  // regular constraint
+		// ---------------------------------------------------------------------------------------------
+			
+		extensional(*this, LTempLength, d);  // regular constraint		
 		linear(*this, HTempHeight, IRT_LQ, HS[ (it->first) - 1 ]); // Height limit constraint
 		rel(*this, WTempWeight, IRT_GQ); // weight ordered constraint		
 		// ---------------------------------------------------------------------------------------------
@@ -373,8 +332,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		extensional(*this, LTempLength, d);  // regular constraint
 		linear(*this, HTempHeight, IRT_LQ, HS[ (it->first) - 1 ] ); // Height limit constraint
     }
-	
-	
+		
 	//----------------------------------------- Slots no-reffer Constraints ----------------------------------
 	// Slot ¬R	
     for(int x = 0; x < pStowageInfo.Slots_NR.size() ; x++)
@@ -443,37 +401,6 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
     }
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////
-	// constraints improve the propagation power
-	//////////////////////////////////////////////////////////////////////////////////////////////////
-
-	//----------------------------------------- constraint exactly ----------------------------------
-
-	/*
-	// Constraint for POD
-    for (map<int, int>::iterator it=pStowageInfo.Cont_EP.begin(); it != pStowageInfo.Cont_EP.end(); ++it)
-    {
-		//cout<<"puerto: "<<it->first<<" cant:"<<it->second<<endl;
-		//if( it->first != 0 ) exactly(*this, P, it->first, it->second);		
-	}
-
-	// Constraint for Weights
-    for (map<double, int>::iterator it=pStowageInfo.Cont_EW.begin(); it != pStowageInfo.Cont_EW.end(); ++it)
-    {
-		int wTmp = it->first;
-		//cout<<"wTmp: "<<wTmp<<" cant: "<<it->second<<endl;
-		//if( it->first != 0 ) exactly(*this, W, wTmp, it->second);
-	}
-
-	// Constraint for Heights
-    for (map<double, int>::iterator it=pStowageInfo.Cont_EH.begin(); it != pStowageInfo.Cont_EH.end(); ++it)
-    {
-		int hTmp = it->first * 10000 ;
-		//cout<<"wTmp: "<<hTmp<<" cant: "<<it->second<<endl;
-		//if( it->first != 0 ) exactly(*this, H, hTmp, it->second);
-	}
-	*/
-	
-	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// Objective 
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -538,6 +465,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		
 	// post branching
     branch(*this, S, INT_VAR_SIZE_MIN(), INT_VAL_MIN());
+    
 }
 
 // search support
@@ -571,9 +499,9 @@ Space* StowageCP::copy(bool share)
 }
   
 // print solution
-void StowageCP::print(void) const 
+void StowageCP::print(int &pO, int &pOGCTD, int &pOR, int &pOP, int &pOU, int &pOCNS) const 
 {
-	cout << "Salida" << endl;
+	/*cout << "Salida" << endl;
     cout <<"S"<< S << endl << endl;
 	cout <<"L"<< L << endl << endl;
 	cout <<"H"<< H << endl << endl;
@@ -591,8 +519,17 @@ void StowageCP::print(void) const
 	cout <<"OU "<< OU << endl << endl;
 	cout <<"OP "<< OP << endl << endl;	
 	cout <<"OR "<< OR << endl << endl;
-	cout <<"OGCTD "<< OGCTD << endl << endl;
+	cout <<"OGCTD "<< OGCTD << endl << endl;*/
 	cout <<"O "<< O << endl << endl;
+	pO = O.val();
+	pOGCTD = OGCTD.val();
+	pOR = OR.val();
+	for(int x = 0; x < OP.size() ; x++)
+		pOP += OP[x].val();
+		
+	pOU = OU.val();
+	pOCNS = OCNS.val();
+	
 }
 
 // cost funtion
@@ -698,4 +635,10 @@ void StowageCP::ChargeInformation(StowageInfo pStowageInfo)
 			Height[x] = pStowageInfo.Height[x] * 10000;
 		}
 	}
+}
+
+
+StowageCP::~StowageCP()
+{
+	
 }

@@ -84,6 +84,11 @@ class StowageCP: public IntMinimizeSpace
              * 1 - Define range of the variables
              */             
             StowageCP(StowageInfo pStowageInfo);
+            
+            /**
+             * Destructor
+             */             
+            ~StowageCP();
 			
 			/**
 			* Charge Information in global variables
@@ -108,17 +113,12 @@ class StowageCP: public IntMinimizeSpace
 			/**
 			*	Printing solutions
 			*/
-			void print(void) const;
+			void print(int &pO, int &pOGCTD, int &pOR, int &pOP, int &pOU, int &pOCNS) const;
 			
 			/**
 			*	Cost function
 			*/
-			virtual IntVar cost(void) const;
-			
-			/**
-			*	Wait Gravity Center Distance 
-			*/ 
-			static void waitGCTD(Gecode::Space& _home);
+			virtual IntVar cost(void) const;					
 };
 
 #endif
