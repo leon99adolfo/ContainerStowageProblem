@@ -42,6 +42,12 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	for(int x = 0; x < pStowageInfo.Slots.size() ; x++)
 	{
 		element(*this, Weight, S[x], W[x]);
+		/*for(int y = 0; y < Weight.size() ; y++)
+		{
+			BoolVar IdxWD(*this, 0, 1);
+			rel(*this, W[x], IRT_EQ, Weight[y], eqv(IdxWD));
+			rel(*this, WD[x], FRT_EQ, Weight[y], imp(IdxWD));
+		}*/
 		for(int y = 0; y < pStowageInfo.Slots.size() ; y++)
 		{	
 			BoolVar IdxWD(*this, 0, 1);
@@ -266,16 +272,9 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		double quarterStack = heigthStack / 4;
 		double GCSY = quarterStack / unitStack;
 		
-		FloatVar cy(*this, -1 * pStowageInfo.GetNumTiers(), pStowageInfo.GetNumTiers());
-		rel(*this, cy == GCY[countStaks] - GCSY);		
-		
-		BoolVar distCeroGC(*this, 0, 1);
-		rel(*this, GCY[countStaks], FRT_LQ, GCSY, eqv(distCeroGC));
-		rel(*this, GCD[countStaks], FRT_EQ, 0, imp(distCeroGC));
-		BoolVar NegDistCeroGC(*this, 0, 1);
-		rel(*this, distCeroGC, IRT_EQ, BoolVar(*this, 0, 0), eqv(NegDistCeroGC));
-		rel(*this, GCD[countStaks], FRT_EQ, cy, imp(NegDistCeroGC));
-		//rel(*this, GCD[countStaks], FRT_EQ, GCDTemp, imp(NegDistCeroGC));
+		FloatVar PenY(*this, -1 * pStowageInfo.GetNumTiers(), pStowageInfo.GetNumTiers());
+		rel(*this, PenY == GCY[countStaks] - GCSY);			
+		max(*this, PenY, FloatVar(*this, 0, 0), GCD[countStaks]);	
 		
 		// ---------------------------------------------------------------------------------------------
 			
@@ -373,7 +372,8 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		IntSet SetCont40( Cont_40 );
 		for(int x = 0; x < pStowageInfo.Slots_40.size() ; x++)
 		{
-			dom(*this, S[ pStowageInfo.Slots_40[x] ], SetCont40);
+			//cout<<"pStowageInfo.Slots_40[x]: "<<pStowageInfo.Slots_40[x]<<" ";
+			dom(*this, S[ pStowageInfo.Slots_40[x] ], SetCont40);			
 		}
 	}
 	
@@ -464,8 +464,12 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	
 		
 	// post branching
-    branch(*this, S, INT_VAR_SIZE_MIN(), INT_VAL_MIN());
-    
+	//branch(*this, S, INT_VAR_SIZE_MIN(), INT_VAL_MIN());
+    branch(*this, S, INT_VAR_SIZE_MIN(), INT_VAL_MED());
+    /*branch(*this, L, INT_VAR_SIZE_MIN(), INT_VAL_MAX());
+    branch(*this, H, INT_VAR_SIZE_MIN(), INT_VAL_MAX());
+    branch(*this, W, INT_VAR_SIZE_MIN(), INT_VAL_MAX());
+    branch(*this, P, INT_VAR_SIZE_MIN(), INT_VAL_MAX());*/
 }
 
 // search support
@@ -499,7 +503,7 @@ Space* StowageCP::copy(bool share)
 }
   
 // print solution
-void StowageCP::print(int &pO, int &pOGCTD, int &pOR, int &pOP, int &pOU, int &pOCNS) const 
+void StowageCP::print(int &pO, int &pOGCTD, int &pOR, string &pOP, int &pOPT, int &pOU, int &pOCNS, int &pOV, string &pS) const 
 {
 	/*cout << "Salida" << endl;
     cout <<"S"<< S << endl << endl;
@@ -519,16 +523,22 @@ void StowageCP::print(int &pO, int &pOGCTD, int &pOR, int &pOP, int &pOU, int &p
 	cout <<"OU "<< OU << endl << endl;
 	cout <<"OP "<< OP << endl << endl;	
 	cout <<"OR "<< OR << endl << endl;
-	cout <<"OGCTD "<< OGCTD << endl << endl;*/
-	cout <<"O "<< O << endl << endl;
+	cout <<"OGCTD "<< OGCTD << endl << endl;
+	cout <<"O "<< O << endl << endl;*/
 	pO = O.val();
 	pOGCTD = OGCTD.val();
 	pOR = OR.val();
 	for(int x = 0; x < OP.size() ; x++)
-		pOP += OP[x].val();
-		
+	{
+		pOP += "," + OP[x].val();
+		pOPT += OP[x].val();
+	}	
 	pOU = OU.val();
 	pOCNS = OCNS.val();
+	pOV = OV.val();
+	
+	//for(int x = 0; x < S.size() ; x++)
+		//pS += "," + S[x].val();
 	
 }
 

@@ -113,7 +113,7 @@ class StowageCP: public IntMinimizeSpace
 			/**
 			*	Printing solutions
 			*/
-			void print(int &pO, int &pOGCTD, int &pOR, int &pOP, int &pOU, int &pOCNS) const;
+			void print(int &pO, int &pOGCTD, int &pOR, string &pOP, int &pOPT, int &pOU, int &pOCNS, int &pOV, string &pS) const;
 			
 			/**
 			*	Cost function
