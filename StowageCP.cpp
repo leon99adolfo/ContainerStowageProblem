@@ -399,7 +399,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		linear(*this, WTempWeight, IRT_GR, 0, eqv(OUT[idxOUT]));
 		idxOUT++;
     }
-
+    
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// Objective 
 	//////////////////////////////////////////////////////////////////////////////////////////////////
@@ -462,8 +462,29 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	// Cost function
 	rel(*this, O == 1000 * OCNS + 100 * OV + 20 * OPT + 10 * OU + 5 * OR + 5 * OGCTD);
 	
+	
+	//////////////////////////////////////////////////////////////////////////////////////////////////
+	// Propagator
+	//////////////////////////////////////////////////////////////////////////////////////////////////
+	IntVar VC(*this, 0, pStowageInfo.Slots.size());
+	rel(*this, VC == pStowageInfo.Slots.size() - CS);
+	exactly(*this, L, VC, 0);
+	exactly(*this, H, VC, 0);
+	exactly(*this, P, VC, 0);
+	
+	IntVar VC40(*this, 0, pStowageInfo.Slots.size());
+	rel(*this, VC40 == VC + C40F );
+	exactly(*this, W, VC40, 0);
+	
+	/*for(int x = 0; x < pStowageInfo.POD.size(); x++)
+		exactly(*this, P, pStowageInfo.POD,  )*/
+	
+	
 		
+	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// post branching
+	//////////////////////////////////////////////////////////////////////////////////////////////////
+
 	//branch(*this, S, INT_VAR_SIZE_MIN(), INT_VAL_MIN());
     branch(*this, S, INT_VAR_SIZE_MIN(), INT_VAL_MED());
     /*branch(*this, L, INT_VAR_SIZE_MIN(), INT_VAL_MAX());
@@ -505,12 +526,12 @@ Space* StowageCP::copy(bool share)
 // print solution
 void StowageCP::print(int &pO, int &pOGCTD, int &pOR, string &pOP, int &pOPT, int &pOU, int &pOCNS, int &pOV, string &pS) const 
 {
-	/*cout << "Salida" << endl;
+	//cout << "Salida" << endl;
     cout <<"S"<< S << endl << endl;
-	cout <<"L"<< L << endl << endl;
-	cout <<"H"<< H << endl << endl;
+	/*cout <<"L"<< L << endl << endl;
+	//cout <<"H"<< H << endl << endl;
 	cout <<"W"<< W << endl << endl;
-	cout <<"WD"<< WD << endl << endl;
+	/*cout <<"WD"<< WD << endl << endl;
 	cout <<"P"<< P << endl << endl;
 	cout <<"HS"<< HS << endl << endl;	
 	cout <<"CFEU_A"<< CFEU_A << endl << endl;
@@ -528,18 +549,41 @@ void StowageCP::print(int &pO, int &pOGCTD, int &pOR, string &pOP, int &pOPT, in
 	pO = O.val();
 	pOGCTD = OGCTD.val();
 	pOR = OR.val();
+	
+	stringstream ss;
 	for(int x = 0; x < OP.size() ; x++)
 	{
-		pOP += "," + OP[x].val();
-		pOPT += OP[x].val();
+		int value = OP[x].val();
+		pOPT += value;		
+		if(x == 0) 
+		{
+			ss << value;
+		}
+		else
+		{
+			ss << "," << value;
+		}
 	}	
+	pOP += ss.str();
+	
 	pOU = OU.val();
 	pOCNS = OCNS.val();
 	pOV = OV.val();
-	
-	//for(int x = 0; x < S.size() ; x++)
-		//pS += "," + S[x].val();
-	
+
+	stringstream ss2;
+	for(int x = 0; x < S.size() ; x++)
+	{
+		int value = S[x].val();
+		if(x == 0) 
+		{
+			ss2 << value;
+		}
+		else
+		{
+			ss2 << "," << value;
+		}
+	}
+	pS = ss2.str();
 }
 
 // cost funtion

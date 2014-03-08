@@ -33,7 +33,7 @@ void* Enviroment(string pDirFile, string pFile, ofstream &pFileOut, ofstream &pF
     
 	// create model and search engine
 	Search::Options so;
-	Search::TimeStop ts(600000); // stop after 600000 ms
+	Search::TimeStop ts(6000); // stop after 600000 ms
 	so.stop = &ts;
 	StowageCP* m = new StowageCP( objStowageInfo );
 	BAB<StowageCP> e(m, so);
