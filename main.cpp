@@ -1,4 +1,5 @@
 #include "BLReadFiles.h"
+#include "StowChannelCP.h"
 #include "StowageCP.h"
 #include <gecode/gist.hh>
 #include <cstdlib>
@@ -15,48 +16,83 @@ using namespace std;
 using namespace Gecode;
 
 
-void* Enviroment(string pDirFile, string pFile, ofstream &pFileOut, ofstream &pFileOutSOL)
-{
-	pFileOutSOL<<pFile<<endl;
-	
+void* Enviroment(string pDirFile, string pFile, bool pChannelUse, bool pnuTotalFile, ofstream &pTotalFile)
+{	
+	// Variables
 	BLReadFiles objBLReadFiles;
-	// time
 	clock_t init, final, final2;
 	init=clock();
 	final = 0;
-    
-    StowageInfo objStowageInfo = 
-                objBLReadFiles.ChargeFile(pDirFile + pFile);
-                
-    
+	string OP, SL;
+	int O, OGCTD, OR, OPT, OU, OCNS, OV;
+	
+	// charge file
+    StowageInfo objStowageInfo = objBLReadFiles.ChargeFile(pDirFile + pFile, pChannelUse);
     objStowageInfo.ChargeData();
+
+	ofstream fileOut( (pDirFile+"Response/"+pFile).c_str() );
+	if(!fileOut)
+	{
+		cout<<"Error, The file can't open "<<pDirFile+"Response/"+pFile<<endl;
+		return 0;
+	}
     
 	// create model and search engine
 	Search::Options so;
-	Search::TimeStop ts(6000); // stop after 600000 ms
+	Search::TimeStop ts(300000); // stop after 600000 ms
 	so.stop = &ts;
-	StowageCP* m = new StowageCP( objStowageInfo );
-	BAB<StowageCP> e(m, so);
-	delete m;
+	if(pChannelUse)
+	{
+		StowChannelCP* m = new StowChannelCP( objStowageInfo );
+		BAB<StowChannelCP> e(m, so);
+		delete m;
 	
-	string OP, SL;
-	int O, OGCTD, OR, OPT, OU, OCNS, OV;
-	// search and print all solutions
-	while (StowageCP* s = e.next()) {
-		s->print(O, OGCTD, OR, OP, OPT, OU, OCNS, OV, SL); 
-		delete s;
+		// search and print all solutions
+		while (StowChannelCP* s = e.next()) {
+			s->print(O, OGCTD, OR, OP, OPT, OU, OCNS, OV, SL, objStowageInfo.Cont.size()); 
+			delete s;
 		
-		final2 = final;
-		final=clock()-init;		 
-		cout << "Tiempo: "<<(double)final / ((double)CLOCKS_PER_SEC)<< endl;
+			final2 = final;
+			final=clock()-init;		 
+			cout << "Tiempo: "<<(double)final / ((double)CLOCKS_PER_SEC)<< endl;
+		}
 	}
-    
-    pFileOut<<O<<"\t"<<OGCTD<<"\t"<<OR<<"\t"<<OPT<<"\t"
+	else
+	{
+		StowageCP* m = new StowageCP( objStowageInfo );	
+		BAB<StowageCP> e(m, so);
+		delete m;
+	
+		// search and print all solutions
+		while (StowageCP* s = e.next()) {
+			s->print(O, OGCTD, OR, OP, OPT, OU, OCNS, OV, SL); 
+			delete s;
+		
+			final2 = final;
+			final=clock()-init;		 
+			cout << "Tiempo: "<<(double)final / ((double)CLOCKS_PER_SEC)<< endl;
+		}
+	}
+		
+	string sbTitulos = "O\tOGCTD\tOR\tOPT\tOU\tOCNS\tOV\tTimeS\tTimeT\tFile\tOP";
+	fileOut<<sbTitulos<<endl;
+		
+    final=clock()-init; 
+    fileOut<<O<<"\t"<<OGCTD<<"\t"<<OR<<"\t"<<OPT<<"\t"
 			<<OU<<"\t"<<OCNS<<"\t"<<OV<<"\t"<<(double)final2 / ((double)CLOCKS_PER_SEC)
-			<<"\t"<<pFile<<"\t"<<OP<< endl;
-			
-	pFileOutSOL<<SL<<endl;
-    
+			<<"\t"<<(double)final / ((double)CLOCKS_PER_SEC)<<"\t"<<pFile<<"\t"<<OP<<endl<<endl;
+					
+	fileOut<<"S:"<<endl<<SL<<endl;
+	
+	fileOut.close();
+	
+	if(pnuTotalFile)
+	{
+		//pTotalFile<<sbTitulos<<endl;
+		pTotalFile<<O<<"\t"<<OGCTD<<"\t"<<OR<<"\t"<<OPT<<"\t"
+				  <<OU<<"\t"<<OCNS<<"\t"<<OV<<"\t"<<(double)final2 / ((double)CLOCKS_PER_SEC)
+				  <<"\t"<<(double)final / ((double)CLOCKS_PER_SEC)<<"\t"<<pFile<<"\t"<<OP<<endl; 
+	}
 }
 
 
@@ -64,27 +100,21 @@ void* Enviroment(string pDirFile, string pFile, ofstream &pFileOut, ofstream &pF
 int main(int argc, char *argv[])
 {
 	//int file_count = 0;
-	string full_path = "/home/adolfo/Universidad/maestria/tesis/inst2/";
-    
-    ofstream write_fich((full_path+"response.txt").c_str());
-    ofstream write_fichSOL((full_path+"responseSOL.txt").c_str());
-    
-    if(!write_fich)
-    {
-		cout<<"Error, The file can't open"<<endl;
-		return 0;
-	}
-	
-	if(!write_fichSOL)
-    {
-		cout<<"Error, The file can't open SOL"<<endl;
-		return 0;
-	}
-    
-    write_fich<<"O\tOGCTD\tOR\tOPT\tOU\tOCNS\tOV\tTime\tFile\tOP"<<endl;
+	string full_path = "/home/adolfo/Universidad/maestria/tesis/inst/";
+	bool boChannelUse = false;
+	bool boTotalFile = true;
     
     cout<<"Empieza a procesar"<<endl;
     
+    ofstream fileOutTotal( (full_path+"Response/responseTotal.txt").c_str() );		
+	if(!fileOutTotal)
+	{
+		cout<<"Error, The file can't open "<<full_path+"Response/responseTotal.txt"<<endl;
+		return 0;
+	}
+	
+	fileOutTotal<<"O\tOGCTD\tOR\tOPT\tOU\tOCNS\tOV\tTimeS\tTimeT\tFile\tOP"<<endl;
+	
     DIR *dp;
     struct dirent *dirp;
     struct stat filestat;
@@ -103,8 +133,6 @@ int main(int argc, char *argv[])
 		// If the file is a directory (or is in some way invalid) we'll skip it 
 		if (stat( filepath.c_str(), &filestat )) continue;
 		if (S_ISDIR( filestat.st_mode ))         continue;
-		if (dirp->d_name == "response.txt")	continue;
-		if (dirp->d_name == "responseSOL.txt")	continue;
 
 		// Endeavor to read a single number from the file and display it
 		fin.open( filepath.c_str() );
@@ -112,13 +140,14 @@ int main(int argc, char *argv[])
 		{
 			if(num = 1)
 			{
-				cout << filepath << ": " << num << endl;			
-				Enviroment(full_path, dirp->d_name, write_fich, write_fichSOL);
+				cout << filepath << ": " << num << endl;				
+				Enviroment(full_path, dirp->d_name, boChannelUse, boTotalFile, fileOutTotal);
 			}
 		}
 		fin.close();
     }
-
+    
+    fileOutTotal.close();    
 	closedir( dp );
     
 	

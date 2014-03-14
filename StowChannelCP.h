@@ -1,12 +1,12 @@
 /**
- * @file	StowageCP
+ * @file	StowChannelCP
  * @author  Adolfo Leon Canizales Murcia (leon99adolfo@gmail.com)
  * @version 1.0
  * @section DESCRIPTION
- * Model Stowage Problem.
+ * Model Stowage Problem with channeling.
  */
-#ifndef StowageCP_h
-#define StowageCP_h
+#ifndef StowChannelCP_h
+#define StowChannelCP_h
 
 #include <math.h> 
 #include <gecode/int.hh>
@@ -16,10 +16,10 @@
 
 using namespace Gecode;
 
-class StowageCP: public IntMinimizeSpace
+class StowChannelCP: public IntMinimizeSpace
 {
       private:
-				// Index Set and Constant of the CP model				
+				// Index Set and Constant of the CP model
 				IntArgs        		Cont_L;     // Loaded containers index set
 				IntArgs           	Cont_20;    // 20' containers index set
 				IntArgs           	Cont_40;    // 40' containers index set
@@ -31,6 +31,7 @@ class StowageCP: public IntMinimizeSpace
 				IntArgs				Height;     // Height of container i
                                    
       protected:
+				IntVarArray     C;   	// Slots index of container j.
                 IntVarArray     S;   	// Container index of slot j.
                 IntVarArray     L;   	// Length of container stowed in slot j.
                 IntVarArray   	H;   	// Height of container stowed in slot j.
@@ -49,18 +50,19 @@ class StowageCP: public IntMinimizeSpace
                 IntVar          OU;  // Number of used stacks. 
                 IntVarArray     OP;  // Number of different discharge ports in each stack.
                 IntVar          OR;  // Number of container non-reefers stowed in reefer cells.
-                IntVar          O;   // Solution Cost.  
+                IntVar          O;   // Solution Cost.
+  
       public:
             /**
              * Constructor:
              * 1 - Define range of the variables
              */             
-            StowageCP(StowageInfo pStowageInfo);
+            StowChannelCP(StowageInfo pStowageInfo);
             
             /**
              * Destructor
              */             
-            ~StowageCP();
+            ~StowChannelCP();
 			
 			/**
 			* Charge Information in global variables
@@ -75,7 +77,7 @@ class StowageCP: public IntMinimizeSpace
 			/** 
 			* Constructor overload
 			*/
-			StowageCP(bool share, StowageCP& s);
+			StowChannelCP(bool share, StowChannelCP& s);
   
 			/**
 			*	Space
@@ -85,7 +87,7 @@ class StowageCP: public IntMinimizeSpace
 			/**
 			*	Printing solutions
 			*/
-			void print(int &pO, int &pOGCTD, int &pOR, string &pOP, int &pOPT, int &pOU, int &pOCNS, int &pOV, string &pS) const;
+			void print(int &pO, int &pOGCTD, int &pOR, string &pOP, int &pOPT, int &pOU, int &pOCNS, int &pOV, string &pS, int nuContainer) const;
 			
 			/**
 			*	Cost function

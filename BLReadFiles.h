@@ -84,7 +84,7 @@ class BLReadFiles
     		 * This method charge data in file
     		 * @param pFileName: Name of the file
     		 */
-             StowageInfo ChargeFile(string pFileName);
+             StowageInfo ChargeFile(string pFileName, bool pChannelUse);
              /**
              *  Printing
              */

@@ -6,7 +6,7 @@ BLReadFiles::BLReadFiles(void)
     nuContainerIdx = 0;                             
 }
 
-StowageInfo BLReadFiles::ChargeFile(string pFileName)
+StowageInfo BLReadFiles::ChargeFile(string pFileName, bool pChannelUse)
 {    
     // Varibles of firts line
     int nuPortsDischarge, nuContainerLoad, nuContainerLoaded, 
@@ -99,11 +99,14 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName)
     archivoAr>>sbTagDummy;
     cout<<sbTagDummy<<endl;
  
-	response.Cont_20.push_back(nuContainerIdx);
-	response.Cont_40.push_back(nuContainerIdx);
+	if(!pChannelUse)
+	{
+		response.Cont_20.push_back(nuContainerIdx);
+		response.Cont_40.push_back(nuContainerIdx);
  
-	// Save virtuals container
-	map<int, ContainerBox> virtualCont = ReadContainer(1, false, true);
+		// Save virtuals container
+		map<int, ContainerBox> virtualCont = ReadContainer(1, false, true);
+	}
  
     // Save Container Load
     response.SetListContainerLoad(ReadContainer(nuContainerLoad, false, false));
@@ -114,14 +117,6 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName)
     
     // Save Container Loaded
     response.SetListContainerLoaded(ReadContainer(nuContainerLoaded, true, false));
-    
-    
-     
-    /*for(int x = nuContainerIdx; x < (nuCell * 2); x++)
-	{
-        response.Cont_V.push_back(x);        
-    }*/
-    
     
     // Read Tag #STACKS
     archivoAr>>sbTagDummy;
@@ -175,10 +170,6 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName)
 		// Insert Slots
 		response.Slots.push_back( idxFirstTemp );
 		response.Slots.push_back( idxSecondTemp );
-
-		// Insert Cont
-		/*response.Cont.push_back( idxFirstTemp );
-		response.Cont.push_back( idxSecondTemp );*/
 		
 		// Insert Slots A
 		response.Slots_A.push_back( idxFirstTemp );
