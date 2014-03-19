@@ -74,7 +74,9 @@ class StowageInfo
             map<int, int>      	Length;      	// Leight of container i
             map<int, double>    Height;      	// Height of container i
             map<int, int>       Cont_EP;        // Number of container with discharge port P.
-			map<int, int>       ContLoadedSlot; // Containers loaded by slot.
+            map<int, int>		ContLoadedSlot;
+			map<int, map<int, int> >	ContLoadedByStackCell; // Containers loaded by stack and cell.
+			map<int, int>		ContLoadedMaxCell; // Maximum cell by stack
             map<double, int>    Cont_EW;        // Number of container with equal weight 
             map<double, int>    Cont_EH;        // Number of container with equal height
             int                 ContNormal;     // Number of normal containers
@@ -229,6 +231,10 @@ class StowageInfo
     		 * Charge Data
     		 */
     		void ChargeData();
+    		/**
+    		 * Validate Data
+    		 */
+    		bool ValidateData();
                           
 };
 

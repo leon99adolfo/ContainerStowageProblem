@@ -302,6 +302,22 @@ map<int, ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoad
 		response.Cont.push_back( nuContainerIdx );			
         listContainer[ nuContainerIdx ] = objContainer;
               
+        if(pAreLoaded)
+        { 
+			response.ContLoadedByStackCell[nuStackIdCont][nuCellIdCont] = nuContainerIdx;
+			if ( response.ContLoadedMaxCell.find(nuStackIdCont) == response.ContLoadedMaxCell.end())
+			{
+				response.ContLoadedMaxCell[nuStackIdCont] = nuCellIdCont;
+			}
+			else
+			{
+				if(response.ContLoadedMaxCell[nuStackIdCont] < nuCellIdCont)
+				{ 
+					response.ContLoadedMaxCell[nuStackIdCont] = nuCellIdCont;
+				}
+			}			
+		}
+              
         if( objContainer.GetLength() == objConstants.container40 ) 
         {
 			listContainer[ nuContainerIdx + 1 ] = objContainer;
@@ -363,7 +379,7 @@ map<int, ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoad
         map<double, int>::iterator ContainerByHeigth = response.Cont_EH.find(dbHeigthCont);
         if( ContainerByHeigth != response.Cont_EH.end() )
 		{
-			if( nuLengthCont == 40)	
+			if( nuLengthCont == 40)
 			{
 				response.Cont_EH[dbHeigthCont] += 2;
 			}

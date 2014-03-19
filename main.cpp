@@ -29,70 +29,77 @@ void* Enviroment(string pDirFile, string pFile, bool pChannelUse, bool pnuTotalF
 	// charge file
     StowageInfo objStowageInfo = objBLReadFiles.ChargeFile(pDirFile + pFile, pChannelUse);
     objStowageInfo.ChargeData();
-
-	ofstream fileOut( (pDirFile+"Response/"+pFile).c_str() );
-	if(!fileOut)
-	{
-		cout<<"Error, The file can't open "<<pDirFile+"Response/"+pFile<<endl;
-		return 0;
-	}
-    
-	// create model and search engine
-	Search::Options so;
-	Search::TimeStop ts(300000); // stop after 600000 ms
-	so.stop = &ts;
-	if(pChannelUse)
-	{
-		StowChannelCP* m = new StowChannelCP( objStowageInfo );
-		BAB<StowChannelCP> e(m, so);
-		delete m;
-	
-		// search and print all solutions
-		while (StowChannelCP* s = e.next()) {
-			s->print(O, OGCTD, OR, OP, OPT, OU, OCNS, OV, SL, objStowageInfo.Cont.size()); 
-			delete s;
+    if(objStowageInfo.ValidateData())
+    {
+		ofstream fileOut( (pDirFile+"Response/"+pFile).c_str() );
+		if(!fileOut)
+		{
+			cout<<"Error, The file can't open "<<pDirFile+"Response/"+pFile<<endl;
+			return 0;
+		}
 		
-			final2 = final;
-			final=clock()-init;		 
-			cout << "Tiempo: "<<(double)final / ((double)CLOCKS_PER_SEC)<< endl;
+		// create model and search engine
+		Search::Options so;
+		Search::TimeStop ts(50000); // stop after 600000 ms
+		so.stop = &ts;
+		if(pChannelUse)
+		{
+			StowChannelCP* m = new StowChannelCP( objStowageInfo );
+			BAB<StowChannelCP> e(m, so);
+			delete m;
+		
+			// search and print all solutions
+			while (StowChannelCP* s = e.next()) {
+				s->print(O, OGCTD, OR, OP, OPT, OU, OCNS, OV, SL, objStowageInfo.Cont.size()); 
+				delete s;
+			
+				final2 = final;
+				final=clock()-init;		 
+				cout << "Tiempo: "<<(double)final / ((double)CLOCKS_PER_SEC)<< endl;
+			}
+		}
+		else
+		{
+			StowageCP* m = new StowageCP( objStowageInfo );	
+			BAB<StowageCP> e(m, so);
+			delete m;
+		
+			// search and print all solutions
+			while (StowageCP* s = e.next()) {
+				s->print(O, OGCTD, OR, OP, OPT, OU, OCNS, OV, SL); 
+				delete s;
+			
+				final2 = final;
+				final=clock()-init;		 
+				cout << "Tiempo: "<<(double)final / ((double)CLOCKS_PER_SEC)<< endl;
+			}
+		}
+			
+		string sbTitulos = "O\tOGCTD\tOR\tOPT\tOU\tOCNS\tOV\tTimeS\tTimeT\tFile\tOP";
+		fileOut<<sbTitulos<<endl;
+			
+		final=clock()-init; 
+		fileOut<<O<<"\t"<<OGCTD<<"\t"<<OR<<"\t"<<OPT<<"\t"
+				<<OU<<"\t"<<OCNS<<"\t"<<OV<<"\t"<<(double)final2 / ((double)CLOCKS_PER_SEC)
+				<<"\t"<<(double)final / ((double)CLOCKS_PER_SEC)<<"\t"<<pFile<<"\t"<<OP<<endl<<endl;
+						
+		fileOut<<"S:"<<endl<<SL<<endl;
+		
+		fileOut.close();
+
+		if(pnuTotalFile)
+		{
+			//pTotalFile<<sbTitulos<<endl;
+			pTotalFile<<O<<"\t"<<OGCTD<<"\t"<<OR<<"\t"<<OPT<<"\t"
+					  <<OU<<"\t"<<OCNS<<"\t"<<OV<<"\t"<<(double)final2 / ((double)CLOCKS_PER_SEC)
+					  <<"\t"<<(double)final / ((double)CLOCKS_PER_SEC)<<"\t"<<pFile<<"\t"<<OP<<endl; 
 		}
 	}
 	else
 	{
-		StowageCP* m = new StowageCP( objStowageInfo );	
-		BAB<StowageCP> e(m, so);
-		delete m;
-	
-		// search and print all solutions
-		while (StowageCP* s = e.next()) {
-			s->print(O, OGCTD, OR, OP, OPT, OU, OCNS, OV, SL); 
-			delete s;
-		
-			final2 = final;
-			final=clock()-init;		 
-			cout << "Tiempo: "<<(double)final / ((double)CLOCKS_PER_SEC)<< endl;
-		}
-	}
-		
-	string sbTitulos = "O\tOGCTD\tOR\tOPT\tOU\tOCNS\tOV\tTimeS\tTimeT\tFile\tOP";
-	fileOut<<sbTitulos<<endl;
-		
-    final=clock()-init; 
-    fileOut<<O<<"\t"<<OGCTD<<"\t"<<OR<<"\t"<<OPT<<"\t"
-			<<OU<<"\t"<<OCNS<<"\t"<<OV<<"\t"<<(double)final2 / ((double)CLOCKS_PER_SEC)
-			<<"\t"<<(double)final / ((double)CLOCKS_PER_SEC)<<"\t"<<pFile<<"\t"<<OP<<endl<<endl;
-					
-	fileOut<<"S:"<<endl<<SL<<endl;
-	
-	fileOut.close();
-	
-	if(pnuTotalFile)
-	{
-		//pTotalFile<<sbTitulos<<endl;
-		pTotalFile<<O<<"\t"<<OGCTD<<"\t"<<OR<<"\t"<<OPT<<"\t"
-				  <<OU<<"\t"<<OCNS<<"\t"<<OV<<"\t"<<(double)final2 / ((double)CLOCKS_PER_SEC)
-				  <<"\t"<<(double)final / ((double)CLOCKS_PER_SEC)<<"\t"<<pFile<<"\t"<<OP<<endl; 
-	}
+		pTotalFile<<pFile<<"\t"<<"Bad file"<<endl;
+		cout<<pFile<<"\t"<<"Bad file"<<endl;
+	}	
 }
 
 
