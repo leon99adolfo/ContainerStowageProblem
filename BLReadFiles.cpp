@@ -50,7 +50,6 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName, bool pChannelUse)
     response.SetNumContainerLoad(nuContainerLoad);
     response.SetNumContainerLoaded(nuContainerLoaded);
     response.SetNumStacks(nuStacks);
-    response.SetNumCell(nuCell);
     response.SetNumLocations(nuLocations);
     response.SetNumTiers(nuTiers);
     
@@ -87,7 +86,7 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName, bool pChannelUse)
     // Read locations 
     for(int x = 0; x < nuLocations; x++)
 	{
-         archivoAr>>nuLocation;        
+         archivoAr>>nuLocation;
          cout<<nuLocation<<endl;
          listLocations.push_back(nuLocation);		
 	}
@@ -125,8 +124,8 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName, bool pChannelUse)
     // Read stacks
     for(int x = 0; x < nuStacks; x++)
 	{
-        archivoAr>>nuMaxWeigth>>nuMaxHeigth>>nuLocationStack; 
-        cout<<nuMaxWeigth<<" "<<nuMaxHeigth<<" "<<nuLocationStack<<endl; 
+        archivoAr>>nuMaxWeigth>>nuMaxHeigth>>nuLocationStack;
+        cout<<nuMaxWeigth<<" "<<nuMaxHeigth<<" "<<nuLocationStack<<endl;
          
         StackContainer objStack;
         objStack.SetMaxWeigth(nuMaxWeigth);
@@ -141,15 +140,47 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName, bool pChannelUse)
     // Read Tag #CELLS
     archivoAr>>sbTagDummy;
     cout<<sbTagDummy<<endl;
-            
+    
+    int	nuStackOld = -1;
+    int nuCellByStack = 0;
+    int nuCellNull = 0;
     // Read Cells 
     for(int x = 0; x < nuCell; x++)
 	{    
         archivoAr>>nuStackIdCell>>nuIsReeferFore>>nuIsReeferAft>>nuCapFore>>
                    nuCapAft>>nuCap40>>nuLocationCell;
-                    
+        
         cout<<nuStackIdCell<<" "<<nuIsReeferFore<<" "<<nuIsReeferAft<<" "<<nuCapFore<<" "<<
               nuCapAft<<" "<<nuCap40<<" "<<nuLocationCell<<endl;
+
+		// change stack
+		if(nuStackOld == nuStackIdCell)
+		{
+			nuCellByStack++;
+		}
+		else
+		{
+			nuStackOld = nuStackIdCell;
+			nuCellByStack = 0;
+		}
+
+		// null cell
+		if(nuCap40 == objConstants.falso && nuCapAft == objConstants.falso && nuCapFore == objConstants.falso)
+		{
+			map<int, vector<int> >::iterator CellNullFinded = response.CellNull.find(nuStackIdCell);		
+			if( CellNullFinded != response.CellNull.end() )
+			{
+				response.CellNull[nuStackIdCell].push_back( nuCellByStack );
+			}
+			else
+			{
+				vector<int> TmpCellNull;
+				TmpCellNull.push_back( nuCellByStack );
+				response.CellNull[nuStackIdCell] = TmpCellNull;
+			}
+			nuCellNull++;
+			continue;
+		}
 
 		// Fill Object 
         Cell objCell;
@@ -164,9 +195,10 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName, bool pChannelUse)
         listCells.push_back(objCell);
 		
 		// Fill index set
-		int	idxFirstTemp	= ( x * 2 );
-		int	idxSecondTemp 	= ( x * 2 ) + 1;
+		int	idxFirstTemp	= ( (x - nuCellNull) * 2 );
+		int	idxSecondTemp 	= ( (x - nuCellNull) * 2 ) + 1;
 		
+		//cout<<idxFirstTemp<<" "<<idxSecondTemp<<" "<<(x - nuCellNull)<<endl;
 		// Insert Slots
 		response.Slots.push_back( idxFirstTemp );
 		response.Slots.push_back( idxSecondTemp );
@@ -178,7 +210,7 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName, bool pChannelUse)
 		response.Slots_F.push_back( idxSecondTemp );
 		
 		// Insert slots reefer and not reefer
-		if( nuIsReeferAft  == objConstants.verdadero ) 
+		if( nuIsReeferAft  == objConstants.verdadero )
 		{
 			response.Slots_R.push_back( idxFirstTemp );
 		}
@@ -186,7 +218,7 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName, bool pChannelUse)
 		{
 			response.Slots_NR.push_back( idxFirstTemp );
 			// Slots in cell with no plug reefer
-			if( nuIsReeferFore != objConstants.verdadero ) response.Slots_NRC.push_back(x);
+			if( nuIsReeferFore != objConstants.verdadero ) response.Slots_NRC.push_back((x - nuCellNull));
 		}
 		
 		// Insert slots reefer and not reefer
@@ -211,7 +243,7 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName, bool pChannelUse)
 			if(nuCapAft == objConstants.verdadero) response.Slots_20.push_back( idxFirstTemp );
 			if(nuCapFore == objConstants.verdadero) response.Slots_20.push_back( idxSecondTemp );
 		}
-			
+
 		vector<int> TmpSlotsK;
 		vector<int> TmpSlotsKA;
 		vector<int> TmpSlotsKF;
@@ -246,9 +278,9 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName, bool pChannelUse)
 			TmpSlotsKF.push_back( idxSecondTemp );
 			response.Slots_K_F[nuStackIdCell] = TmpSlotsKF;
 			
-		}	
+		}
     }
-    	
+    response.SetNumCell(nuCell - nuCellNull);
     response.SetListCells(listCells);    
 	response.ChargeData();
 	
@@ -266,8 +298,7 @@ map<int, ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoad
         nuIsReeferCont, nuLocationCont;
     double dbWeigthCont, dbHeigthCont;
     map<int, ContainerBox> listContainer;
-    
-    
+        
     // Read Container Load
     for(int x = 0; x < pContainers; x++)
 	{
@@ -295,7 +326,7 @@ map<int, ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoad
         objContainer.SetHeight(dbHeigthCont);
         objContainer.SetLength(nuLengthCont);
         objContainer.SetPortDischarge(nuPortDischargeCont);
-        objContainer.SetIsReefer(nuIsReeferCont);        
+        objContainer.SetIsReefer(nuIsReeferCont);
         objContainer.SetLocation(nuLocationCont);
         objContainer.SetIsCharged(pAreLoaded);
 		
@@ -410,7 +441,7 @@ map<int, ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoad
             response.ContNormal++;    
         }
 
-        // Insert Cont_L and Cont_V
+        // Insert Cont_L
 		if( pAreLoaded )
 		{
             response.Cont_L.push_back(nuContainerIdx); 			 

@@ -13,22 +13,24 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
               CFEU_A(*this,(pStowageInfo.Slots.size()/2), 0, 1),
               CFEU_F(*this,(pStowageInfo.Slots.size()/2), 0, 1),
               GCD(*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo.GetNumTiers()),
-              OGCTD(*this, 0, pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks()),
+              OGCTD(*this, 0, ceil(pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() / 0.1)), 
               OV (*this, 0, pStowageInfo.Slots.size()),
 			  OVT(*this, pStowageInfo.Slots.size(), 0, 1),
 			  OCNS(*this, 0, pStowageInfo.Slots.size()), 
               OU (*this, 0, pStowageInfo.GetNumStacks()),
               OP (*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo.GetNumPortsDischarge()),
               OR (*this, 0, pStowageInfo.Slots_R.size()),
-              O  (*this, 0, (1000 * pStowageInfo.Cont.size() -1) + 
+              O  (*this, 0, (1000 * pStowageInfo.GetNumContainerLoad()) + 
 							(100 * pStowageInfo.Cont.size() -1) + 
 							(20 * pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks()) + 
 							(10 * pStowageInfo.GetNumStacks()) +
-							(5 * pStowageInfo.Slots_R.size()) )
+							(5 * pStowageInfo.Slots_R.size()) +
+							ceil((pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() / 0.1) * 10) )
 {
+	
 	// Charge Information in global variables
 	ChargeInformation(pStowageInfo);
-	
+
 	// Number of container stowed    
     for(int x = 0; x < pStowageInfo.Slots.size() ; x++)
     {	
@@ -72,11 +74,21 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	map<int, int> slotByStackFore;
 	map<int, int> slotByStackAft;
 	
-	for(int x = 0; x < pStowageInfo.Cont_L.size() ; x++)
+	for(int x = 0; x < pStowageInfo.Cont_L.size(); x++)
 	{	
 		ContainerBox objContainer = pStowageInfo.GetListContainerLoaded()[pStowageInfo.Cont_L[x]];
 		int stack = objContainer.GetStackId();
-		int cell = objContainer.GetCellId();
+		
+		int nuCellNull = 0;
+		for(int y = 0; y < pStowageInfo.CellNull[stack].size() ; y++)
+		{
+			if(objContainer.GetCellId() <= pStowageInfo.CellNull[stack][y] ) nuCellNull++;
+		}
+		
+		//cout<<"cellCont "<<objContainer.GetCellId()<<" nuCellNull: "<<nuCellNull<<endl;
+		
+		int cell = objContainer.GetCellId() - nuCellNull;
+		//cout<<"cell: "<<cell<<endl;
 		int position = objContainer.GetPosition();
 		int cantSlots = 0;
 		
@@ -109,7 +121,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 				rel(*this, S[nuPositionA], IRT_EQ, Cont_L[x]);
 				SaveContLoadedSlot(pStowageInfo, slotByStackAft, stack, nuPositionA);
 				break;
-		}		
+		}
 	}
 	
 	//-------------------------- Regular Constraints and Height Constraints ----------------------------------
@@ -205,12 +217,13 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 					NotOverStow40(*this, 0, 1), NotOverStow20A(*this, 0, 1), NotOverStow20F(*this, 0, 1),
 					NegIsOverStowed40(*this, 0, 1), NegCFEU_A(*this, 0, 1), NegIsOverStowed20A(*this, 0, 1),
 					NegIsOverStowed20F(*this, 0, 1);
-											
-			rel(*this, NegIsOverStowed40, IRT_EQ, BoolVar(*this, 0, 0), eqv(IsOverStowed40));
-			rel(*this, NegCFEU_A, IRT_EQ, BoolVar(*this, 0, 0), eqv(CFEU_A[countCont]));
-			rel(*this, NegIsOverStowed20A, IRT_EQ, BoolVar(*this, 0, 0), eqv(IsOverStowed20A));
-			rel(*this, NegIsOverStowed20F, IRT_EQ, BoolVar(*this, 0, 0), eqv(IsOverStowed20F));
-								
+		
+			BoolVar GenericBool(*this, 0, 0);			
+			rel(*this, NegIsOverStowed40, IRT_EQ, GenericBool, eqv(IsOverStowed40));
+			rel(*this, NegCFEU_A, IRT_EQ, GenericBool, eqv(CFEU_A[countCont]));
+			rel(*this, NegIsOverStowed20A, IRT_EQ, GenericBool, eqv(IsOverStowed20A));
+			rel(*this, NegIsOverStowed20F, IRT_EQ, GenericBool, eqv(IsOverStowed20F));
+			
 			rel(*this, CFEU_A[countCont], BOT_AND, IsOverStowed40, OverStow40);
 			rel(*this, CFEU_A[countCont], BOT_AND, NegIsOverStowed40, NotOverStow40);
 			rel(*this, NegCFEU_A, BOT_AND, IsOverStowed20A, OverStow20A);
@@ -372,7 +385,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	{
 		for(int y = 0; y < pStowageInfo.Cont_40_R.size() ; y++)
 		{
-			int nuCell = pStowageInfo.Slots_NRC[x];			
+			int nuCell = pStowageInfo.Slots_NRC[x];
 			rel(*this, S[ (nuCell * 2) ], IRT_NQ, pStowageInfo.Cont_40_R[y] );
 			rel(*this, S[ (nuCell * 2) + 1 ], IRT_NQ, pStowageInfo.Cont_40_R[y] );
 		}
@@ -425,7 +438,6 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// Objective 
 	//////////////////////////////////////////////////////////////////////////////////////////////////
-
 	
 	IntVar CS(*this, 0, pStowageInfo.Cont.size());	// containers stowed
 	linear(*this, NVC, IRT_EQ, CS);	
@@ -455,26 +467,25 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		}
 		linear(*this, isContNRSlotR, IRT_NQ, 0, eqv(StowedSlotR[x]));		
 	}
-		
+	
 	// objetive reffer
 	linear(*this, StowedSlotR, IRT_EQ, OR);
 	
-	// Total Distance   
+	// Total Distance
 	linear(*this, GCD, FRT_EQ, GCTD);
 	
-	int countOper = ceil(pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() / 0.01);
+	int countOper = ceil(pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() / 0.1);
 	BoolVarArray countGC(*this, countOper, 0, 1);
 	for(int x = 0; x < countOper ; x++)
-	{
-		rel(*this, GCTD, FRT_GQ, (x * 0.01), eqv(countGC[x]));
+	{		
+		rel(*this, GCTD, FRT_GQ, (x * 0.1), eqv(countGC[x]));
 	}
 	
 	linear(*this, countGC, IRT_EQ, OGCTD);
 	
 	// Cost function
-	rel(*this, O == 1000 * OCNS + 100 * OV + 20 * OPT + 10 * OU + 5 * OR + OGCTD);
-	
-	
+	rel(*this, O == 1000 * OCNS + 100 * OV + 20 * OPT + 10 * OU + 5 * OR + 10 * OGCTD);
+		
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// Propagator
 	//////////////////////////////////////////////////////////////////////////////////////////////////
@@ -487,11 +498,6 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	IntVar VC40(*this, 0, pStowageInfo.Slots.size());
 	rel(*this, VC40 == VC + C40F );
 	exactly(*this, W, VC40, 0);
-	
-	/*for(int x = 0; x < pStowageInfo.POD.size(); x++)
-		exactly(*this, P, pStowageInfo.POD,  )
-	*/
-	
 		
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// post branching
@@ -542,15 +548,15 @@ void StowageCP::print(int &pO, int &pOGCTD, int &pOR, string &pOP, int &pOPT, in
 {
 	//cout << "Salida" << endl;
     cout <<"S"<< S << endl << endl;
-	/*cout <<"L"<< L << endl << endl;
+	cout <<"L"<< L << endl << endl;
 	cout <<"H"<< H << endl << endl;
 	cout <<"W"<< W << endl << endl;
 	cout <<"WD"<< WD << endl << endl;
 	cout <<"P"<< P << endl << endl;
 	cout <<"HS"<< HS << endl << endl;	
-	cout <<"CFEU_A"<< CFEU_A << endl << endl;*/
+	cout <<"CFEU_A"<< CFEU_A << endl << endl;
 	cout <<"CFEU_F"<< CFEU_F << endl << endl;
-	/*cout <<"GCD"<< GCD << endl << endl;
+	cout <<"GCD"<< GCD << endl << endl;
 	cout <<"OVT"<< OVT << endl << endl;
 	cout <<"OV "<< OV << endl << endl;
 	cout <<"NVC"<< NVC << endl << endl;
@@ -559,8 +565,8 @@ void StowageCP::print(int &pO, int &pOGCTD, int &pOR, string &pOP, int &pOPT, in
 	cout <<"OP "<< OP << endl << endl;	
 	cout <<"OR "<< OR << endl << endl;
 	cout <<"OGCTD "<< OGCTD << endl << endl;
-	cout <<"O "<< O << endl << endl;*/
-	
+	cout <<"O "<< O << endl << endl;
+
 	pO = 0;
 	pO = O.val();
 	pOGCTD = 0;

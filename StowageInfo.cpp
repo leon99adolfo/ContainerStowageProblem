@@ -136,7 +136,7 @@ vector<Cell> StowageInfo::GetListCells()
 StowageInfo::StowageInfo()
 {
     ContNormal = 0;  
-    ContCUBE   = 0;                       
+    ContCUBE   = 0;         
 }
 
 //StowageInfo::~StowageInfo(){}

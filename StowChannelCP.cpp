@@ -2,30 +2,31 @@
 
 StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
               // Domain Variables              
-			  C  (*this, (pStowageInfo.Slots.size() + pStowageInfo.Cont.size()), 0, (pStowageInfo.Slots.size() + pStowageInfo.Cont.size())),
-              S  (*this, (pStowageInfo.Slots.size() + pStowageInfo.Cont.size()), 0, (pStowageInfo.Slots.size() + pStowageInfo.Cont.size())),
-              L  (*this, (pStowageInfo.Slots.size() + pStowageInfo.Cont.size()), 0, pStowageInfo._nuMaxLength),
-              H  (*this, (pStowageInfo.Slots.size() + pStowageInfo.Cont.size()), 0, pStowageInfo._nuMaxHeight * 10000),
-              W  (*this, (pStowageInfo.Slots.size() + pStowageInfo.Cont.size()), 0, pStowageInfo._nuMaxWeight),
-              WD (*this, (pStowageInfo.Slots.size() + pStowageInfo.Cont.size()), 0, pStowageInfo._nuMaxWeight),
-              P  (*this, (pStowageInfo.Slots.size() + pStowageInfo.Cont.size()), 0, pStowageInfo._nuMaxPOD),
+			  C  (*this, (pStowageInfo.Slots.size() + pStowageInfo.GetNumContainerLoad()), 0, (pStowageInfo.Slots.size() + pStowageInfo.GetNumContainerLoad())),
+              S  (*this, (pStowageInfo.Slots.size() + pStowageInfo.GetNumContainerLoad()), 0, (pStowageInfo.Slots.size() + pStowageInfo.GetNumContainerLoad())),
+              L  (*this, (pStowageInfo.Slots.size() + pStowageInfo.GetNumContainerLoad()), 0, pStowageInfo._nuMaxLength),
+              H  (*this, (pStowageInfo.Slots.size() + pStowageInfo.GetNumContainerLoad()), 0, pStowageInfo._nuMaxHeight * 10000),
+              W  (*this, (pStowageInfo.Slots.size() + pStowageInfo.GetNumContainerLoad()), 0, pStowageInfo._nuMaxWeight),
+              WD (*this, (pStowageInfo.Slots.size() + pStowageInfo.GetNumContainerLoad()), 0, pStowageInfo._nuMaxWeight),
+              P  (*this, (pStowageInfo.Slots.size() + pStowageInfo.GetNumContainerLoad()), 0, pStowageInfo._nuMaxPOD),
               HS (*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo._nuMaxStackHeight * 10000),
               NVC (*this, (pStowageInfo.Slots.size() + pStowageInfo.Cont.size()), 0, 1),
               CFEU_A(*this,(pStowageInfo.Slots.size()/2), 0, 1),
               CFEU_F(*this,(pStowageInfo.Slots.size()/2), 0, 1),
               GCD(*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo.GetNumTiers()),
-              OGCTD(*this, 0, pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks()),
+              OGCTD(*this, 0, ceil(pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() / 0.1)),
               OV (*this, 0, pStowageInfo.Slots.size()),
 			  OVT(*this, pStowageInfo.Slots.size(), 0, 1),
 			  OCNS(*this, 0, pStowageInfo.Slots.size()), 
               OU (*this, 0, pStowageInfo.GetNumStacks()),
               OP (*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo.GetNumPortsDischarge()),
               OR (*this, 0, pStowageInfo.Slots_R.size()),
-              O  (*this, 0, (1000 * pStowageInfo.Cont.size() -1) + 
+              O  (*this, 0, (1000 * pStowageInfo.GetNumContainerLoad()) + 
 							(100 * pStowageInfo.Cont.size() -1) + 
 							(20 * pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks()) + 
 							(10 * pStowageInfo.GetNumStacks()) +
-							(5 * pStowageInfo.Slots_R.size()) ) 
+							(5 * pStowageInfo.Slots_R.size()) +
+							ceil((pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() / 0.1) * 10) ) 
 {
 	// Charge Information in global variables
 	ChargeInformation(pStowageInfo);
@@ -35,7 +36,7 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 	channel(*this, S, C);	
 		
 	//----------------------------------------- Element Constraints -------------------------------
-	int nuSlotsContainer = pStowageInfo.Slots.size() + pStowageInfo.Cont.size();
+	int nuSlotsContainer = pStowageInfo.Slots.size() + pStowageInfo.GetNumContainerLoad();
 	// elements Length
 	for(int x = 0; x < nuSlotsContainer ; x++)
 		element(*this, Length, S[x], L[x]); 				
@@ -69,7 +70,14 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 	{	
 		ContainerBox objContainer = pStowageInfo.GetListContainerLoaded()[pStowageInfo.Cont_L[x]];
 		int stack = objContainer.GetStackId();
-		int cell = objContainer.GetCellId();
+		
+		int nuCellNull = 0;
+		for(int y = 0; y < pStowageInfo.CellNull[stack].size() ; y++)
+		{
+			if(objContainer.GetCellId() <= pStowageInfo.CellNull[stack][y] ) nuCellNull++;
+		}
+		
+		int cell = objContainer.GetCellId() - nuCellNull;
 		int position = objContainer.GetPosition();
 		int cantSlots = 0;
 		
@@ -87,7 +95,7 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 
 		switch (position)
 		{	
-			case -1:			
+			case -1:
 				rel(*this, S[nuPositionF], IRT_EQ, Cont_L[x]);
 				SaveContLoadedSlot(pStowageInfo, slotByStackFore, stack, nuPositionF);				
 				break;
@@ -102,17 +110,17 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 				rel(*this, S[nuPositionA], IRT_EQ, Cont_L[x]);
 				SaveContLoadedSlot(pStowageInfo, slotByStackAft, stack, nuPositionA);
 				break;
-		}		
+		}
 	}
 	
 	//-------------------------- Regular Constraints and Height Constraints ----------------------------------
 	// regular constraint
 	REG r = *REG(20) + *REG(40) + *REG(0);
-	DFA d(r);	
+	DFA d(r);
 	int countCont = 0;
 	int countStaks = 0;
 	FloatVarArray GCY(*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo.GetNumTiers());
-	FloatVar GCTD(*this, 0, pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks());		
+	FloatVar GCTD(*this, 0, pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks());
 	// regular constraint Stack-Aft
 	for (map<int, vector<int> >::iterator it=pStowageInfo.Slots_K_A.begin(); it != pStowageInfo.Slots_K_A.end(); ++it)
     {
@@ -164,14 +172,15 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 						
 			// sum slots in cell
 			linear(*this, slotsCellWeight, IRT_EQ, WTempWeight[x]);
-						
+			
 			// Restriction container 40 Aft
 			rel(*this, L[slot], IRT_EQ, 40, eqv(CFEU_A[countCont]));
 			linear(*this, IntVarArgs()<<S[slot]<<IntVar(*this, 1, 1), IRT_EQ, S[slot+1], imp(CFEU_A[countCont]));		
 			
 			// Only stowed container 40 aft
 			for(int z = 0; z < pStowageInfo.Cont_40_F.size() ; z++)
-				rel(*this, S[slot], IRT_NQ, pStowageInfo.Cont_40_F[z]);			
+				rel(*this, S[slot], IRT_NQ, pStowageInfo.Cont_40_F[z]);
+				
 			// ---------------------------------------------------------------------------------------
 			// This restriction is goal (POD)
 			PTempPODAft<<P[slot];
@@ -203,7 +212,7 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 			rel(*this, NegCFEU_A, IRT_EQ, GenericBool, eqv(CFEU_A[countCont]));
 			rel(*this, NegIsOverStowed20A, IRT_EQ, GenericBool, eqv(IsOverStowed20A));
 			rel(*this, NegIsOverStowed20F, IRT_EQ, GenericBool, eqv(IsOverStowed20F));
-								
+
 			rel(*this, CFEU_A[countCont], BOT_AND, IsOverStowed40, OverStow40);
 			rel(*this, CFEU_A[countCont], BOT_AND, NegIsOverStowed40, NotOverStow40);
 			rel(*this, NegCFEU_A, BOT_AND, IsOverStowed20A, OverStow20A);
@@ -259,10 +268,23 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 		FloatVar WeightTotal(*this, 0, pStowageInfo._nuMaxWeight * size * 2);
 		linear(*this, WeightTotalArgs, FRT_EQ, WeightTotal);		
 		
+		BoolVar boRespDiv(*this, 0, 1), boNotRespDiv(*this, 0, 1);
+		rel(*this, WeightTotal, FRT_EQ, 0.0, eqv(boRespDiv));
+		rel(*this, WeightTotal, FRT_NQ, 0.0, eqv(boNotRespDiv));
+		
 		// Calculate gravity center in Y
-		FloatVar sumGraviCentersY(*this, 0, pStowageInfo._nuMaxWeight * size * size * 2);
+		FloatVar sumGraviCentersY(*this, 0, pStowageInfo._nuMaxWeight * size * size * 2);		
+		FloatVar WeightTotalTmp(*this, 0, pStowageInfo._nuMaxWeight * size * 2);
+		FloatVar sumGraviCentersYTmp(*this, 0, pStowageInfo._nuMaxWeight * size * size * 2);				
+				
+		rel(*this, WeightTotalTmp, FRT_EQ, 1.0, imp(boRespDiv));
+		rel(*this, WeightTotalTmp, FRT_EQ, WeightTotal, imp(boNotRespDiv));
+		
 		linear(*this, GraviCentersY, FRT_EQ, sumGraviCentersY);
-		div(*this, sumGraviCentersY, WeightTotal, GCY[countStaks]);				
+		rel(*this, sumGraviCentersYTmp, FRT_EQ, 0.0, imp(boRespDiv));
+		rel(*this, sumGraviCentersYTmp, FRT_EQ, sumGraviCentersY, imp(boNotRespDiv));
+				
+		div(*this, sumGraviCentersYTmp, WeightTotalTmp, GCY[countStaks]);			
 				
 		// calculate gravity center distance		
 		double unitStack = heigthStack / pStowageInfo.GetNumTiers();
@@ -283,14 +305,26 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 		// Goal OP
 		IntVar 	stackPODs(*this, 1, pStowageInfo.GetNumPortsDischarge() + 1),
 				minPODStack(*this, 0, pStowageInfo._nuMaxPOD);
-		BoolVar	existPODnull(*this, 0, 1),
-				existPOD(*this, 0, 1);
 		nvalues(*this, PTempPODAftFore, IRT_EQ, stackPODs);
-		min(*this, PTempPODAftFore, minPODStack);
+		
+		BoolVar	existPODnull(*this, 0, 1),
+				existPOD(*this, 0, 1),
+				manyPODs(*this, 0, 1),
+				onlyPODs(*this, 0, 1),
+				respPODS(*this, 0, 1),
+				respPODSnull(*this, 0, 1);
+		min(*this, PTempPODAftFore, minPODStack);		
+		rel(*this, stackPODs, IRT_GR, 1, eqv(manyPODs));
+		rel(*this, stackPODs, IRT_EQ, 1, eqv(onlyPODs));		
 		rel(*this, minPODStack, IRT_EQ, 0, eqv(existPODnull));
 		rel(*this, minPODStack, IRT_NQ, 0, eqv(existPOD));
-		linear(*this, IntVarArgs()<<stackPODs<<IntVar(*this, -2, -2), IRT_EQ, OP[countStaks], imp(existPODnull)); // equal and null POD 
-		linear(*this, IntVarArgs()<<stackPODs<<IntVar(*this, -1, -1), IRT_EQ, OP[countStaks], imp(existPOD)); // equal POD  				
+		rel(*this, manyPODs, BOT_AND, existPODnull, respPODS);
+		rel(*this, onlyPODs, BOT_AND, existPODnull, respPODSnull);
+				
+		linear(*this, IntVarArgs()<<stackPODs<<IntVar(*this, -2, -2), IRT_EQ, OP[countStaks], imp(respPODS)); // equal and null POD 
+		linear(*this, IntVarArgs()<<stackPODs<<IntVar(*this, -1, -1), IRT_EQ, OP[countStaks], imp(respPODSnull)); // equal and null POD 
+		linear(*this, IntVarArgs()<<stackPODs<<IntVar(*this, -1, -1), IRT_EQ, OP[countStaks], imp(existPOD)); // equal POD
+		
 		countStaks++;
     }
     
@@ -307,15 +341,12 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 			
 			// Restriction container 40 Fore
 			rel(*this, L[slot], IRT_EQ, 40, eqv(CFEU_F[countCont]));
+			linear(*this, IntVarArgs()<<S[slot]<<IntVar(*this, -1, -1), IRT_EQ, S[slot-1], imp(CFEU_F[countCont]));
+			countCont++;
 			
 			// Only stowed container 40 fore
 			for(int z = 0; z < pStowageInfo.Cont_40_A.size() ; z++)
-				rel(*this, S[slot], IRT_NQ, pStowageInfo.Cont_40_A[z]);
-			
-			BoolVar contNVCandCFEUF(*this, 0, 1);
-			rel(*this, NVC[slot-1], BOT_AND, CFEU_F[countCont], contNVCandCFEUF);
-			linear(*this, IntVarArgs()<<S[slot]<<IntVar(*this, -1, -1), IRT_EQ, S[slot-1], imp(contNVCandCFEUF));
-			countCont++;
+				rel(*this, S[slot], IRT_NQ, pStowageInfo.Cont_40_A[z]);			
 			
 			// Get Length
 			IntVar varTmpLength( L[slot] );
@@ -399,7 +430,6 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 	// Objective 
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 
-	int nuSlotsCont = pStowageInfo.Slots.size() + pStowageInfo.Cont.size();
 	// Number of container stowed    
     for(int x = 0; x < nuSlotsContainer; x++)
     {	
@@ -408,12 +438,11 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 	}
 	
 	BoolVarArray NCS20Temp(*this, pStowageInfo.Slots.size(), 0, 1);
-	BoolVarArray NCS40Temp(*this, pStowageInfo.Slots.size(), 0, 1);
-	int nuContLarge = pStowageInfo.Cont.size();
-	for(int x = nuContLarge; x < nuSlotsCont; x++)
+	BoolVarArray NCS40Temp(*this, pStowageInfo.Slots.size(), 0, 1);	
+	for(int x = pStowageInfo.GetNumContainerLoad(); x < nuSlotsContainer; x++)
     {
-		rel(*this, L[x], IRT_EQ, 20, eqv(NCS20Temp[x-nuContLarge])); 
-		rel(*this, L[x], IRT_EQ, 40, eqv(NCS40Temp[x-nuContLarge])); 
+		rel(*this, L[x], IRT_EQ, 20, eqv(NCS20Temp[x-pStowageInfo.GetNumContainerLoad()])); 
+		rel(*this, L[x], IRT_EQ, 40, eqv(NCS40Temp[x-pStowageInfo.GetNumContainerLoad()])); 
 	}
 	
 	IntVar NCS20(*this, 0, pStowageInfo.Slots.size());
@@ -450,17 +479,17 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 	// Total Distance   
 	linear(*this, GCD, FRT_EQ, GCTD);
 	
-	int countOper = ceil(pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() / 0.05);
+	int countOper = ceil(pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() / 0.1);
 	BoolVarArray countGC(*this, countOper, 0, 1);
 	for(int x = 0; x < countOper ; x++)
 	{
-		rel(*this, GCTD, FRT_GQ, (x * 0.05), eqv(countGC[x]));
+		rel(*this, GCTD, FRT_GQ, (x * 0.1), eqv(countGC[x]));
 	}
 	
 	linear(*this, countGC, IRT_EQ, OGCTD);
 	
 	// Cost function
-	rel(*this, O == 1000 * OCNS + 100 * OV + 20 * OPT + 10 * OU + 5 * OR + 5 * OGCTD);
+	rel(*this, O == 1000 * OCNS + 100 * OV + 20 * OPT + 10 * OU + 5 * OR + 10 * OGCTD);
 	
 	
 	//////////////////////////////////////////////////////////////////////////////////////////////////
@@ -484,7 +513,7 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 	//////////////////////////////////////////////////////////////////////////////////////////////////	
 
 	//branch(*this, S, INT_VAR_SIZE_MIN(), INT_VAL_MIN());
-    branch(*this, S, INT_VAR_SIZE_MIN(), INT_VAL_MED());
+    branch(*this, C, INT_VAR_SIZE_MIN(), INT_VAL_MED());
     /*branch(*this, L, INT_VAR_SIZE_MIN(), INT_VAL_MED());
     branch(*this, H, INT_VAR_SIZE_MIN(), INT_VAL_MED());
     branch(*this, W, INT_VAR_SIZE_MIN(), INT_VAL_MED());
@@ -548,12 +577,18 @@ void StowChannelCP::print(int &pO, int &pOGCTD, int &pOR, string &pOP, int &pOPT
 	cout <<"OR "<< OR << endl << endl;
 	cout <<"OGCTD "<< OGCTD << endl << endl;
 	cout <<"O "<< O << endl << endl;*/
+	
+	pO = 0;
 	pO = O.val();
+	pOGCTD = 0;
 	pOGCTD = OGCTD.val();
+	pOR = 0;
 	pOR = OR.val();
 	
 	stringstream ss;
 	pOPT = 0;
+	pOP = "";
+
 	for(int x = 0; x < OP.size() ; x++)
 	{
 		int value = OP[x].val();
@@ -569,8 +604,11 @@ void StowChannelCP::print(int &pO, int &pOGCTD, int &pOR, string &pOP, int &pOPT
 	}	
 	pOP += ss.str();
 	
+	pOU = 0;
 	pOU = OU.val();
+	pOCNS = 0;
 	pOCNS = OCNS.val();
+	pOV = 0;
 	pOV = OV.val();
 
 	stringstream ss2;
@@ -638,7 +676,7 @@ void StowChannelCP::ChargeInformation(StowageInfo pStowageInfo)
 {
 //---------------------------- sorts the arguments -------------------------- 
 
-	int nuSlotsCont = pStowageInfo.Slots.size() + pStowageInfo.Cont.size();
+	int nuSlotsCont = pStowageInfo.Slots.size() + pStowageInfo.GetNumContainerLoad();
 
     // Loaded containers index set
 	Cont_L = IntArgs( pStowageInfo.Cont_L );

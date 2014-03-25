@@ -69,6 +69,7 @@ class StowageInfo
             vector<int>         Cont_20_R;      // 20' reefer containers index set
             vector<int>         Cont_40_R;      // 40' reefer containers index set
             vector<int>         Cont_NR;        // Non-reefer containers index set
+            map<int, vector<int> >CellNull;     	// null Cell
 			map<int, double>    Weight;      	// Weight of container i
             map<int, int> 		POD;         	// Ports of discharges of container i
             map<int, int>      	Length;      	// Leight of container i
