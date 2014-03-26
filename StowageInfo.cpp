@@ -151,7 +151,7 @@ void StowageInfo::ChargeContainer(map<int, ContainerBox> pListContainer, bool pV
 			   boFirst = false;
                _nuMaxLength = (it->second).GetLength();
                _nuMaxHeight = (it->second).GetHeight();               
-               _nuMaxWeight = (it->second).GetWeight();     
+               _nuMaxWeight = (it->second).GetWeight();
           }
           else
           {
@@ -207,19 +207,3 @@ void StowageInfo::ChargeData()
     cout<<"_nuMaxStackHeight: "<<_nuMaxStackHeight<<endl;
 }
 
-bool StowageInfo::ValidateData()
-{
-	
-	for (map<int, int>::iterator it=ContLoadedMaxCell.begin(); it != ContLoadedMaxCell.end(); ++it)
-	{
-		for(int x = 1; x <= it->second; x++)
-		{
-			if (ContLoadedByStackCell[it->first].find(x) == ContLoadedByStackCell[it->first].end())
-			{
-				return false;
-			}
-		}
-	}
-	
-	return true;
-}

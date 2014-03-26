@@ -232,10 +232,6 @@ class StowageInfo
     		 * Charge Data
     		 */
     		void ChargeData();
-    		/**
-    		 * Validate Data
-    		 */
-    		bool ValidateData();
                           
 };
 

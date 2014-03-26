@@ -11,10 +11,8 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
               P  (*this, (pStowageInfo.Slots.size() + pStowageInfo.GetNumContainerLoad()), 0, pStowageInfo._nuMaxPOD),
               HS (*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo._nuMaxStackHeight * 10000),
               NVC (*this, (pStowageInfo.Slots.size() + pStowageInfo.Cont.size()), 0, 1),
-              CFEU_A(*this,(pStowageInfo.Slots.size()/2), 0, 1),
-              CFEU_F(*this,(pStowageInfo.Slots.size()/2), 0, 1),
               GCD(*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo.GetNumTiers()),
-              OGCTD(*this, 0, ceil(pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() / 0.1)),
+              OGCTD(*this, 0, pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() * 100),
               OV (*this, 0, pStowageInfo.Slots.size()),
 			  OVT(*this, pStowageInfo.Slots.size(), 0, 1),
 			  OCNS(*this, 0, pStowageInfo.Slots.size()), 
@@ -26,7 +24,7 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 							(20 * pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks()) + 
 							(10 * pStowageInfo.GetNumStacks()) +
 							(5 * pStowageInfo.Slots_R.size()) +
-							ceil((pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() / 0.1) * 10) ) 
+							(pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() * 100) ) 
 {
 	// Charge Information in global variables
 	ChargeInformation(pStowageInfo);
@@ -37,30 +35,16 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 		
 	//----------------------------------------- Element Constraints -------------------------------
 	int nuSlotsContainer = pStowageInfo.Slots.size() + pStowageInfo.GetNumContainerLoad();
-	// elements Length
-	for(int x = 0; x < nuSlotsContainer ; x++)
-		element(*this, Length, S[x], L[x]); 				
 	
-	// elements Height
-	for(int x = 0; x < nuSlotsContainer ; x++)
-		element(*this, Height, S[x], H[x]);
-		
-	// elements Weight
 	for(int x = 0; x < nuSlotsContainer ; x++)
 	{
+		element(*this, Length, S[x], L[x]);
+		element(*this, Height, S[x], H[x]);
 		element(*this, Weight, S[x], W[x]);
-		for(int y = 0; y < Weight.size() ; y++)
-		{
-			BoolVar IdxWD(*this, 0, 1);
-			rel(*this, W[x], IRT_EQ, Weight[y], eqv(IdxWD));
-			rel(*this, WD[x], FRT_EQ, Weight[y], imp(IdxWD));
-		}
-	}	
-
-	// elements POD
-	for(int x = 0; x < nuSlotsContainer ; x++)
-		element(*this, POD, S[x], P[x]);	
-
+		element(*this, POD, S[x], P[x]);
+		channel(*this, WD[x], W[x]);
+	}
+	
 	//----------------------------------------- Loaded Container Constraints -------------------------
 	// Loaded Container
 	map<int, int> slotByStackFore;
@@ -113,6 +97,11 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 		}
 	}
 	
+	//-------------------------- Container 40  ----------------------------------
+	for(int z = 0; z < pStowageInfo.Cont_40_A.size(); z++)
+		rel(*this, C[pStowageInfo.Cont_40_A[z] + 1] == C[pStowageInfo.Cont_40_A[z]] + 1);
+	
+	
 	//-------------------------- Regular Constraints and Height Constraints ----------------------------------
 	// regular constraint
 	REG r = *REG(20) + *REG(40) + *REG(0);
@@ -136,7 +125,6 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 		// Variables POD
 		IntVarArgs PTempPODAft;
 		IntVarArgs PTempPODFore;
-		IntVarArgs PTempPODAftFore;	
 		
 		for(int x = 0; x < size; x++)
 		{
@@ -148,94 +136,43 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 			// Aft slot 
 			if ( pStowageInfo.ContLoadedSlot.find(slot) != pStowageInfo.ContLoadedSlot.end())	
 			{
-				slotsCellWeight[0] = IntVar(*this, pStowageInfo._nuMaxWeight, pStowageInfo._nuMaxWeight);				
+				slotsCellWeight[0] = IntVar(*this, pStowageInfo._nuMaxWeight, pStowageInfo._nuMaxWeight);
+				PTempPODAft<<IntVar(*this, pStowageInfo._nuMaxPOD, pStowageInfo._nuMaxPOD);
 			}
 			else
 			{			
 				IntVar varTmpWeight0( W[slot] );
 				slotsCellWeight[0] = varTmpWeight0;
+				PTempPODAft<<P[slot];
 			}
 			
 			// Fore slot
 			if ( pStowageInfo.ContLoadedSlot.find(slot + 1) != pStowageInfo.ContLoadedSlot.end())	
 			{			
 				slotsCellWeight[1] = IntVar(*this, pStowageInfo._nuMaxWeight, pStowageInfo._nuMaxWeight);				
+				PTempPODFore<<IntVar(*this, pStowageInfo._nuMaxPOD, pStowageInfo._nuMaxPOD);
 			}
 			else
 			{			
 				IntVar varTmpWeight1( W[slot + 1] );
 				slotsCellWeight[1] = varTmpWeight1;
+				PTempPODFore<<P[slot+1];
 			}
 			
 			// full variable WeightTotal
 			WeightTotalArgs<<WD[slot]<<WD[slot + 1];
 						
 			// sum slots in cell
-			linear(*this, slotsCellWeight, IRT_EQ, WTempWeight[x]);
-			
-			// Restriction container 40 Aft
-			rel(*this, L[slot], IRT_EQ, 40, eqv(CFEU_A[countCont]));
-			linear(*this, IntVarArgs()<<S[slot]<<IntVar(*this, 1, 1), IRT_EQ, S[slot+1], imp(CFEU_A[countCont]));		
+			linear(*this, slotsCellWeight, IRT_EQ, WTempWeight[x]);		
 			
 			// Only stowed container 40 aft
 			for(int z = 0; z < pStowageInfo.Cont_40_F.size() ; z++)
 				rel(*this, S[slot], IRT_NQ, pStowageInfo.Cont_40_F[z]);
-				
-			// ---------------------------------------------------------------------------------------
-			// This restriction is goal (POD)
-			PTempPODAft<<P[slot];
-			PTempPODFore<<P[slot+1];
-			PTempPODAftFore<<P[slot]<<P[slot+1];
-			BoolVar	IsOverStowed20A(*this, 0, 1), 
-					IsOverStowed20F(*this, 0, 1), 
-					IsOverStowed40(*this, 0, 1);
-			// Get minimun value
-			IntVar 	minPODAft(*this, 0, pStowageInfo._nuMaxPOD), 
-					minPODFore(*this, 0, pStowageInfo._nuMaxPOD),  
-					minPODAftFore(*this, 0, pStowageInfo._nuMaxPOD);
-			// Restriction min
-			min(*this, PTempPODAft, minPODAft);
-			min(*this, PTempPODFore, minPODFore);
-			min(*this, PTempPODAftFore, minPODAftFore);
-			// This restriction is goal (POD)
-			rel(*this, P[slot], IRT_GR, minPODAft, eqv(IsOverStowed20A)); 
-			rel(*this, P[slot], IRT_GR, minPODFore, eqv(IsOverStowed20F)); 
-			rel(*this, P[slot], IRT_GR, minPODAftFore, eqv(IsOverStowed40));			
-			// Get solution Bool
-			BoolVar OverStow40(*this, 0, 1), OverStow20A(*this, 0, 1), OverStow20F(*this, 0, 1),
-					NotOverStow40(*this, 0, 1), NotOverStow20A(*this, 0, 1), NotOverStow20F(*this, 0, 1),
-					NegIsOverStowed40(*this, 0, 1), NegCFEU_A(*this, 0, 1), NegIsOverStowed20A(*this, 0, 1),
-					NegIsOverStowed20F(*this, 0, 1);
-			
-			BoolVar GenericBool(*this, 0, 0);			
-			rel(*this, NegIsOverStowed40, IRT_EQ, GenericBool, eqv(IsOverStowed40));
-			rel(*this, NegCFEU_A, IRT_EQ, GenericBool, eqv(CFEU_A[countCont]));
-			rel(*this, NegIsOverStowed20A, IRT_EQ, GenericBool, eqv(IsOverStowed20A));
-			rel(*this, NegIsOverStowed20F, IRT_EQ, GenericBool, eqv(IsOverStowed20F));
-
-			rel(*this, CFEU_A[countCont], BOT_AND, IsOverStowed40, OverStow40);
-			rel(*this, CFEU_A[countCont], BOT_AND, NegIsOverStowed40, NotOverStow40);
-			rel(*this, NegCFEU_A, BOT_AND, IsOverStowed20A, OverStow20A);
-			rel(*this, NegCFEU_A, BOT_AND, NegIsOverStowed20A, NotOverStow20A);
-			rel(*this, NegCFEU_A, BOT_AND, IsOverStowed20F, OverStow20F);
-			rel(*this, NegCFEU_A, BOT_AND, NegIsOverStowed20F, NotOverStow20F);
-			
-			// This restriction is goal (POD) for container 40			
-			rel(*this, OVT[countCont*2], IRT_EQ, 1, imp( OverStow40 ));
-			rel(*this, OVT[(countCont*2) + 1], IRT_EQ, 1, imp( OverStow40 ));
-			rel(*this, OVT[(countCont*2)], IRT_EQ, 0, imp( NotOverStow40 ));
-			rel(*this, OVT[(countCont*2) + 1], IRT_EQ, 0, imp( NotOverStow40 ));
-			// This restriction is goal (POD) for container 20 aft
-			rel(*this, OVT[countCont*2], IRT_EQ, 1, imp( OverStow20A ));
-			rel(*this, OVT[countCont*2], IRT_EQ, 0, imp( NotOverStow20A ));
-			// This restriction is goal (POD) for container 20 fore
-			rel(*this, OVT[(countCont*2) + 1], IRT_EQ, 1, imp( OverStow20F  ));
-			rel(*this, OVT[(countCont*2) + 1], IRT_EQ, 0, imp( NotOverStow20F ));
 			
 			// ---------------------------------------------------------------------------------------				
 			// Gravitatory center In Y
 			FloatVar GCY40AF(*this, 0, (pStowageInfo._nuMaxWeight/2) * posY);
-			rel(*this, GCY40AF == WD[slot] * (posY/2));			
+			rel(*this, GCY40AF == WD[slot] * (posY/2));
 			rel(*this, GraviCentersY[(posY*2)], FRT_EQ, GCY40AF, imp(CFEU_A[countCont]));
 			
 			FloatVar GCY20A(*this, 0, pStowageInfo._nuMaxWeight * posY);
@@ -300,6 +237,8 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 		extensional(*this, LTempLength, d);  // regular constraint		
 		linear(*this, HTempHeight, IRT_LQ, HS[ (it->first) - 1 ]); // Height limit constraint
 		rel(*this, WTempWeight, IRT_GQ); // weight ordered constraint		
+		rel(*this, PTempPODAft, IRT_GQ); // POD ordered constraint (Aft)
+		rel(*this, PTempPODFore, IRT_GQ); // POD ordered constraint (Fore)
 		// ---------------------------------------------------------------------------------------------
 		
 		// Goal OP
@@ -328,7 +267,6 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 		countStaks++;
     }
     
-    countCont = 0;
 	// regular constraint Stack-Fore
 	for (map<int, vector<int> >::iterator it=pStowageInfo.Slots_K_F.begin(); it != pStowageInfo.Slots_K_F.end(); ++it)
     {
@@ -338,11 +276,6 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 		for(int x = 0; x < size; x++)
 		{
 			int slot = (it->second)[x];
-			
-			// Restriction container 40 Fore
-			rel(*this, L[slot], IRT_EQ, 40, eqv(CFEU_F[countCont]));
-			linear(*this, IntVarArgs()<<S[slot]<<IntVar(*this, -1, -1), IRT_EQ, S[slot-1], imp(CFEU_F[countCont]));
-			countCont++;
 			
 			// Only stowed container 40 fore
 			for(int z = 0; z < pStowageInfo.Cont_40_A.size() ; z++)
@@ -479,17 +412,12 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 	// Total Distance   
 	linear(*this, GCD, FRT_EQ, GCTD);
 	
-	int countOper = ceil(pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() / 0.1);
-	BoolVarArray countGC(*this, countOper, 0, 1);
-	for(int x = 0; x < countOper ; x++)
-	{
-		rel(*this, GCTD, FRT_GQ, (x * 0.1), eqv(countGC[x]));
-	}
-	
-	linear(*this, countGC, IRT_EQ, OGCTD);
+	FloatVar GCTDTmp(*this, 0, pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks() * 100);
+	rel(*this, GCTDTmp == GCTD * 100);
+	channel(*this, OGCTD, GCTDTmp);
 	
 	// Cost function
-	rel(*this, O == 1000 * OCNS + 100 * OV + 20 * OPT + 10 * OU + 5 * OR + 10 * OGCTD);
+	rel(*this, O == 1000 * OCNS + 100 * OV + 20 * OPT + 10 * OU + 5 * OR + OGCTD);
 	
 	
 	//////////////////////////////////////////////////////////////////////////////////////////////////
@@ -565,8 +493,6 @@ void StowChannelCP::print(int &pO, int &pOGCTD, int &pOR, string &pOP, int &pOPT
 	cout <<"WD"<< WD << endl << endl;
 	cout <<"P"<< P << endl << endl;
 	/*cout <<"HS"<< HS << endl << endl;	
-	cout <<"CFEU_A"<< CFEU_A << endl << endl;
-	cout <<"CFEU_F"<< CFEU_F << endl << endl;
 	cout <<"GCD"<< GCD << endl << endl;
 	cout <<"OVT"<< OVT << endl << endl;
 	cout <<"OV "<< OV << endl << endl;

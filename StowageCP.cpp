@@ -13,7 +13,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
               CFEU_A(*this,(pStowageInfo.Slots.size()/2), 0, 1),
               CFEU_F(*this,(pStowageInfo.Slots.size()/2), 0, 1),
               GCD(*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo.GetNumTiers()),
-              OGCTD(*this, 0, ceil(pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() / 0.1)), 
+              OGCTD(*this, 0, pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() * 100), 
               OV (*this, 0, pStowageInfo.Slots.size()),
 			  OVT(*this, pStowageInfo.Slots.size(), 0, 1),
 			  OCNS(*this, 0, pStowageInfo.Slots.size()), 
@@ -25,50 +25,32 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 							(20 * pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks()) + 
 							(10 * pStowageInfo.GetNumStacks()) +
 							(5 * pStowageInfo.Slots_R.size()) +
-							ceil((pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() / 0.1) * 10) )
+							(pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() * 100) )
 {
 	
 	// Charge Information in global variables
 	ChargeInformation(pStowageInfo);
 
-	// Number of container stowed    
-    for(int x = 0; x < pStowageInfo.Slots.size() ; x++)
-    {	
+	//----------------------------------------- Element Constraints -------------------------------
+	for(int x = 0; x < pStowageInfo.Slots.size() ; x++)
+	{
 		// the container isn't virtual?
-		rel(*this, S[x], IRT_NQ, 0, eqv(NVC[x]));		
-		
+		rel(*this, S[x], IRT_NQ, 0, eqv(NVC[x]));				
 		for(int y = 0; y < pStowageInfo.Slots.size() ; y++)
 		{
 			if(x != y) rel(*this, S[x], IRT_NQ, S[y], imp(NVC[x]));
 		}
-	}
-
-	//----------------------------------------- Element Constraints -------------------------------
-	// elements Length
-	for(int x = 0; x < pStowageInfo.Slots.size() ; x++)
-		element(*this, Length, S[x], L[x]); 
-	
-	// elements Height
-	for(int x = 0; x < pStowageInfo.Slots.size() ; x++)
-		element(*this, Height, S[x], H[x]);
 		
-	// elements Weight
-	for(int x = 0; x < pStowageInfo.Slots.size() ; x++)
-	{
+		// element constraint
+		element(*this, Length, S[x], L[x]);
+		element(*this, Height, S[x], H[x]);
 		element(*this, Weight, S[x], W[x]);
-		for(int y = 0; y < Weight.size() ; y++)
-		{
-			BoolVar IdxWD(*this, 0, 1);
-			rel(*this, W[x], IRT_EQ, Weight[y], eqv(IdxWD));
-			rel(*this, WD[x], FRT_EQ, Weight[y], imp(IdxWD));
-		}
+		element(*this, POD, S[x], P[x]);
+		
+		// channel constraint
+		channel(*this, WD[x], W[x]);
 	}
-
-	// elements POD
-	for(int x = 0; x < pStowageInfo.Slots.size() ; x++)
-		element(*this, POD, S[x], P[x]);	
-
-
+	
 	//----------------------------------------- Loaded Container Constraints -------------------------
 	// Loaded Container
 	map<int, int> slotByStackFore;
@@ -84,11 +66,8 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		{
 			if(objContainer.GetCellId() <= pStowageInfo.CellNull[stack][y] ) nuCellNull++;
 		}
-		
-		//cout<<"cellCont "<<objContainer.GetCellId()<<" nuCellNull: "<<nuCellNull<<endl;
-		
+				
 		int cell = objContainer.GetCellId() - nuCellNull;
-		//cout<<"cell: "<<cell<<endl;
 		int position = objContainer.GetPosition();
 		int cantSlots = 0;
 		
@@ -474,17 +453,12 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	// Total Distance
 	linear(*this, GCD, FRT_EQ, GCTD);
 	
-	int countOper = ceil(pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() / 0.1);
-	BoolVarArray countGC(*this, countOper, 0, 1);
-	for(int x = 0; x < countOper ; x++)
-	{		
-		rel(*this, GCTD, FRT_GQ, (x * 0.1), eqv(countGC[x]));
-	}
-	
-	linear(*this, countGC, IRT_EQ, OGCTD);
+	FloatVar GCTDTmp(*this, 0, pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks() * 100);
+	rel(*this, GCTDTmp == GCTD * 100);
+	channel(*this, OGCTD, GCTDTmp);
 	
 	// Cost function
-	rel(*this, O == 1000 * OCNS + 100 * OV + 20 * OPT + 10 * OU + 5 * OR + 10 * OGCTD);
+	rel(*this, O == 1000 * OCNS + 100 * OV + 20 * OPT + 10 * OU + 5 * OR + OGCTD);
 		
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// Propagator

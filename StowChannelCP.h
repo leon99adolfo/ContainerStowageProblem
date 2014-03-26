@@ -39,9 +39,7 @@ class StowChannelCP: public IntMinimizeSpace
                 FloatVarArray  	WD;   	// Weight of container stowed in slot j.
                 IntVarArray     P;   	// POD of container stowed in slot j.
                 IntVarArray     HS;  	// Current height of stack k.
-                BoolVarArray    NVC;  	// No Virtual containers
-                BoolVarArray    CFEU_A;	// Is container 40' Aft?
-                BoolVarArray    CFEU_F;	// Is container 40' Fore?               
+                BoolVarArray    NVC;  	// No Virtual containers             
                 FloatVarArray	GCD;	// Gravity center distance
                 IntVar			OGCTD;	// Gravity Center total distance
                 IntVar          OV;  	// Number of over-stowing containers.
