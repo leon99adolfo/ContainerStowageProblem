@@ -10,7 +10,6 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
               WD (*this, (pStowageInfo.Slots.size() + pStowageInfo.GetNumContainerLoad()), 0, pStowageInfo._nuMaxWeight),
               P  (*this, (pStowageInfo.Slots.size() + pStowageInfo.GetNumContainerLoad()), 0, pStowageInfo._nuMaxPOD),
               HS (*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo._nuMaxStackHeight * 10000),
-              NVC (*this, (pStowageInfo.Slots.size() + pStowageInfo.Cont.size()), 0, 1),
               GCD(*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo.GetNumTiers()),
               OGCTD(*this, 0, pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() * 100),
               OV (*this, 0, pStowageInfo.Slots.size()),
@@ -125,6 +124,7 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 		// Variables POD
 		IntVarArgs PTempPODAft;
 		IntVarArgs PTempPODFore;
+		IntVarArgs PTempPODAftFore;
 		
 		for(int x = 0; x < size; x++)
 		{
@@ -159,6 +159,8 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 				PTempPODFore<<P[slot+1];
 			}
 			
+			PTempPODAftFore<<P[slot]<<P[slot+1];
+			
 			// full variable WeightTotal
 			WeightTotalArgs<<WD[slot]<<WD[slot + 1];
 						
@@ -171,19 +173,8 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 			
 			// ---------------------------------------------------------------------------------------				
 			// Gravitatory center In Y
-			FloatVar GCY40AF(*this, 0, (pStowageInfo._nuMaxWeight/2) * posY);
-			rel(*this, GCY40AF == WD[slot] * (posY/2));
-			rel(*this, GraviCentersY[(posY*2)], FRT_EQ, GCY40AF, imp(CFEU_A[countCont]));
-			
-			FloatVar GCY20A(*this, 0, pStowageInfo._nuMaxWeight * posY);
-			rel(*this, GCY20A == WD[slot] * posY);						
-			rel(*this, GraviCentersY[(posY*2)], FRT_EQ, GCY20A, imp(NegCFEU_A));
-			
-			rel(*this, GraviCentersY[(posY*2) + 1], FRT_EQ, GCY40AF, imp(CFEU_A[countCont]));
-			
-			FloatVar GCY20F(*this, 0, pStowageInfo._nuMaxWeight * posY);
-			rel(*this, GCY20F == WD[slot + 1] * posY);	
-			rel(*this, GraviCentersY[(posY*2) + 1], FRT_EQ, GCY20F, imp(NegCFEU_A));
+			rel(*this, GraviCentersY[(posY*2)] == WD[slot] * posY);
+			rel(*this, GraviCentersY[(posY*2) + 1] == WD[slot + 1] * posY);
 			posY++;
 				
 			// -----------------------------------------------------------------------------------
@@ -201,27 +192,16 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 		rel(*this, HS[countStaks], IRT_LQ, heigthStack); // Heigth limit	
 		
 		// ---------------------------------------------------------------------------------------------
-		// calculate the all weigth by stack
-		FloatVar WeightTotal(*this, 0, pStowageInfo._nuMaxWeight * size * 2);
-		linear(*this, WeightTotalArgs, FRT_EQ, WeightTotal);		
+		// Calculate gravity center in Y
+		FloatVar sumGraviCentersY(*this, 0, pStowageInfo._nuMaxWeight * size * size * 2);
+		linear(*this, GraviCentersY, FRT_EQ, sumGraviCentersY);
 		
-		BoolVar boRespDiv(*this, 0, 1), boNotRespDiv(*this, 0, 1);
-		rel(*this, WeightTotal, FRT_EQ, 0.0, eqv(boRespDiv));
-		rel(*this, WeightTotal, FRT_NQ, 0.0, eqv(boNotRespDiv));
+		WeightTotalArgs<<FloatVar(*this, 0.001, 0.001);		
+		FloatVar WeightTotal(*this, 0, (pStowageInfo._nuMaxWeight * size * 2) + 0.001);
+		linear(*this, WeightTotalArgs, FRT_EQ, WeightTotal);
 		
 		// Calculate gravity center in Y
-		FloatVar sumGraviCentersY(*this, 0, pStowageInfo._nuMaxWeight * size * size * 2);		
-		FloatVar WeightTotalTmp(*this, 0, pStowageInfo._nuMaxWeight * size * 2);
-		FloatVar sumGraviCentersYTmp(*this, 0, pStowageInfo._nuMaxWeight * size * size * 2);				
-				
-		rel(*this, WeightTotalTmp, FRT_EQ, 1.0, imp(boRespDiv));
-		rel(*this, WeightTotalTmp, FRT_EQ, WeightTotal, imp(boNotRespDiv));
-		
-		linear(*this, GraviCentersY, FRT_EQ, sumGraviCentersY);
-		rel(*this, sumGraviCentersYTmp, FRT_EQ, 0.0, imp(boRespDiv));
-		rel(*this, sumGraviCentersYTmp, FRT_EQ, sumGraviCentersY, imp(boNotRespDiv));
-				
-		div(*this, sumGraviCentersYTmp, WeightTotalTmp, GCY[countStaks]);			
+		div(*this, sumGraviCentersY, WeightTotal, GCY[countStaks]);			
 				
 		// calculate gravity center distance		
 		double unitStack = heigthStack / pStowageInfo.GetNumTiers();
@@ -242,28 +222,9 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 		// ---------------------------------------------------------------------------------------------
 		
 		// Goal OP
-		IntVar 	stackPODs(*this, 1, pStowageInfo.GetNumPortsDischarge() + 1),
-				minPODStack(*this, 0, pStowageInfo._nuMaxPOD);
+		IntVar 	stackPODs(*this, 0, pStowageInfo.GetNumPortsDischarge());
 		nvalues(*this, PTempPODAftFore, IRT_EQ, stackPODs);
-		
-		BoolVar	existPODnull(*this, 0, 1),
-				existPOD(*this, 0, 1),
-				manyPODs(*this, 0, 1),
-				onlyPODs(*this, 0, 1),
-				respPODS(*this, 0, 1),
-				respPODSnull(*this, 0, 1);
-		min(*this, PTempPODAftFore, minPODStack);		
-		rel(*this, stackPODs, IRT_GR, 1, eqv(manyPODs));
-		rel(*this, stackPODs, IRT_EQ, 1, eqv(onlyPODs));		
-		rel(*this, minPODStack, IRT_EQ, 0, eqv(existPODnull));
-		rel(*this, minPODStack, IRT_NQ, 0, eqv(existPOD));
-		rel(*this, manyPODs, BOT_AND, existPODnull, respPODS);
-		rel(*this, onlyPODs, BOT_AND, existPODnull, respPODSnull);
-				
-		linear(*this, IntVarArgs()<<stackPODs<<IntVar(*this, -2, -2), IRT_EQ, OP[countStaks], imp(respPODS)); // equal and null POD 
-		linear(*this, IntVarArgs()<<stackPODs<<IntVar(*this, -1, -1), IRT_EQ, OP[countStaks], imp(respPODSnull)); // equal and null POD 
-		linear(*this, IntVarArgs()<<stackPODs<<IntVar(*this, -1, -1), IRT_EQ, OP[countStaks], imp(existPOD)); // equal POD
-		
+		linear(*this, IntVarArgs()<<stackPODs<<IntVar(*this, -1, -1), IRT_EQ, OP[countStaks]);		
 		countStaks++;
     }
     
@@ -361,15 +322,7 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
     
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// Objective 
-	//////////////////////////////////////////////////////////////////////////////////////////////////
-
-	// Number of container stowed    
-    for(int x = 0; x < nuSlotsContainer; x++)
-    {	
-		// the container isn't virtual?
-		rel(*this, S[x], IRT_LE, pStowageInfo.Cont.size(), eqv(NVC[x]));
-	}
-	
+	//////////////////////////////////////////////////////////////////////////////////////////////////	
 	BoolVarArray NCS20Temp(*this, pStowageInfo.Slots.size(), 0, 1);
 	BoolVarArray NCS40Temp(*this, pStowageInfo.Slots.size(), 0, 1);	
 	for(int x = pStowageInfo.GetNumContainerLoad(); x < nuSlotsContainer; x++)
@@ -461,12 +414,9 @@ StowChannelCP::StowChannelCP(bool share, StowChannelCP& s): IntMinimizeSpace(sha
 	WD.update(*this, share, s.WD);
 	P.update(*this, share, s.P);
 	HS.update(*this, share, s.HS);
-	CFEU_A.update(*this, share, s.CFEU_A);
-	CFEU_F.update(*this, share, s.CFEU_F);
 	GCD.update(*this, share, s.GCD);
 	OV.update(*this, share, s.OV);
 	OVT.update(*this, share, s.OVT);
-	NVC.update(*this, share, s.NVC);
 	OCNS.update(*this, share, s.OCNS);
 	OU.update(*this, share, s.OU);
 	OP.update(*this, share, s.OP);
@@ -496,7 +446,6 @@ void StowChannelCP::print(int &pO, int &pOGCTD, int &pOR, string &pOP, int &pOPT
 	cout <<"GCD"<< GCD << endl << endl;
 	cout <<"OVT"<< OVT << endl << endl;
 	cout <<"OV "<< OV << endl << endl;
-	cout <<"NVC"<< NVC << endl << endl;
 	cout <<"OCNS "<< OCNS << endl << endl;
 	cout <<"OU "<< OU << endl << endl;
 	cout <<"OP "<< OP << endl << endl;	

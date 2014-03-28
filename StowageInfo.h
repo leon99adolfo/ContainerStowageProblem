@@ -41,6 +41,7 @@ class StowageInfo
                             
       public:
              /* Calculated variables */
+            int			_nuMinPOD;	   // maximum POD
             int			_nuMaxPOD;	   // maximum POD
             int         _nuMaxLength;  // maximum length
             double      _nuMaxHeight;  // maximum height

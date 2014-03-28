@@ -64,12 +64,19 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName, bool pChannelUse)
         if(x == 0)
         {
 			response._nuMaxPOD = nuPortDischarge;
+			response._nuMinPOD = nuPortDischarge;
 		}
 		
 		// save maximum POD
 		if( response._nuMaxPOD < nuPortDischarge )
 		{
 			response._nuMaxPOD = nuPortDischarge;
+		}
+		
+		// save manimum POD
+		if(response._nuMinPOD > nuPortDischarge)
+		{
+			response._nuMinPOD = nuPortDischarge;
 		}
 		           
         cout<<nuPortDischarge<<endl;     
@@ -305,8 +312,8 @@ map<int, ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoad
 		if( pIsVirtual )
 		{
 			nuStackIdCont = nuCellIdCont = nuPositionCont = dbWeigthCont = 
-			dbHeigthCont = nuLengthCont = nuPortDischargeCont = nuIsReeferCont =
-			nuLocationCont = 0;
+			dbHeigthCont = nuLengthCont = nuIsReeferCont = nuLocationCont = 0;
+			nuPortDischargeCont = response._nuMinPOD;
 		}
 		else
 		{
@@ -505,7 +512,9 @@ void BLReadFiles::ChargeContainerInfo(ContainerBox objContainer)
 		response.Cont_40_F.push_back(nuContainerIdx + 1);
 
 		// Insert Container Weight 
-        response.Weight[nuContainerIdx + 1] = 0;//objContainer.GetWeight();
+		int WeightContATmp = ceil(objContainer.GetWeight() / 2);
+		response.Weight[nuContainerIdx] = WeightContATmp;
+        response.Weight[nuContainerIdx + 1] = objContainer.GetWeight() - WeightContATmp;
 	
 	    // Insert Container POD 
 	    response.POD[nuContainerIdx + 1] = objContainer.GetPortDischarge();

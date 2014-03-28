@@ -7,7 +7,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
               H  (*this, pStowageInfo.Slots.size(), 0, pStowageInfo._nuMaxHeight * 10000),
               W  (*this, pStowageInfo.Slots.size(), 0, pStowageInfo._nuMaxWeight),
               WD (*this, pStowageInfo.Slots.size(), 0, pStowageInfo._nuMaxWeight),
-              P  (*this, pStowageInfo.Slots.size(), 0, pStowageInfo._nuMaxPOD),
+              P  (*this, pStowageInfo.Slots.size(), pStowageInfo._nuMinPOD, pStowageInfo._nuMaxPOD),
               HS (*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo._nuMaxStackHeight * 10000),
               NVC (*this, pStowageInfo.Slots.size(), 0, 1),
               CFEU_A(*this,(pStowageInfo.Slots.size()/2), 0, 1),
@@ -180,9 +180,9 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 					IsOverStowed20F(*this, 0, 1),
 					IsOverStowed40(*this, 0, 1);
 			// Get minimun value
-			IntVar 	minPODAft(*this, 0, pStowageInfo._nuMaxPOD), 
-					minPODFore(*this, 0, pStowageInfo._nuMaxPOD),  
-					minPODAftFore(*this, 0, pStowageInfo._nuMaxPOD);
+			IntVar 	minPODAft(*this, pStowageInfo._nuMinPOD, pStowageInfo._nuMaxPOD), 
+					minPODFore(*this, pStowageInfo._nuMinPOD, pStowageInfo._nuMaxPOD),  
+					minPODAftFore(*this, pStowageInfo._nuMinPOD, pStowageInfo._nuMaxPOD);
 			// Restriction min
 			min(*this, PTempPODAft, minPODAft);
 			min(*this, PTempPODFore, minPODFore);
@@ -190,7 +190,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			// This restriction is goal (POD)
 			rel(*this, P[slot], IRT_GR, minPODAft, eqv(IsOverStowed20A)); 
 			rel(*this, P[slot], IRT_GR, minPODFore, eqv(IsOverStowed20F)); 
-			rel(*this, P[slot], IRT_GR, minPODAftFore, eqv(IsOverStowed40));			
+			rel(*this, P[slot], IRT_GR, minPODAftFore, eqv(IsOverStowed40));
 			// Get solution Bool
 			BoolVar OverStow40(*this, 0, 1), OverStow20A(*this, 0, 1), OverStow20F(*this, 0, 1),
 					NotOverStow40(*this, 0, 1), NotOverStow20A(*this, 0, 1), NotOverStow20F(*this, 0, 1),
@@ -210,7 +210,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			rel(*this, NegCFEU_A, BOT_AND, IsOverStowed20F, OverStow20F);
 			rel(*this, NegCFEU_A, BOT_AND, NegIsOverStowed20F, NotOverStow20F);
 			
-			// This restriction is goal (POD) for container 40			
+			// This restriction is goal (POD) for container 40
 			rel(*this, OVT[countCont*2], IRT_EQ, 1, imp( OverStow40 ));
 			rel(*this, OVT[(countCont*2) + 1], IRT_EQ, 1, imp( OverStow40 ));
 			rel(*this, OVT[(countCont*2)], IRT_EQ, 0, imp( NotOverStow40 ));
@@ -224,21 +224,9 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			
 			// ---------------------------------------------------------------------------------------				
 			// Gravitatory center In Y
-			FloatVar GCY40AF(*this, 0, (pStowageInfo._nuMaxWeight/2) * posY);
-			rel(*this, GCY40AF == WD[slot] * (posY/2));			
-			rel(*this, GraviCentersY[(posY*2)], FRT_EQ, GCY40AF, imp(CFEU_A[countCont]));
-			
-			FloatVar GCY20A(*this, 0, pStowageInfo._nuMaxWeight * posY);
-			rel(*this, GCY20A == WD[slot] * posY);						
-			rel(*this, GraviCentersY[(posY*2)], FRT_EQ, GCY20A, imp(NegCFEU_A));
-			
-			rel(*this, GraviCentersY[(posY*2) + 1], FRT_EQ, GCY40AF, imp(CFEU_A[countCont]));
-			
-			FloatVar GCY20F(*this, 0, pStowageInfo._nuMaxWeight * posY);
-			rel(*this, GCY20F == WD[slot + 1] * posY);	
-			rel(*this, GraviCentersY[(posY*2) + 1], FRT_EQ, GCY20F, imp(NegCFEU_A));
-			posY++;
-				
+			rel(*this, GraviCentersY[(posY*2)] == WD[slot] * posY);
+			rel(*this, GraviCentersY[(posY*2) + 1] == WD[slot + 1] * posY);
+			posY++;				
 			// -----------------------------------------------------------------------------------
 						
 			countCont++;
@@ -253,28 +241,17 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		double heigthStack =  pStowageInfo.GetListStacks().at(countStaks).GetMaxHeigth()*10000;
 		rel(*this, HS[countStaks], IRT_LQ, heigthStack); // Heigth limit	
 		
-		// ---------------------------------------------------------------------------------------------
-		// calculate the all weigth by stack
-		FloatVar WeightTotal(*this, 0, pStowageInfo._nuMaxWeight * size * 2);
+		// ---------------------------------------------------------------------------------------------		
+		// Calculate gravity center in Y
+		FloatVar sumGraviCentersY(*this, 0, pStowageInfo._nuMaxWeight * size * size * 2);
+		linear(*this, GraviCentersY, FRT_EQ, sumGraviCentersY);
+		
+		WeightTotalArgs<<FloatVar(*this, 0.001, 0.001);		
+		FloatVar WeightTotal(*this, 0, (pStowageInfo._nuMaxWeight * size * 2) + 0.001);
 		linear(*this, WeightTotalArgs, FRT_EQ, WeightTotal);
 		
-		BoolVar boRespDiv(*this, 0, 1), boNotRespDiv(*this, 0, 1);
-		rel(*this, WeightTotal, FRT_EQ, 0.0, eqv(boRespDiv));
-		rel(*this, WeightTotal, FRT_NQ, 0.0, eqv(boNotRespDiv));
-		
 		// Calculate gravity center in Y
-		FloatVar sumGraviCentersY(*this, 0, pStowageInfo._nuMaxWeight * size * size * 2);		
-		FloatVar WeightTotalTmp(*this, 0, pStowageInfo._nuMaxWeight * size * 2);
-		FloatVar sumGraviCentersYTmp(*this, 0, pStowageInfo._nuMaxWeight * size * size * 2);				
-				
-		rel(*this, WeightTotalTmp, FRT_EQ, 1.0, imp(boRespDiv));
-		rel(*this, WeightTotalTmp, FRT_EQ, WeightTotal, imp(boNotRespDiv));
-		
-		linear(*this, GraviCentersY, FRT_EQ, sumGraviCentersY);
-		rel(*this, sumGraviCentersYTmp, FRT_EQ, 0.0, imp(boRespDiv));
-		rel(*this, sumGraviCentersYTmp, FRT_EQ, sumGraviCentersY, imp(boNotRespDiv));
-				
-		div(*this, sumGraviCentersYTmp, WeightTotalTmp, GCY[countStaks]);				
+		div(*this, sumGraviCentersY, WeightTotal, GCY[countStaks]);			
 			
 		// calculate gravity center distance		
 		double unitStack = heigthStack / pStowageInfo.GetNumTiers();
@@ -293,28 +270,9 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		// ---------------------------------------------------------------------------------------------
 		
 		// Goal OP
-		IntVar 	stackPODs(*this, 1, pStowageInfo.GetNumPortsDischarge() + 1),
-				minPODStack(*this, 0, pStowageInfo._nuMaxPOD);		
-		nvalues(*this, PTempPODAftFore, IRT_EQ, stackPODs);
-		
-		BoolVar	existPODnull(*this, 0, 1),
-				existPOD(*this, 0, 1),
-				manyPODs(*this, 0, 1),
-				onlyPODs(*this, 0, 1),
-				respPODS(*this, 0, 1),
-				respPODSnull(*this, 0, 1);
-		min(*this, PTempPODAftFore, minPODStack);		
-		rel(*this, stackPODs, IRT_GR, 1, eqv(manyPODs));
-		rel(*this, stackPODs, IRT_EQ, 1, eqv(onlyPODs));		
-		rel(*this, minPODStack, IRT_EQ, 0, eqv(existPODnull));
-		rel(*this, minPODStack, IRT_NQ, 0, eqv(existPOD));
-		rel(*this, manyPODs, BOT_AND, existPODnull, respPODS);
-		rel(*this, onlyPODs, BOT_AND, existPODnull, respPODSnull);
-				
-		linear(*this, IntVarArgs()<<stackPODs<<IntVar(*this, -2, -2), IRT_EQ, OP[countStaks], imp(respPODS)); // equal and null POD 
-		linear(*this, IntVarArgs()<<stackPODs<<IntVar(*this, -1, -1), IRT_EQ, OP[countStaks], imp(respPODSnull)); // equal and null POD 
-		linear(*this, IntVarArgs()<<stackPODs<<IntVar(*this, -1, -1), IRT_EQ, OP[countStaks], imp(existPOD)); // equal POD 
-		
+		IntVar 	stackPODs(*this, 0, pStowageInfo.GetNumPortsDischarge());		
+		nvalues(*this, PTempPODAftFore, IRT_EQ, stackPODs);		
+		linear(*this, IntVarArgs()<<stackPODs<<IntVar(*this, -1, -1), IRT_EQ, OP[countStaks]);
 		countStaks++;
     }
     
