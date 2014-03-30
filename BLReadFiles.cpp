@@ -508,8 +508,9 @@ void BLReadFiles::ChargeContainerInfo(ContainerBox objContainer)
 		response.Cont_40.push_back(nuContainerIdx + 1);
 	
 		// 40' Container Aft and Container Fore	
-		response.Cont_40_A.push_back(nuContainerIdx);
-		response.Cont_40_F.push_back(nuContainerIdx + 1);
+		response.Cont_40_A[nuContainerIdx] = nuContainerIdx;
+		response.Cont_40_F[nuContainerIdx + 1] = nuContainerIdx + 1;
+		
 
 		// Insert Container Weight 
 		int WeightContATmp = ceil(objContainer.GetWeight() / 2);

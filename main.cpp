@@ -62,7 +62,7 @@ void* Enviroment(string pDirFile, string pFile, bool pChannelUse, bool pnuTotalF
 		StowageCP* m = new StowageCP( objStowageInfo );	
 		BAB<StowageCP> e(m, so);
 		delete m;
-	
+		
 		// search and print all solutions
 		while (StowageCP* s = e.next()) {
 			s->print(O, OGCTD, OR, OP, OPT, OU, OCNS, OV, SL); 
@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
 {
 	//int file_count = 0;
 	string full_path = "/home/adolfo/Universidad/maestria/tesis/inst2/";
-	bool boChannelUse = false;
+	bool boChannelUse = true;
 	bool boTotalFile = true;
     
     cout<<"Empieza a procesar"<<endl;

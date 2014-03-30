@@ -65,8 +65,8 @@ class StowageInfo
             vector<int>        	Cont_L;      	// Loaded containers index set
             vector<int>         Cont_20;        // 20' containers index set
             vector<int>         Cont_40;        // 40' containers index set
-            vector<int>         Cont_40_A;      // 40' containers index set (Aft)
-            vector<int>         Cont_40_F;      // 40' containers index set (Fore)
+            map<int, int>       Cont_40_A;      // 40' containers index set (Aft)
+            map<int, int>       Cont_40_F;      // 40' containers index set (Fore)            
             vector<int>         Cont_20_R;      // 20' reefer containers index set
             vector<int>         Cont_40_R;      // 40' reefer containers index set
             vector<int>         Cont_NR;        // Non-reefer containers index set

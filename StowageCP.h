@@ -49,7 +49,7 @@ class StowageCP: public IntMinimizeSpace
                 IntVar          OU;  // Number of used stacks. 
                 IntVarArray     OP;  // Number of different discharge ports in each stack.
                 IntVar          OR;  // Number of container non-reefers stowed in reefer cells.
-                IntVar          O;   // Solution Cost.  
+                IntVar          O;   // Solution Cost.
       public:
             /**
              * Constructor:

@@ -2,6 +2,7 @@
 
 StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
               // Domain Variables              
+              VSC(*this, (pStowageInfo.Slots.size() + pStowageInfo.GetNumContainerLoad()), 0, 1),
 			  C  (*this, (pStowageInfo.Slots.size() + pStowageInfo.GetNumContainerLoad()), 0, (pStowageInfo.Slots.size() + pStowageInfo.GetNumContainerLoad())),
               S  (*this, (pStowageInfo.Slots.size() + pStowageInfo.GetNumContainerLoad()), 0, (pStowageInfo.Slots.size() + pStowageInfo.GetNumContainerLoad())),
               L  (*this, (pStowageInfo.Slots.size() + pStowageInfo.GetNumContainerLoad()), 0, pStowageInfo._nuMaxLength),
@@ -12,14 +13,11 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
               HS (*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo._nuMaxStackHeight * 10000),
               GCD(*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo.GetNumTiers()),
               OGCTD(*this, 0, pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() * 100),
-              OV (*this, 0, pStowageInfo.Slots.size()),
-			  OVT(*this, pStowageInfo.Slots.size(), 0, 1),
 			  OCNS(*this, 0, pStowageInfo.Slots.size()), 
               OU (*this, 0, pStowageInfo.GetNumStacks()),
               OP (*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo.GetNumPortsDischarge()),
               OR (*this, 0, pStowageInfo.Slots_R.size()),
-              O  (*this, 0, (1000 * pStowageInfo.GetNumContainerLoad()) + 
-							(100 * pStowageInfo.Cont.size() -1) + 
+              O  (*this, 0, (1000 * pStowageInfo.GetNumContainerLoad()) +
 							(20 * pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks()) + 
 							(10 * pStowageInfo.GetNumStacks()) +
 							(5 * pStowageInfo.Slots_R.size()) +
@@ -37,13 +35,28 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 	
 	for(int x = 0; x < nuSlotsContainer ; x++)
 	{
+		// element contraint
 		element(*this, Length, S[x], L[x]);
 		element(*this, Height, S[x], H[x]);
 		element(*this, Weight, S[x], W[x]);
 		element(*this, POD, S[x], P[x]);
+		// channel contraint
 		channel(*this, WD[x], W[x]);
+		
+		if ( pStowageInfo.Cont_40_F.find(x) != pStowageInfo.Cont_40_F.end())
+		{
+			rel(*this, VSC[x] == 0);
+		}
+		else if( x < pStowageInfo.GetNumContainerLoad() )
+		{
+			element(*this, OverCont, C[x], VSC[x]);
+		}
+		else
+		{
+			rel(*this, VSC[x] == 0);
+		}
 	}
-	
+
 	//----------------------------------------- Loaded Container Constraints -------------------------
 	// Loaded Container
 	map<int, int> slotByStackFore;
@@ -95,10 +108,10 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 				break;
 		}
 	}
-	
+
 	//-------------------------- Container 40  ----------------------------------
-	for(int z = 0; z < pStowageInfo.Cont_40_A.size(); z++)
-		rel(*this, C[pStowageInfo.Cont_40_A[z] + 1] == C[pStowageInfo.Cont_40_A[z]] + 1);
+	//for(int z = 0; z < pStowageInfo.Cont_40_A.size(); z++)
+		//rel(*this, C[pStowageInfo.Cont_40_A[z] + 1] == C[pStowageInfo.Cont_40_A[z]] + 1);
 	
 	
 	//-------------------------- Regular Constraints and Height Constraints ----------------------------------
@@ -168,8 +181,8 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 			linear(*this, slotsCellWeight, IRT_EQ, WTempWeight[x]);		
 			
 			// Only stowed container 40 aft
-			for(int z = 0; z < pStowageInfo.Cont_40_F.size() ; z++)
-				rel(*this, S[slot], IRT_NQ, pStowageInfo.Cont_40_F[z]);
+			for (map<int, int>::iterator it=pStowageInfo.Cont_40_F.begin(); it != pStowageInfo.Cont_40_F.end(); ++it)
+				rel(*this, S[slot], IRT_NQ, it->second);
 			
 			// ---------------------------------------------------------------------------------------				
 			// Gravitatory center In Y
@@ -239,8 +252,8 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 			int slot = (it->second)[x];
 			
 			// Only stowed container 40 fore
-			for(int z = 0; z < pStowageInfo.Cont_40_A.size() ; z++)
-				rel(*this, S[slot], IRT_NQ, pStowageInfo.Cont_40_A[z]);			
+			for (map<int, int>::iterator it=pStowageInfo.Cont_40_A.begin(); it != pStowageInfo.Cont_40_A.end(); ++it)
+				rel(*this, S[slot], IRT_NQ, it->second);
 			
 			// Get Length
 			IntVar varTmpLength( L[slot] );
@@ -252,7 +265,7 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 		extensional(*this, LTempLength, d);  // regular constraint
 		linear(*this, HTempHeight, IRT_LQ, HS[ (it->first) - 1 ] ); // Height limit constraint
     }
-		
+	
 	//----------------------------------------- Slots no-reffer Constraints ----------------------------------
 	// Slot ¬R	
     for(int x = 0; x < pStowageInfo.Slots_NR.size() ; x++)
@@ -314,7 +327,7 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 			WTempWeight[x] = varTmpWeight;
 		}	
 		
-		double dbMaxWeight = pStowageInfo.GetListStacks()[ ((it->first) - 1 ) ].GetMaxWeigth();		
+		double dbMaxWeight = pStowageInfo.GetListStacks()[ ((it->first) - 1 ) ].GetMaxWeigth();
 		linear(*this, WTempWeight, IRT_LQ, dbMaxWeight ); // Weight limit constraint
 		linear(*this, WTempWeight, IRT_GR, 0, eqv(OUT[idxOUT]));
 		idxOUT++;
@@ -323,22 +336,19 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// Objective 
 	//////////////////////////////////////////////////////////////////////////////////////////////////	
-	BoolVarArray NCS20Temp(*this, pStowageInfo.Slots.size(), 0, 1);
-	BoolVarArray NCS40Temp(*this, pStowageInfo.Slots.size(), 0, 1);	
-	for(int x = pStowageInfo.GetNumContainerLoad(); x < nuSlotsContainer; x++)
+	BoolVarArray NCS20Temp(*this, pStowageInfo.GetNumContainerLoad(), 0, 1);
+	BoolVarArray NCS40Temp(*this, pStowageInfo.GetNumContainerLoad(), 0, 1);	
+	for(int x = pStowageInfo.Slots.size(); x < nuSlotsContainer; x++)
     {
-		rel(*this, L[x], IRT_EQ, 20, eqv(NCS20Temp[x-pStowageInfo.GetNumContainerLoad()])); 
-		rel(*this, L[x], IRT_EQ, 40, eqv(NCS40Temp[x-pStowageInfo.GetNumContainerLoad()])); 
+		rel(*this, L[x], IRT_EQ, 20, eqv(NCS20Temp[x-pStowageInfo.Slots.size()])); 
+		rel(*this, L[x], IRT_EQ, 40, eqv(NCS40Temp[x-pStowageInfo.Slots.size()])); 
 	}
 	
-	IntVar NCS20(*this, 0, pStowageInfo.Slots.size());
-	IntVar NCS40(*this, 0, pStowageInfo.Slots.size());
+	IntVar NCS20(*this, 0, pStowageInfo.GetNumContainerLoad());
+	IntVar NCS40(*this, 0, pStowageInfo.GetNumContainerLoad());
 	linear(*this, NCS20Temp, IRT_EQ, NCS20);
 	linear(*this, NCS40Temp, IRT_EQ, NCS40);
-	rel(*this, OCNS == NCS20 + (NCS40/2));
-	
-	// Get Over-stowing container
-	linear(*this, OVT, IRT_EQ, OV); 
+	rel(*this, OCNS == NCS20 + (NCS40/2));	
 	
 	// Get empty stack
 	linear(*this, OUT, IRT_EQ, OU);
@@ -365,12 +375,18 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 	// Total Distance   
 	linear(*this, GCD, FRT_EQ, GCTD);
 	
-	FloatVar GCTDTmp(*this, 0, pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks() * 100);
+	int costGCTD = pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks() * 100;
+	FloatVar GCTDTmp(*this, 0, costGCTD);
 	rel(*this, GCTDTmp == GCTD * 100);
-	channel(*this, OGCTD, GCTDTmp);
+	//channel(*this, OGCTD, GCTDTmp);
 	
+	BoolVarArgs GCTDArray(*this, costGCTD, 0, 1);
+	for(int x = 0; x < costGCTD; x++) rel(*this, GCTDTmp, FRT_GR, x + 1, eqv(GCTDArray[x]));
+	linear(*this, GCTDArray, IRT_EQ, OGCTD);
+
+	//rel(*this, S[78] == 0);
 	// Cost function
-	rel(*this, O == 1000 * OCNS + 100 * OV + 20 * OPT + 10 * OU + 5 * OR + OGCTD);
+	rel(*this, O == 1000 * OCNS + 20 * OPT + 10 * OU + 5 * OR + OGCTD);
 	
 	
 	//////////////////////////////////////////////////////////////////////////////////////////////////
@@ -406,6 +422,7 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 // search support
 StowChannelCP::StowChannelCP(bool share, StowChannelCP& s): IntMinimizeSpace(share, s)
 {	
+	VSC.update(*this, share, s.VSC);
 	C.update(*this, share, s.C);
 	S.update(*this, share, s.S);
 	L.update(*this, share, s.L);
@@ -415,8 +432,6 @@ StowChannelCP::StowChannelCP(bool share, StowChannelCP& s): IntMinimizeSpace(sha
 	P.update(*this, share, s.P);
 	HS.update(*this, share, s.HS);
 	GCD.update(*this, share, s.GCD);
-	OV.update(*this, share, s.OV);
-	OVT.update(*this, share, s.OVT);
 	OCNS.update(*this, share, s.OCNS);
 	OU.update(*this, share, s.OU);
 	OP.update(*this, share, s.OP);
@@ -435,23 +450,22 @@ Space* StowChannelCP::copy(bool share)
 void StowChannelCP::print(int &pO, int &pOGCTD, int &pOR, string &pOP, int &pOPT, int &pOU, int &pOCNS, int &pOV, string &pS, int nuContainer) const 
 {
 	cout << "Salida" << endl;
-	//cout <<"C"<< C << endl << endl;
-    cout <<"S"<< S << endl << endl;
-	/*cout <<"L"<< L << endl << endl;
+	cout <<"C"<< C << endl << endl;
+    cout <<"S "<< S << endl << endl;
+    cout <<"VSC "<< VSC << endl << endl;
+	cout <<"L"<< L << endl << endl;
 	cout <<"H"<< H << endl << endl;
 	cout <<"W"<< W << endl << endl;
 	cout <<"WD"<< WD << endl << endl;
 	cout <<"P"<< P << endl << endl;
-	/*cout <<"HS"<< HS << endl << endl;	
+	cout <<"HS"<< HS << endl << endl;	
 	cout <<"GCD"<< GCD << endl << endl;
-	cout <<"OVT"<< OVT << endl << endl;
-	cout <<"OV "<< OV << endl << endl;
 	cout <<"OCNS "<< OCNS << endl << endl;
 	cout <<"OU "<< OU << endl << endl;
 	cout <<"OP "<< OP << endl << endl;	
 	cout <<"OR "<< OR << endl << endl;
 	cout <<"OGCTD "<< OGCTD << endl << endl;
-	cout <<"O "<< O << endl << endl;*/
+	cout <<"O "<< O << endl << endl;
 	
 	pO = 0;
 	pO = O.val();
@@ -484,7 +498,6 @@ void StowChannelCP::print(int &pO, int &pOGCTD, int &pOR, string &pOP, int &pOPT
 	pOCNS = 0;
 	pOCNS = OCNS.val();
 	pOV = 0;
-	pOV = OV.val();
 
 	stringstream ss2;
 	stringstream ss3;
@@ -578,15 +591,28 @@ void StowChannelCP::ChargeInformation(StowageInfo pStowageInfo)
     {
 		ContTemp_40.push_back(x);
 	}
-	
+
     Cont_40 = IntArgs( ContTemp_40 );
     
-	   
     // 40' reefer containers index set
     Cont_40_R = IntArgs( pStowageInfo.Cont_40_R );
         
     // 20' reefer containers index set
     Cont_20_R = IntArgs( pStowageInfo.Cont_20_R );
+
+	// OverStowage container
+	OverCont = IntArgs( nuSlotsCont );	
+	for(int x = 0; x < nuSlotsCont ; x++)
+	{
+		if( x < pStowageInfo.Slots.size() )
+		{
+			OverCont[x] = 0;
+		}
+		else
+		{
+			OverCont[x] = 1;
+		}
+	}
 
     // Weight of container i 
 	Weight = IntArgs( nuSlotsCont );
@@ -600,7 +626,6 @@ void StowChannelCP::ChargeInformation(StowageInfo pStowageInfo)
 		{
 			Weight[x] = pStowageInfo.Weight[x];
 		}
-		
 	}
     
 	// Ports of discharges of container i
@@ -609,7 +634,7 @@ void StowChannelCP::ChargeInformation(StowageInfo pStowageInfo)
 	{
 		if( pStowageInfo.POD.find(x) == pStowageInfo.POD.end() )
 		{
-			POD[x] = 0;
+			POD[x] = pStowageInfo._nuMinPOD;
 		}
 		else
 		{

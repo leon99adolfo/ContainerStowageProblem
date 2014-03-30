@@ -1,7 +1,7 @@
 #include "StowageCP.h"
 
 StowageCP::StowageCP(StowageInfo pStowageInfo):
-              // Domain Variables              
+              // Domain Variables    
               S  (*this, pStowageInfo.Slots.size(), 0, (pStowageInfo.Cont.size() - 1)),
               L  (*this, pStowageInfo.Slots.size(), 0, pStowageInfo._nuMaxLength),
               H  (*this, pStowageInfo.Slots.size(), 0, pStowageInfo._nuMaxHeight * 10000),
@@ -111,6 +111,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	int countStaks = 0;
 	FloatVarArray GCY(*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo.GetNumTiers());
 	FloatVar GCTD(*this, 0, pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks());
+	
 	// regular constraint Stack-Aft
 	for (map<int, vector<int> >::iterator it=pStowageInfo.Slots_K_A.begin(); it != pStowageInfo.Slots_K_A.end(); ++it)
     {
@@ -168,8 +169,8 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			linear(*this, IntVarArgs()<<S[slot]<<IntVar(*this, 1, 1), IRT_EQ, S[slot+1], imp(CFEU_A[countCont]));
 			
 			// Only stowed container 40 aft
-			for(int z = 0; z < pStowageInfo.Cont_40_F.size() ; z++)
-				rel(*this, S[slot], IRT_NQ, pStowageInfo.Cont_40_F[z]);
+			for (map<int, int>::iterator it=pStowageInfo.Cont_40_F.begin(); it != pStowageInfo.Cont_40_F.end(); ++it)
+				rel(*this, S[slot], IRT_NQ, it->second);
 							
 			// ---------------------------------------------------------------------------------------
 			// This restriction is goal (POD)
@@ -292,8 +293,8 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			countCont++;
 			
 			// Only stowed container 40 fore
-			for(int z = 0; z < pStowageInfo.Cont_40_A.size() ; z++)
-				rel(*this, S[slot], IRT_NQ, pStowageInfo.Cont_40_A[z]);
+			for (map<int, int>::iterator it=pStowageInfo.Cont_40_A.begin(); it != pStowageInfo.Cont_40_A.end(); ++it)
+				rel(*this, S[slot], IRT_NQ, it->second);
 			
 			// Get Length
 			IntVar varTmpLength( L[slot] );
@@ -350,6 +351,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			dom(*this, S[ pStowageInfo.Slots_40[x] ], SetCont40);			
 		}
 	}
+	
 	//----------------------------------------- Weight limit Constraints ----------------------------------
 	BoolVarArray OUT(*this, pStowageInfo.GetNumStacks(), 0, 1);
 	// weight constraints
@@ -382,7 +384,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	linear(*this, CFEU_F, IRT_EQ, C40F);
 	int numberContainer = pStowageInfo.GetNumContainerLoad() + pStowageInfo.GetNumContainerLoaded();
 	rel(*this, OCNS == numberContainer - (CS - C40F)); // (-1) for container virtual
-		
+	
 	// Get Over-stowing container
 	linear(*this, OVT, IRT_EQ, OV); 
 	
@@ -410,14 +412,20 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	
 	// Total Distance
 	linear(*this, GCD, FRT_EQ, GCTD);
-	
-	FloatVar GCTDTmp(*this, 0, pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks() * 100);
-	rel(*this, GCTDTmp == GCTD * 100);
-	channel(*this, OGCTD, GCTDTmp);
-	
-	// Cost function
-	rel(*this, O == 1000 * OCNS + 100 * OV + 20 * OPT + 10 * OU + 5 * OR + OGCTD);
 		
+	int costGCTD = pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks() * 100;
+	FloatVar GCTDTmp(*this, 0, costGCTD);
+	rel(*this, GCTDTmp == GCTD * 100);
+	//channel(*this, OGCTD, GCTDTmp);
+	
+	BoolVarArgs GCTDArray(*this, costGCTD, 0, 1);
+	for(int x = 0; x < costGCTD; x++) rel(*this, GCTDTmp, FRT_GR, x + 1, eqv(GCTDArray[x]));
+	linear(*this, GCTDArray, IRT_EQ, OGCTD);
+
+	// --------------------------------------------------------------------------------------
+	// --------------------------- Cost function --------------------------------------------
+	// --------------------------------------------------------------------------------------
+	rel(*this, O == 1000 * OCNS + 100 * OV + 20 * OPT + 10 * OU + 5 * OR + OGCTD);	
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// Propagator
 	//////////////////////////////////////////////////////////////////////////////////////////////////
@@ -466,7 +474,7 @@ StowageCP::StowageCP(bool share, StowageCP& s): IntMinimizeSpace(share, s)
 	OP.update(*this, share, s.OP);
 	OR.update(*this, share, s.OR);
 	OGCTD.update(*this, share, s.OGCTD);
-	O.update(*this, share, s.O);
+	O.update(*this, share, s.O);	
 }
   
 // Copy solution  
@@ -478,7 +486,7 @@ Space* StowageCP::copy(bool share)
 // print solution
 void StowageCP::print(int &pO, int &pOGCTD, int &pOR, string &pOP, int &pOPT, int &pOU, int &pOCNS, int &pOV, string &pS) const 
 {
-	//cout << "Salida" << endl;
+	//cout << "Salida" << endl;	
     cout <<"S"<< S << endl << endl;
 	cout <<"L"<< L << endl << endl;
 	cout <<"H"<< H << endl << endl;

@@ -29,8 +29,10 @@ class StowChannelCP: public IntMinimizeSpace
 				IntArgs 			POD;        // Ports of discharges of container i
 				IntArgs				Length;     // Lenght of container i
 				IntArgs				Height;     // Height of container i
+				IntArgs				OverCont;     // Height of container i
                                    
       protected:
+				IntVarArray     VSC;   	// Slots index of container j.
 				IntVarArray     C;   	// Slots index of container j.
                 IntVarArray     S;   	// Container index of slot j.
                 IntVarArray     L;   	// Length of container stowed in slot j.
@@ -41,8 +43,6 @@ class StowChannelCP: public IntMinimizeSpace
                 IntVarArray     HS;  	// Current height of stack k.         
                 FloatVarArray	GCD;	// Gravity center distance
                 IntVar			OGCTD;	// Gravity Center total distance
-                IntVar          OV;  	// Number of over-stowing containers.
-				IntVarArray     OVT; 	// Container j over-stowing temporal.
 				IntVar			OCNS; 	// Number of container not stowed.				
                 IntVar          OU;  // Number of used stacks. 
                 IntVarArray     OP;  // Number of different discharge ports in each stack.
