@@ -31,6 +31,16 @@ int     StowageInfo::GetNumContainerLoaded()
         return _numContainerLoaded;        
 }
 
+void    StowageInfo::SetNumVirtualCont(int pNumVirtualCont)
+{
+        _numVirtualCont = pNumVirtualCont;
+}
+
+int     StowageInfo::GetNumVirtualCont()
+{
+        return _numVirtualCont;
+}
+
 void    StowageInfo::SetNumStacks(int pNumStacks)
 {
         _numStacks = pNumStacks;       

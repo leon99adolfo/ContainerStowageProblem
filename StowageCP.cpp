@@ -396,15 +396,19 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	linear(*this, OP, IRT_EQ, OPT);
 	
 	// Container no-reffer in slots reffer
+	int contSlotR = 0;
 	BoolVarArray StowedSlotR(*this, pStowageInfo.Slots_R.size(), 0, 1); 
-	for(int x = 0; x < pStowageInfo.Slots_R.size() ; x++)
+	for (map<int, int>::iterator itSt=pStowageInfo.Slots_R.begin(); itSt != pStowageInfo.Slots_R.end(); ++itSt)
 	{
+		int contNRSlotR = 0;
 		BoolVarArray isContNRSlotR(*this, pStowageInfo.Cont_NR.size(), 0, 1); 
-		for(int y = 0; y < pStowageInfo.Cont_NR.size() ; y++)
+		for (map<int, int>::iterator it=pStowageInfo.Cont_NR.begin(); it != pStowageInfo.Cont_NR.end(); ++it)
 		{
-			rel(*this, S[ pStowageInfo.Slots_R[x] ], IRT_EQ, pStowageInfo.Cont_NR[y], eqv(isContNRSlotR[y]));
+			rel(*this, S[ (itSt->second) ], IRT_EQ, (it->second), eqv(isContNRSlotR[contNRSlotR]));
+			contNRSlotR++;
 		}
-		linear(*this, isContNRSlotR, IRT_NQ, 0, eqv(StowedSlotR[x]));		
+		linear(*this, isContNRSlotR, IRT_NQ, 0, eqv(StowedSlotR[contSlotR]));
+		contSlotR++;
 	}
 	
 	// objetive reffer

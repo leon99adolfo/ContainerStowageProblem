@@ -52,6 +52,7 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName, bool pChannelUse)
     response.SetNumStacks(nuStacks);
     response.SetNumLocations(nuLocations);
     response.SetNumTiers(nuTiers);
+    response.SetNumVirtualCont(nuContainerLoad);
     
     // Read Tag #POD
     archivoAr>>sbTagDummy;
@@ -219,7 +220,7 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName, bool pChannelUse)
 		// Insert slots reefer and not reefer
 		if( nuIsReeferAft  == objConstants.verdadero )
 		{
-			response.Slots_R.push_back( idxFirstTemp );
+			response.Slots_R[idxFirstTemp] = idxFirstTemp;
 		}
 		else
 		{
@@ -231,7 +232,7 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName, bool pChannelUse)
 		// Insert slots reefer and not reefer
 		if( nuIsReeferFore == objConstants.verdadero) 
 		{
-			response.Slots_R.push_back( idxSecondTemp );
+			response.Slots_R[idxSecondTemp] = idxSecondTemp;
 		}
 		else
 		{
@@ -491,7 +492,7 @@ void BLReadFiles::ChargeContainerInfo(ContainerBox objContainer)
 		}
 		else
 		{
-			response.Cont_NR.push_back(nuContainerIdx);
+			response.Cont_NR[nuContainerIdx] = nuContainerIdx;
 		}
 		 
 	}
@@ -500,18 +501,22 @@ void BLReadFiles::ChargeContainerInfo(ContainerBox objContainer)
         if(objContainer.GetIsCharged())
         {
             // Insert Container loaded
-		    response.Cont_L.push_back(nuContainerIdx + 1);                             
+		    response.Cont_L.push_back(nuContainerIdx + 1);
         }
-             
+        else
+        {
+			int numVirtualCont = response.GetNumVirtualCont() + 1;
+			response.SetNumVirtualCont(numVirtualCont);
+		}
+                      
 		// Insert 40' Container
 		response.Cont_40.push_back(nuContainerIdx);
 		response.Cont_40.push_back(nuContainerIdx + 1);
-	
+		
 		// 40' Container Aft and Container Fore	
 		response.Cont_40_A[nuContainerIdx] = nuContainerIdx;
 		response.Cont_40_F[nuContainerIdx + 1] = nuContainerIdx + 1;
-		
-
+	
 		// Insert Container Weight 
 		int WeightContATmp = ceil(objContainer.GetWeight() / 2);
 		response.Weight[nuContainerIdx] = WeightContATmp;
@@ -534,8 +539,8 @@ void BLReadFiles::ChargeContainerInfo(ContainerBox objContainer)
 		}
 		else
 		{
-			response.Cont_NR.push_back(nuContainerIdx);
-			response.Cont_NR.push_back(nuContainerIdx + 1);
+			response.Cont_NR[nuContainerIdx] = nuContainerIdx;
+			response.Cont_NR[nuContainerIdx + 1] = nuContainerIdx + 1;
 		}
 		
 		nuContainerIdx++;
@@ -605,8 +610,8 @@ void BLReadFiles::PrintingData()
      
     // Reefer slot index set
     cout<<endl<<"Reefer slot index set"<<endl;
-    for(int x = 0; x < response.Slots_R.size() ; x++)
-        cout<<response.Slots_R[x]<<" "; 	
+    for (map<int, int>::iterator it=response.Slots_R.begin(); it != response.Slots_R.end(); ++it)
+        cout<<it->second<<" "<<endl;    
      
     // Non Reefer slot index set
     cout<<endl<<"Non Reefer slot index set"<<endl;
@@ -670,8 +675,8 @@ void BLReadFiles::PrintingData()
         
     // Non-reefer containers index set
     cout<<endl<<"Non-reefer containers index set"<<endl;
-    for(int x = 0; x < response.Cont_NR.size() ; x++)
-        cout<<response.Cont_NR[x]<<" ";     
+    for (map<int, int>::iterator it=response.Cont_NR.begin(); it != response.Cont_NR.end(); ++it)
+        cout<<it->second<<" "<<endl;
      
     // Weight of container i        	
     cout<<endl<<"Weight of container i"<<endl;

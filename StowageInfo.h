@@ -21,6 +21,7 @@ class StowageInfo
               // ------------------------ Properties ------------------------------- 
               int                    _numPortsDischarge;
               int                    _numContainerLoad;
+              int                    _numVirtualCont;
               int                    _numContainerLoaded;
               int                    _numStacks;
               int                    _numCell;
@@ -56,7 +57,7 @@ class StowageInfo
             map<int, vector<int> >Slots_K;     	// Slots of stack K index set
             map<int, vector<int> >Slots_K_A;   	// Aft slots of stack K index set
 			map<int, vector<int> >Slots_K_F;	// Fore slots of stack K index set
-			vector<int>        	Slots_R;     	// Reefer slot index set
+			map<int, int>      	Slots_R;     	// Reefer slot index set
 			vector<int>    		Slots_NR;    	// Non Reefer slot index set
 			vector<int>    		Slots_NRC;   	// Slots in cell with no reefer plugs index set
             vector<int>        	Slots_20;    	// 20' capacity slots index set
@@ -69,7 +70,7 @@ class StowageInfo
             map<int, int>       Cont_40_F;      // 40' containers index set (Fore)            
             vector<int>         Cont_20_R;      // 20' reefer containers index set
             vector<int>         Cont_40_R;      // 40' reefer containers index set
-            vector<int>         Cont_NR;        // Non-reefer containers index set
+            map<int, int>       Cont_NR;        // Non-reefer containers index set
             map<int, vector<int> >CellNull;     	// null Cell
 			map<int, double>    Weight;      	// Weight of container i
             map<int, int> 		POD;         	// Ports of discharges of container i
@@ -114,6 +115,17 @@ class StowageInfo
     		 *	LocationId Property GET
     		 */
              int     GetNumContainerLoaded();
+             
+             /**
+    		 *	SetNumVirtualCont Property SET
+    		 *	@param pNumVirtualCont
+    		 */
+             void    SetNumVirtualCont(int pNumVirtualCont);
+             /**
+    		 *	GetNumVirtualCont Property GET
+    		 */
+             int     GetNumVirtualCont();
+             
              
              /**
     		 *	NumStacks Property SET
