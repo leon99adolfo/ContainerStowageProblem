@@ -29,6 +29,7 @@ class StowageCP: public IntMinimizeSpace
 				IntArgs 			POD;        // Ports of discharges of container i
 				IntArgs				Length;     // Lenght of container i
 				IntArgs				Height;     // Height of container i
+				IntArgs				ContNonReefer; // container non reefer
                                    
       protected:
                 IntVarArray     S;   	// Container index of slot j.

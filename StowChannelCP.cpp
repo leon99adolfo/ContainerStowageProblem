@@ -1,9 +1,7 @@
 #include "StowChannelCP.h"
 
 StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
-              // Domain Variables     
-              NRSR(*this,(pStowageInfo.Slots.size() + pStowageInfo.GetNumVirtualCont()), 0, 1),
-              VSC(*this, (pStowageInfo.Slots.size() + pStowageInfo.GetNumVirtualCont()), 0, 1),
+              // Domain Variables              
 			  C  (*this, (pStowageInfo.Slots.size() + pStowageInfo.GetNumVirtualCont()), 0, (pStowageInfo.Slots.size() + pStowageInfo.GetNumVirtualCont())),
               S  (*this, (pStowageInfo.Slots.size() + pStowageInfo.GetNumVirtualCont()), 0, (pStowageInfo.Slots.size() + pStowageInfo.GetNumVirtualCont())),
               L  (*this, (pStowageInfo.Slots.size() + pStowageInfo.GetNumVirtualCont()), 0, pStowageInfo._nuMaxLength),
@@ -33,7 +31,8 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 		
 	//----------------------------------------- Element Constraints -------------------------------
 	int nuSlotsContainer = pStowageInfo.Slots.size() + pStowageInfo.GetNumVirtualCont();
-	
+	IntVarArray VSC(*this, pStowageInfo.GetNumVirtualCont() , 0, 1);
+		
 	for(int x = 0; x < nuSlotsContainer ; x++)
 	{
 		// element contraint
@@ -44,29 +43,29 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 		// channel contraint
 		channel(*this, WD[x], W[x]);
 		
-		// no restriction for container stowed
-		if ( pStowageInfo.Cont_40_F.find(x) != pStowageInfo.Cont_40_F.end())
+		// no restriction for container stowed		
+		if( x < pStowageInfo.GetNumVirtualCont() )
 		{
-			rel(*this, VSC[x] == 0);
+			if ( pStowageInfo.Cont_40_F.find(x) != pStowageInfo.Cont_40_F.end())
+			{
+				rel(*this, VSC[x] == 0);
+			}
+			else
+			{
+				element(*this, OverCont, C[x], VSC[x]);
+			}
 		}
-		else if( x < pStowageInfo.GetNumVirtualCont() )
-		{
-			element(*this, OverCont, C[x], VSC[x]);
-		}
-		else
-		{
-			rel(*this, VSC[x] == 0);
-		}
-		
-		// element constraint for non reefer container in reefer slot 
-		if( pStowageInfo.Slots_R.find(x) != pStowageInfo.Slots_R.end() )
-		{
-			element(*this, ContNonReefer, S[x], NRSR[x]);
-		}
-		else
-		{
-			rel(*this, NRSR[x] == 0);
-		}
+	}
+	
+	//--------------------------------------------------------------------------------------------------
+	
+	IntVarArray NRSR(*this, pStowageInfo.Slots_R.size(), 0, 1);
+	// reefer Slots
+	int nuConSlotR = 0;
+	for (map<int, int>::iterator itSt=pStowageInfo.Slots_R.begin(); itSt != pStowageInfo.Slots_R.end(); ++itSt)
+	{
+		element(*this, ContNonReefer, S[ (itSt->second) ], NRSR[nuConSlotR]);
+		nuConSlotR++;
 	}
 
 	//----------------------------------------- Loaded Container Constraints -------------------------
@@ -138,8 +137,8 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 	for (map<int, vector<int> >::iterator it=pStowageInfo.Slots_K_A.begin(); it != pStowageInfo.Slots_K_A.end(); ++it)
     {
 		int size = pStowageInfo.Slots_K_A[(it->first)].size();
-		IntVarArray	LTempLength( *this, size );
-		IntVarArray	HTempHeight( *this, size );
+		IntVarArgs	LTempLength;
+		IntVarArgs	HTempHeight;
 		IntVarArray	WTempWeight( *this, size, 0, pStowageInfo._nuMaxWeight*2);
 		FloatVarArgs WeightTotalArgs;
 				
@@ -156,31 +155,29 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 			int slot = (it->second)[x];
 			
 			// Get slots in cell
-			IntVarArray slotsCellWeight(*this, 2);			
+			IntVarArgs slotsCellWeight;
 			
 			// Aft slot 
 			if ( pStowageInfo.ContLoadedSlot.find(slot) != pStowageInfo.ContLoadedSlot.end())	
 			{
-				slotsCellWeight[0] = IntVar(*this, pStowageInfo._nuMaxWeight, pStowageInfo._nuMaxWeight);
+				slotsCellWeight<<IntVar(*this, pStowageInfo._nuMaxWeight, pStowageInfo._nuMaxWeight);
 				PTempPODAft<<IntVar(*this, pStowageInfo._nuMaxPOD, pStowageInfo._nuMaxPOD);
 			}
 			else
-			{			
-				IntVar varTmpWeight0( W[slot] );
-				slotsCellWeight[0] = varTmpWeight0;
+			{							
+				slotsCellWeight<<W[slot];
 				PTempPODAft<<P[slot];
 			}
 			
 			// Fore slot
 			if ( pStowageInfo.ContLoadedSlot.find(slot + 1) != pStowageInfo.ContLoadedSlot.end())	
 			{			
-				slotsCellWeight[1] = IntVar(*this, pStowageInfo._nuMaxWeight, pStowageInfo._nuMaxWeight);				
+				slotsCellWeight<<IntVar(*this, pStowageInfo._nuMaxWeight, pStowageInfo._nuMaxWeight);				
 				PTempPODFore<<IntVar(*this, pStowageInfo._nuMaxPOD, pStowageInfo._nuMaxPOD);
 			}
 			else
 			{			
-				IntVar varTmpWeight1( W[slot + 1] );
-				slotsCellWeight[1] = varTmpWeight1;
+				slotsCellWeight<<W[slot + 1];
 				PTempPODFore<<P[slot+1];
 			}
 			
@@ -206,11 +203,9 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 						
 			countCont++;
 			// Get Length
-			IntVar varTmpLength( L[slot] );
-			LTempLength[x] = varTmpLength;
+			LTempLength<<L[slot];
 			// Get Height
-			IntVar varTmpHeight( H[slot] );
-			HTempHeight[x] = varTmpHeight;
+			HTempHeight<<H[slot];
 		}
 			
 		double heigthStack =  pStowageInfo.GetListStacks().at(countStaks).GetMaxHeigth()*10000;
@@ -257,8 +252,8 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 	for (map<int, vector<int> >::iterator it=pStowageInfo.Slots_K_F.begin(); it != pStowageInfo.Slots_K_F.end(); ++it)
     {
 		int size = pStowageInfo.Slots_K_F[(it->first)].size();
-		IntVarArray	LTempLength( *this, size );
-		IntVarArray	HTempHeight( *this, size );
+		IntVarArgs	LTempLength;
+		IntVarArgs	HTempHeight;
 		for(int x = 0; x < size; x++)
 		{
 			int slot = (it->second)[x];
@@ -268,11 +263,9 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 				rel(*this, S[slot], IRT_NQ, it->second);
 			
 			// Get Length
-			IntVar varTmpLength( L[slot] );
-			LTempLength[x] = varTmpLength;
+			LTempLength<<L[slot];
 			// Get Height
-			IntVar varTmpHeight( H[slot] );
-			HTempHeight[x] = varTmpHeight;
+			HTempHeight<<H[slot];
 		}
 		extensional(*this, LTempLength, d);  // regular constraint
 		linear(*this, HTempHeight, IRT_LQ, HS[ (it->first) - 1 ] ); // Height limit constraint
@@ -323,25 +316,26 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 	}
 	
 	//----------------------------------------- Weight limit Constraints ----------------------------------
-	BoolVarArray OUT(*this, pStowageInfo.GetNumStacks(), 0, 1);
+	IntVarArray OUT(*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo.Slots.size() );
 	// weight constraints
 	int idxOUT = 0;
 	for (map<int, vector<int> >::iterator it=pStowageInfo.Slots_K.begin(); it != pStowageInfo.Slots_K.end(); ++it)
     {
 		int size = pStowageInfo.Slots_K[(it->first)].size();
-		IntVarArray	WTempWeight( *this, size );
+		IntVarArgs	WTempWeight;
+		IntVarArgs	LTempLength;
 		for(int x = 0; x < size; x++)
 		{
 			int slot = (it->second)[x];
 									
 			// Get Weight
-			IntVar varTmpWeight( W[slot] );
-			WTempWeight[x] = varTmpWeight;
+			WTempWeight<<W[slot];
+			LTempLength<<L[slot];
 		}	
 		
 		double dbMaxWeight = pStowageInfo.GetListStacks()[ ((it->first) - 1 ) ].GetMaxWeigth();
 		linear(*this, WTempWeight, IRT_LQ, dbMaxWeight ); // Weight limit constraint
-		linear(*this, WTempWeight, IRT_GR, 0, eqv(OUT[idxOUT]));
+		count(*this, LTempLength, IntSet(20, 40), IRT_EQ, OUT[idxOUT]);
 		idxOUT++;
     }
     
@@ -351,7 +345,9 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 	linear(*this, VSC, IRT_EQ, OCNS);
 	
 	// Get empty stack
-	linear(*this, OUT, IRT_EQ, OU);
+	IntVar nuCeroOU(*this, 0, pStowageInfo.GetNumStacks());
+	count(*this, OUT, 0, IRT_EQ, nuCeroOU);
+	rel(*this, OU == pStowageInfo.GetNumStacks() - nuCeroOU);
 	
 	// Get Different POD
 	IntVar OPT(*this, 0, pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks());
@@ -367,6 +363,7 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 	FloatVar GCTDTmp(*this, 0, costGCTD);
 	rel(*this, GCTDTmp == GCTD * 100);
 	//channel(*this, OGCTD, GCTDTmp);
+	IntVar cosa = channel(*this, GCTDTmp);
 	
 	BoolVarArgs GCTDArray(*this, costGCTD, 0, 1);
 	for(int x = 0; x < costGCTD; x++) rel(*this, GCTDTmp, FRT_GR, x + 1, eqv(GCTDArray[x]));
@@ -374,7 +371,6 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 
 	// Cost function
 	rel(*this, O == 1000 * OCNS + 20 * OPT + 10 * OU + 5 * OR + OGCTD);
-	
 	
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// Propagator
@@ -408,9 +404,7 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 
 // search support
 StowChannelCP::StowChannelCP(bool share, StowChannelCP& s): IntMinimizeSpace(share, s)
-{	
-	NRSR.update(*this, share, s.NRSR);
-	VSC.update(*this, share, s.VSC);
+{
 	C.update(*this, share, s.C);
 	S.update(*this, share, s.S);
 	L.update(*this, share, s.L);
@@ -440,8 +434,6 @@ void StowChannelCP::print(int &pO, int &pOGCTD, int &pOR, string &pOP, int &pOPT
 	cout << "Salida" << endl;
 	cout <<"C"<< C << endl << endl;
     cout <<"S "<< S << endl << endl;
-    cout <<"NRSR "<< NRSR << endl << endl;
-    cout <<"VSC "<< VSC << endl << endl;
 	cout <<"L"<< L << endl << endl;
 	cout <<"H"<< H << endl << endl;
 	cout <<"W"<< W << endl << endl;
@@ -455,6 +447,7 @@ void StowChannelCP::print(int &pO, int &pOGCTD, int &pOR, string &pOP, int &pOPT
 	cout <<"OR "<< OR << endl << endl;
 	cout <<"OGCTD "<< OGCTD << endl << endl;
 	cout <<"O "<< O << endl << endl;
+	
 	
 	pO = 0;
 	pO = O.val();

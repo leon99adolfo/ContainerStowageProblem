@@ -31,10 +31,8 @@ class StowChannelCP: public IntMinimizeSpace
 				IntArgs				Height;     // Height of container i
 				IntArgs				OverCont;   // container i (OUT)
 				IntArgs				ContNonReefer; // container non reefer
-				
-                                   
+
       protected:
-				IntVarArray     NRSR;	// Non reefer Container in slot reefer
 				IntVarArray     VSC;   	// Slots index of container j.
 				IntVarArray     C;   	// Slots index of container j.
                 IntVarArray     S;   	// Container index of slot j.
