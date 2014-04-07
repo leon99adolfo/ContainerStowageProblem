@@ -198,39 +198,27 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			min(*this, PTempPODFore, minPODFore);
 			min(*this, PTempPODAftFore, minPODAftFore);
 			// This restriction is goal (POD)
-			rel(*this, P[slot], IRT_GR, minPODAft, eqv(IsOverStowed20A)); 
-			rel(*this, P[slot], IRT_GR, minPODFore, eqv(IsOverStowed20F)); 
-			rel(*this, P[slot], IRT_GR, minPODAftFore, eqv(IsOverStowed40));
+			IsOverStowed20A = expr(*this, P[slot] > minPODAft);
+			IsOverStowed20F = expr(*this, P[slot] > minPODFore);
+			IsOverStowed40 = expr(*this, P[slot] > minPODAftFore);
 			// Get solution Bool
 			BoolVar OverStow40(*this, 0, 1), OverStow20A(*this, 0, 1), OverStow20F(*this, 0, 1),
-					NotOverStow40(*this, 0, 1), NotOverStow20A(*this, 0, 1), NotOverStow20F(*this, 0, 1),
-					NegIsOverStowed40(*this, 0, 1), NegCFEU_A(*this, 0, 1), NegIsOverStowed20A(*this, 0, 1),
-					NegIsOverStowed20F(*this, 0, 1);
-		
-			BoolVar GenericBool(*this, 0, 0);			
-			rel(*this, NegIsOverStowed40, IRT_EQ, GenericBool, eqv(IsOverStowed40));
-			rel(*this, NegCFEU_A, IRT_EQ, GenericBool, eqv(CFEU_A[countCont]));
-			rel(*this, NegIsOverStowed20A, IRT_EQ, GenericBool, eqv(IsOverStowed20A));
-			rel(*this, NegIsOverStowed20F, IRT_EQ, GenericBool, eqv(IsOverStowed20F));
-			
+					NegCFEU_A(*this, 0, 1);
+					
+			NegCFEU_A = expr(*this, !CFEU_A[countCont]);			
 			rel(*this, CFEU_A[countCont], BOT_AND, IsOverStowed40, OverStow40);
-			rel(*this, CFEU_A[countCont], BOT_AND, NegIsOverStowed40, NotOverStow40);
 			rel(*this, NegCFEU_A, BOT_AND, IsOverStowed20A, OverStow20A);
-			rel(*this, NegCFEU_A, BOT_AND, NegIsOverStowed20A, NotOverStow20A);
 			rel(*this, NegCFEU_A, BOT_AND, IsOverStowed20F, OverStow20F);
-			rel(*this, NegCFEU_A, BOT_AND, NegIsOverStowed20F, NotOverStow20F);
 			
 			// This restriction is goal (POD) for container 40
-			rel(*this, OVT[countCont*2], IRT_EQ, 1, imp( OverStow40 ));
-			rel(*this, OVT[(countCont*2) + 1], IRT_EQ, 1, imp( OverStow40 ));
-			rel(*this, OVT[(countCont*2)], IRT_EQ, 0, imp( NotOverStow40 ));
-			rel(*this, OVT[(countCont*2) + 1], IRT_EQ, 0, imp( NotOverStow40 ));
+			IntVar GenericCero(*this, 0, 0);
+			IntVar GenericOne(*this, 1, 1);
+			ite(*this, OverStow40, GenericOne, GenericCero, OVT[countCont*2]);
+			ite(*this, OverStow40, GenericOne, GenericCero, OVT[(countCont*2) + 1]);
 			// This restriction is goal (POD) for container 20 aft
-			rel(*this, OVT[countCont*2], IRT_EQ, 1, imp( OverStow20A ));
-			rel(*this, OVT[countCont*2], IRT_EQ, 0, imp( NotOverStow20A ));
+			ite(*this, OverStow20A, GenericOne, GenericCero, OVT[countCont*2]);
 			// This restriction is goal (POD) for container 20 fore
-			rel(*this, OVT[(countCont*2) + 1], IRT_EQ, 1, imp( OverStow20F  ));
-			rel(*this, OVT[(countCont*2) + 1], IRT_EQ, 0, imp( NotOverStow20F ));
+			ite(*this, OverStow20F, GenericOne, GenericCero, OVT[(countCont*2) + 1]);
 			
 			// ---------------------------------------------------------------------------------------				
 			// Gravitatory center In Y

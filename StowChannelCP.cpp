@@ -363,7 +363,7 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 	FloatVar GCTDTmp(*this, 0, costGCTD);
 	rel(*this, GCTDTmp == GCTD * 100);
 	//channel(*this, OGCTD, GCTDTmp);
-	IntVar cosa = channel(*this, GCTDTmp);
+	//IntVar cosa = channel(*this, GCTDTmp);
 	
 	BoolVarArgs GCTDArray(*this, costGCTD, 0, 1);
 	for(int x = 0; x < costGCTD; x++) rel(*this, GCTDTmp, FRT_GR, x + 1, eqv(GCTDArray[x]));
@@ -394,12 +394,11 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 
 	//branch(*this, S, INT_VAR_SIZE_MIN(), INT_VAL_MIN());
     branch(*this, C, INT_VAR_SIZE_MIN(), INT_VAL_MED());
-    /*branch(*this, L, INT_VAR_SIZE_MIN(), INT_VAL_MED());
-    branch(*this, H, INT_VAR_SIZE_MIN(), INT_VAL_MED());
+    /* branch(*this, P, INT_VAR_SIZE_MIN(), INT_VAL_MED());
+    branch(*this, L, INT_VAR_SIZE_MIN(), INT_VAL_MED());
     branch(*this, W, INT_VAR_SIZE_MIN(), INT_VAL_MED());
-    branch(*this, P, INT_VAR_SIZE_MIN(), INT_VAL_MED());
-    branch(*this, C, INT_VAR_SIZE_MIN(), INT_VAL_MED());*/
-    
+    branch(*this, H, INT_VAR_SIZE_MIN(), INT_VAL_MED());
+    branch(*this, C, INT_VAR_SIZE_MIN(), INT_VAL_MED()); */
 }
 
 // search support

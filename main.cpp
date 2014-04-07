@@ -39,7 +39,7 @@ void* Enviroment(string pDirFile, string pFile, bool pChannelUse, bool pnuTotalF
 	
 	// create model and search engine
 	Search::Options so;
-	Search::TimeStop ts(100000); // stop after 600000 ms
+	Search::TimeStop ts(600000); // stop after 600000 ms
 	so.stop = &ts;
 	if(pChannelUse)
 	{
@@ -100,8 +100,8 @@ void* Enviroment(string pDirFile, string pFile, bool pChannelUse, bool pnuTotalF
 int main(int argc, char *argv[])
 {
 	//int file_count = 0;
-	string full_path = "/home/adolfo/Universidad/maestria/tesis/inst2/";
-	bool boChannelUse = true;
+	string full_path = "/home/adolfo/Universidad/maestria/tesis/inst/";
+	bool boChannelUse = false;
 	bool boTotalFile = true;
     
     cout<<"Empieza a procesar"<<endl;
