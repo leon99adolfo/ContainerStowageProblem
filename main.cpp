@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
 {
 	//int file_count = 0;
 	string full_path = "/home/adolfo/Universidad/maestria/tesis/inst/";
-	bool boChannelUse = false;
+	bool boChannelUse = true;
 	bool boTotalFile = true;
     
     cout<<"Empieza a procesar"<<endl;
