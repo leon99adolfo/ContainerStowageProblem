@@ -242,9 +242,18 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 		// ---------------------------------------------------------------------------------------------
 		
 		// Goal OP
-		IntVar 	stackPODs(*this, 0, pStowageInfo.GetNumPortsDischarge());
-		nvalues(*this, PTempPODAftFore, IRT_EQ, stackPODs);
-		linear(*this, IntVarArgs()<<stackPODs<<IntVar(*this, -1, -1), IRT_EQ, OP[countStaks]);		
+		
+		IntVar 	stackPODs(*this, 0, pStowageInfo.GetNumPortsDischarge() + 1);	
+		IntVar  nuMinPOD(*this, 0, pStowageInfo._nuMaxPOD);
+		nvalues(*this, PTempPODAftFore, IRT_EQ, stackPODs);		
+		min(*this, PTempPODAftFore, nuMinPOD);
+		BoolVar boIsPODNull = expr(*this, nuMinPOD == 0);
+		BoolVar boMoreThanOne = expr(*this, stackPODs > 1);
+		BoolVar boAppliesTwo = expr(*this, boIsPODNull && boMoreThanOne);
+		IntVar nuPODTwo = expr(*this, stackPODs - 2);
+		IntVar nuPODOne = expr(*this, stackPODs - 1);
+		ite(*this, boAppliesTwo, nuPODTwo, nuPODOne, OP[countStaks]);
+		//linear(*this, IntVarArgs()<<stackPODs<<IntVar(*this, -1, -1), IRT_EQ, OP[countStaks]);
 		countStaks++;
     }
     
@@ -366,7 +375,7 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 	//IntVar cosa = channel(*this, GCTDTmp);
 	
 	BoolVarArgs GCTDArray(*this, costGCTD, 0, 1);
-	for(int x = 0; x < costGCTD; x++) rel(*this, GCTDTmp, FRT_GR, x + 1, eqv(GCTDArray[x]));
+	for(int x = 0; x < costGCTD; x++) GCTDArray[x] = expr(*this, GCTDTmp > (x+1));
 	linear(*this, GCTDArray, IRT_EQ, OGCTD);
 
 	// Cost function

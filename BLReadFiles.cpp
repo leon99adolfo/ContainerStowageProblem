@@ -65,7 +65,7 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName, bool pChannelUse)
         if(x == 0)
         {
 			response._nuMaxPOD = nuPortDischarge;
-			response._nuMinPOD = nuPortDischarge;
+			response._nuMinPOD = 0;
 		}
 		
 		// save maximum POD
@@ -313,8 +313,9 @@ map<int, ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoad
 		if( pIsVirtual )
 		{
 			nuStackIdCont = nuCellIdCont = nuPositionCont = dbWeigthCont = 
-			dbHeigthCont = nuLengthCont = nuIsReeferCont = nuLocationCont = 0;
-			nuPortDischargeCont = response._nuMinPOD;
+			dbHeigthCont = nuLengthCont = nuIsReeferCont = nuLocationCont = 
+			nuPortDischargeCont = 0;
+			//nuPortDischargeCont = response._nuMinPOD;
 		}
 		else
 		{
