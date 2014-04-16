@@ -13,6 +13,8 @@
 #include <gecode/minimodel.hh>
 #include <gecode/search.hh>
 #include "StowageInfo.h"
+#include "Casting.h"
+
 
 using namespace Gecode;
 
@@ -30,11 +32,11 @@ class StowChannelCP: public IntMinimizeSpace
 				IntArgs				Length;     // Lenght of container i
 				IntArgs				Height;     // Height of container i
 				IntArgs				OverCont;   // container i (OUT)
-				IntArgs				ContNonReefer; // container non reefer
+				IntArgs				ContNonReefer; // container non reefer			
 
       protected:
-				IntVarArray     VSC;   	// Slots index of container j.
 				IntVarArray     C;   	// Slots index of container j.
+				IntVarArray     RC;   	// Slots index of container j for real container.
                 IntVarArray     S;   	// Container index of slot j.
                 IntVarArray     L;   	// Length of container stowed in slot j.
                 IntVarArray   	H;   	// Height of container stowed in slot j.
@@ -49,6 +51,8 @@ class StowChannelCP: public IntMinimizeSpace
                 IntVarArray     OP;  // Number of different discharge ports in each stack.
                 IntVar          OR;  // Number of container non-reefers stowed in reefer cells.
                 IntVar          O;   // Solution Cost.
+                IntVarArray		OVA;	
+                FloatVar		OCosa;
   
       public:
             /**
@@ -86,6 +90,22 @@ class StowChannelCP: public IntMinimizeSpace
 			*	Printing solutions
 			*/
 			void print(int &pO, int &pOGCTD, int &pOR, string &pOP, int &pOPT, int &pOU, int &pOCNS, int &pOV, string &pS, int nuContainer) const;
+			
+			/**
+			*	Propagator
+			*/
+			void casting(StowChannelCP& home, FloatVar x0, FloatVar x1);
+			
+			/**
+			*	branching L
+			*/
+			static double meritL(const Space& home, IntVar x, int i);			
+			static int valueFunL(const Space& home, IntVar x, int i);
+			
+			/**
+			*	branching S
+			*/
+			static double meritS(const Space& home, IntVar x, int i);
 			
 			/**
 			*	Cost function

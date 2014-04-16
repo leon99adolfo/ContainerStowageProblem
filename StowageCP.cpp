@@ -12,7 +12,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
               CFEU_A(*this,(pStowageInfo.Slots.size()/2), 0, 1),
               CFEU_F(*this,(pStowageInfo.Slots.size()/2), 0, 1),
               GCD(*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo.GetNumTiers()),
-              OGCTD(*this, 0, pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() * 100), 
+              OGCTD(*this, 0, pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks() * 100), 
               OV (*this, 0, pStowageInfo.Slots.size()),
 			  OVT(*this, pStowageInfo.Slots.size(), 0, 1),
 			  OCNS(*this, 0, pStowageInfo.Slots.size()), 
@@ -24,7 +24,9 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 							(20 * pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks()) + 
 							(10 * pStowageInfo.GetNumStacks()) +
 							(5 * pStowageInfo.Slots_R.size()) +
-							(pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() * 100) )
+							(pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks() * 100) ),
+			  OVA (*this, 6, 0, (1000 * pStowageInfo.GetNumContainerLoad()) + 
+								(pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks() * 100))
 {
 	
 	// Charge Information in global variables
@@ -418,6 +420,15 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	// --------------------------- Cost function --------------------------------------------
 	// --------------------------------------------------------------------------------------
 	rel(*this, O == 1000 * OCNS + 100 * OV + 20 * OPT + 10 * OU + 5 * OR + OGCTD);	
+	
+	// OVA Constraint
+	rel(*this, OVA[0] == OCNS);
+	rel(*this, OVA[1] == OV);
+	rel(*this, OVA[2] == OPT);
+	rel(*this, OVA[3] == OU);
+	rel(*this, OVA[4] == OR);
+	rel(*this, OVA[5] == OGCTD);
+	
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// Propagator
 	//////////////////////////////////////////////////////////////////////////////////////////////////
@@ -433,21 +444,21 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// post branching
-	//////////////////////////////////////////////////////////////////////////////////////////////////
-
-	//branch(*this, S, INT_VAR_SIZE_MIN(), INT_VAL_MIN());
-    branch(*this, S, INT_VAR_SIZE_MIN(), INT_VAL_MED());
-    /*branch(*this, L, INT_VAR_SIZE_MIN(), INT_VAL_MED());
-    branch(*this, H, INT_VAR_SIZE_MIN(), INT_VAL_MED());
-    branch(*this, W, INT_VAR_SIZE_MIN(), INT_VAL_MAX());
-    branch(*this, P, INT_VAR_SIZE_MIN(), INT_VAL_MED());
-    branch(*this, S, INT_VAR_SIZE_MIN(), INT_VAL_MED());
-    */
+	//////////////////////////////////////////////////////////////////////////////////////////////////        
+	branch(*this, P, INT_VAR_MAX_MAX(), INT_VAL_MAX());
+	//branch(*this, L, INT_VAR_MERIT_MAX(&meritL), INT_VAL(&valueFunL));
+	//branch(*this, W, INT_VAR_MAX_MAX(), INT_VAL_MAX());    	
+	//branch(*this, H, INT_VAR_MAX_MAX(), INT_VAL_MAX()); 
+    branch(*this, S, INT_VAR_MERIT_MAX(&meritS), INT_VAL_MED());
 }
 
 // search support
 StowageCP::StowageCP(bool share, StowageCP& s): IntMinimizeSpace(share, s)
-{	
+{
+	
+	//cout<<"cosa  "<<s.OVA<<endl;
+	//rel(*this, OVA, IRT_GR, s.OVA);
+	
 	S.update(*this, share, s.S);
 	L.update(*this, share, s.L);
 	H.update(*this, share, s.H);
@@ -465,7 +476,8 @@ StowageCP::StowageCP(bool share, StowageCP& s): IntMinimizeSpace(share, s)
 	OP.update(*this, share, s.OP);
 	OR.update(*this, share, s.OR);
 	OGCTD.update(*this, share, s.OGCTD);
-	O.update(*this, share, s.O);	
+	OVA.update(*this, share, s.OVA);
+	O.update(*this, share, s.O);
 }
   
 // Copy solution  
@@ -495,6 +507,7 @@ void StowageCP::print(int &pO, int &pOGCTD, int &pOR, string &pOP, int &pOPT, in
 	cout <<"OP "<< OP << endl << endl;	
 	cout <<"OR "<< OR << endl << endl;
 	cout <<"OGCTD "<< OGCTD << endl << endl;
+	cout <<"OVA "<< OVA << endl << endl;
 	cout <<"O "<< O << endl << endl;
 
 	pO = 0;
@@ -664,7 +677,41 @@ void StowageCP::ChargeInformation(StowageInfo pStowageInfo)
 	}
 }
 
+// -------------- Branching L ---------------------
+double StowageCP::meritL(const Space& home, IntVar x, int i)
+{
+	int merit = 0;
+	if(x.in(20))
+	{
+		merit = 6;
+		if(x.in(0))	merit = merit - 1;
+		if(x.in(40))merit = merit - 2;			
+	}
+	else if(x.in(40))
+	{
+		merit = 2;
+		if(x.in(0))	merit = merit - 1;
+	}
+	return merit;
+}
 
+int StowageCP::valueFunL(const Space& home, IntVar x, int i)
+{
+	if(x.in(20)) return 20;
+	if(x.in(40)) return 40;
+	
+	return 0;	
+}
+
+// -------------- Branching S ---------------------
+double StowageCP::meritS(const Space& home, IntVar x, int i)
+{
+	int merit = 1;
+	if(x.in(0)) merit--;	
+	return merit;
+}
+
+// -------------- Destroyer ---------------------
 StowageCP::~StowageCP()
 {
 	

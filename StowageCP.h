@@ -50,6 +50,7 @@ class StowageCP: public IntMinimizeSpace
                 IntVarArray     OP;  // Number of different discharge ports in each stack.
                 IntVar          OR;  // Number of container non-reefers stowed in reefer cells.
                 IntVar          O;   // Solution Cost.
+                IntVarArray		OVA;	
       public:
             /**
              * Constructor:
@@ -88,9 +89,20 @@ class StowageCP: public IntMinimizeSpace
 			void print(int &pO, int &pOGCTD, int &pOR, string &pOP, int &pOPT, int &pOU, int &pOCNS, int &pOV, string &pS) const;
 			
 			/**
+			*	branching L
+			*/
+			static double meritL(const Space& home, IntVar x, int i);			
+			static int valueFunL(const Space& home, IntVar x, int i);
+			
+			/**
+			*	branching S
+			*/
+			static double meritS(const Space& home, IntVar x, int i);
+			
+			/**
 			*	Cost function
 			*/
-			virtual IntVar cost(void) const;					
+			virtual IntVar cost(void) const;
 };
 
 #endif

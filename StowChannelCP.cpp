@@ -2,6 +2,7 @@
 
 StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
               // Domain Variables              
+              RC (*this, pStowageInfo.GetNumVirtualCont(), 0, (pStowageInfo.Slots.size() + pStowageInfo.GetNumVirtualCont())),
 			  C  (*this, (pStowageInfo.Slots.size() + pStowageInfo.GetNumVirtualCont()), 0, (pStowageInfo.Slots.size() + pStowageInfo.GetNumVirtualCont())),
               S  (*this, (pStowageInfo.Slots.size() + pStowageInfo.GetNumVirtualCont()), 0, (pStowageInfo.Slots.size() + pStowageInfo.GetNumVirtualCont())),
               L  (*this, (pStowageInfo.Slots.size() + pStowageInfo.GetNumVirtualCont()), 0, pStowageInfo._nuMaxLength),
@@ -11,7 +12,7 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
               P  (*this, (pStowageInfo.Slots.size() + pStowageInfo.GetNumVirtualCont()), 0, pStowageInfo._nuMaxPOD),
               HS (*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo._nuMaxStackHeight * 10000),
               GCD(*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo.GetNumTiers()),
-              OGCTD(*this, 0, pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() * 100),
+              OGCTD(*this, 0, pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks() * 100),
 			  OCNS(*this, 0, pStowageInfo.Slots.size()), 
               OU (*this, 0, pStowageInfo.GetNumStacks()),
               OP (*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo.GetNumPortsDischarge()),
@@ -20,7 +21,10 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 							(20 * pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks()) + 
 							(10 * pStowageInfo.GetNumStacks()) +
 							(5 * pStowageInfo.Slots_R.size()) +
-							(pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() * 100) ) 
+							(pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks() * 100) ),
+			  OVA (*this, 5, 0, (1000 * pStowageInfo.GetNumContainerLoad()) + 
+								(pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() * 100)),
+			  OCosa(*this, 0, pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks() * 100)
 {
 	// Charge Information in global variables
 	ChargeInformation(pStowageInfo);
@@ -54,6 +58,8 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 			{
 				element(*this, OverCont, C[x], VSC[x]);
 			}
+			
+			rel(*this, C[x] == RC[x]);
 		}
 	}
 	
@@ -371,8 +377,8 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 	int costGCTD = pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks() * 100;
 	FloatVar GCTDTmp(*this, 0, costGCTD);
 	rel(*this, GCTDTmp == GCTD * 100);
+	casting(*this, GCTDTmp, OCosa);
 	//channel(*this, OGCTD, GCTDTmp);
-	//IntVar cosa = channel(*this, GCTDTmp);
 	
 	BoolVarArgs GCTDArray(*this, costGCTD, 0, 1);
 	for(int x = 0; x < costGCTD; x++) GCTDArray[x] = expr(*this, GCTDTmp > (x+1));
@@ -380,6 +386,13 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 
 	// Cost function
 	rel(*this, O == 1000 * OCNS + 20 * OPT + 10 * OU + 5 * OR + OGCTD);
+
+	// OVA Constraint
+	rel(*this, OVA[0] == OCNS);
+	rel(*this, OVA[1] == OPT);
+	rel(*this, OVA[2] == OU);
+	rel(*this, OVA[3] == OR);
+	rel(*this, OVA[4] == OGCTD);
 	
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// Propagator
@@ -398,21 +411,25 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 		exactly(*this, P, pStowageInfo.POD,  )*/	
 		
 	//////////////////////////////////////////////////////////////////////////////////////////////////
-	// post branching
+	// Branching
 	//////////////////////////////////////////////////////////////////////////////////////////////////	
 
 	//branch(*this, S, INT_VAR_SIZE_MIN(), INT_VAL_MIN());
-    branch(*this, C, INT_VAR_SIZE_MIN(), INT_VAL_MED());
-    /* branch(*this, P, INT_VAR_SIZE_MIN(), INT_VAL_MED());
-    branch(*this, L, INT_VAR_SIZE_MIN(), INT_VAL_MED());
-    branch(*this, W, INT_VAR_SIZE_MIN(), INT_VAL_MED());
-    branch(*this, H, INT_VAR_SIZE_MIN(), INT_VAL_MED());
-    branch(*this, C, INT_VAR_SIZE_MIN(), INT_VAL_MED()); */
+    //branch(*this, C, INT_VAR_SIZE_MIN(), INT_VAL_MED());
+    branch(*this, P, INT_VAR_MAX_MAX(), INT_VAL_MAX());
+	branch(*this, L, INT_VAR_MERIT_MAX(&meritL), INT_VAL(&valueFunL));
+	branch(*this, W, INT_VAR_MAX_MAX(), INT_VAL_MAX());    	
+	branch(*this, H, INT_VAR_MAX_MAX(), INT_VAL_MAX());
+    branch(*this, RC, INT_VAR_NONE(), INT_VAL_MIN());
+    branch(*this, S, INT_VAR_SIZE_MIN(), INT_VAL_MIN());
+    
 }
 
 // search support
 StowChannelCP::StowChannelCP(bool share, StowChannelCP& s): IntMinimizeSpace(share, s)
 {
+	//rel(*this, OVA, IRT_LE, s.OVA);
+	RC.update(*this, share, s.RC);
 	C.update(*this, share, s.C);
 	S.update(*this, share, s.S);
 	L.update(*this, share, s.L);
@@ -427,7 +444,9 @@ StowChannelCP::StowChannelCP(bool share, StowChannelCP& s): IntMinimizeSpace(sha
 	OP.update(*this, share, s.OP);
 	OR.update(*this, share, s.OR);
 	OGCTD.update(*this, share, s.OGCTD);
+	OVA.update(*this, share, s.OVA);
 	O.update(*this, share, s.O);
+	OCosa.update(*this, share, s.OCosa);
 }
   
 // Copy solution  
@@ -440,6 +459,7 @@ Space* StowChannelCP::copy(bool share)
 void StowChannelCP::print(int &pO, int &pOGCTD, int &pOR, string &pOP, int &pOPT, int &pOU, int &pOCNS, int &pOV, string &pS, int nuContainer) const 
 {
 	cout << "Salida" << endl;
+	cout <<"RC"<< RC << endl << endl;
 	cout <<"C"<< C << endl << endl;
     cout <<"S "<< S << endl << endl;
 	cout <<"L"<< L << endl << endl;
@@ -454,7 +474,9 @@ void StowChannelCP::print(int &pO, int &pOGCTD, int &pOR, string &pOP, int &pOPT
 	cout <<"OP "<< OP << endl << endl;	
 	cout <<"OR "<< OR << endl << endl;
 	cout <<"OGCTD "<< OGCTD << endl << endl;
+	cout <<"OVA " << OVA << endl << endl;
 	cout <<"O "<< O << endl << endl;
+	cout <<"OCosa "<< OCosa << endl << endl;
 	
 	
 	pO = 0;
@@ -675,8 +697,42 @@ void StowChannelCP::ChargeInformation(StowageInfo pStowageInfo)
 	}
 }
 
+// ------------------- Propagator Casting----------------------------
+void StowChannelCP::casting(StowChannelCP& home, FloatVar x0, FloatVar x1) {
+  if (home.failed()) return;
+  GECODE_ES_FAIL(Casting::post(home,x0,x1));
+}
 
+// -------------- Branching L ---------------------
+double StowChannelCP::meritL(const Space& home, IntVar x, int i)
+{
+	int merit = 0;
+	if(x.in(20))
+	{
+		merit = 6;
+		if(x.in(0))	merit = merit - 1;
+		if(x.in(40))merit = merit - 2;			
+	}
+	else if(x.in(40))
+	{
+		merit = 2;
+		if(x.in(0))	merit = merit - 1;
+	}
+	return merit;
+}
+
+int StowChannelCP::valueFunL(const Space& home, IntVar x, int i)
+{
+	if(x.in(20)) return 20;
+	if(x.in(40)) return 40;
+	
+	return 0;	
+}
+
+// ------------------ Dristroyer ------------------------- 
 StowChannelCP::~StowChannelCP()
 {
 	
 }
+
+
