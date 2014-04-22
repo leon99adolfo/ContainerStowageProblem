@@ -23,8 +23,7 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 							(5 * pStowageInfo.Slots_R.size()) +
 							(pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks() * 100) ),
 			  OVA (*this, 5, 0, (1000 * pStowageInfo.GetNumContainerLoad()) + 
-								(pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() * 100)),
-			  OCosa(*this, 0, pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks() * 100)
+								(pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks() * 100))
 {
 	// Charge Information in global variables
 	ChargeInformation(pStowageInfo);
@@ -87,7 +86,7 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 		int nuCellNull = 0;
 		for(int y = 0; y < pStowageInfo.CellNull[stack].size() ; y++)
 		{
-			if(objContainer.GetCellId() <= pStowageInfo.CellNull[stack][y] ) nuCellNull++;
+			if(objContainer.GetCellId() > pStowageInfo.CellNull[stack][y] ) nuCellNull++;
 		}
 		
 		int cell = objContainer.GetCellId() - nuCellNull;
@@ -259,7 +258,6 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 		IntVar nuPODTwo = expr(*this, stackPODs - 2);
 		IntVar nuPODOne = expr(*this, stackPODs - 1);
 		ite(*this, boAppliesTwo, nuPODTwo, nuPODOne, OP[countStaks]);
-		//linear(*this, IntVarArgs()<<stackPODs<<IntVar(*this, -1, -1), IRT_EQ, OP[countStaks]);
 		countStaks++;
     }
     
@@ -377,12 +375,9 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 	int costGCTD = pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks() * 100;
 	FloatVar GCTDTmp(*this, 0, costGCTD);
 	rel(*this, GCTDTmp == GCTD * 100);
-	casting(*this, GCTDTmp, OCosa);
-	//channel(*this, OGCTD, GCTDTmp);
-	
-	BoolVarArgs GCTDArray(*this, costGCTD, 0, 1);
-	for(int x = 0; x < costGCTD; x++) GCTDArray[x] = expr(*this, GCTDTmp > (x+1));
-	linear(*this, GCTDArray, IRT_EQ, OGCTD);
+	FloatVar GCTD_cast(*this, 0, pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks() * 100);
+	casting(*this, GCTDTmp, GCTD_cast);
+	channel(*this, OGCTD, GCTD_cast);
 
 	// Cost function
 	rel(*this, O == 1000 * OCNS + 20 * OPT + 10 * OU + 5 * OR + OGCTD);
@@ -417,9 +412,9 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 	//branch(*this, S, INT_VAR_SIZE_MIN(), INT_VAL_MIN());
     //branch(*this, C, INT_VAR_SIZE_MIN(), INT_VAL_MED());
     branch(*this, P, INT_VAR_MAX_MAX(), INT_VAL_MAX());
-	branch(*this, L, INT_VAR_MERIT_MAX(&meritL), INT_VAL(&valueFunL));
+	/*branch(*this, L, INT_VAR_MERIT_MAX(&trampMeritL), INT_VAL(&valueFunL));
 	branch(*this, W, INT_VAR_MAX_MAX(), INT_VAL_MAX());    	
-	branch(*this, H, INT_VAR_MAX_MAX(), INT_VAL_MAX());
+	branch(*this, H, INT_VAR_MAX_MAX(), INT_VAL_MAX());*/
     branch(*this, RC, INT_VAR_NONE(), INT_VAL_MIN());
     branch(*this, S, INT_VAR_SIZE_MIN(), INT_VAL_MIN());
     
@@ -446,7 +441,6 @@ StowChannelCP::StowChannelCP(bool share, StowChannelCP& s): IntMinimizeSpace(sha
 	OGCTD.update(*this, share, s.OGCTD);
 	OVA.update(*this, share, s.OVA);
 	O.update(*this, share, s.O);
-	OCosa.update(*this, share, s.OCosa);
 }
   
 // Copy solution  
@@ -476,7 +470,6 @@ void StowChannelCP::print(int &pO, int &pOGCTD, int &pOR, string &pOP, int &pOPT
 	cout <<"OGCTD "<< OGCTD << endl << endl;
 	cout <<"OVA " << OVA << endl << endl;
 	cout <<"O "<< O << endl << endl;
-	cout <<"OCosa "<< OCosa << endl << endl;
 	
 	
 	pO = 0;
@@ -704,7 +697,7 @@ void StowChannelCP::casting(StowChannelCP& home, FloatVar x0, FloatVar x1) {
 }
 
 // -------------- Branching L ---------------------
-double StowChannelCP::meritL(const Space& home, IntVar x, int i)
+double StowChannelCP::meritL(IntVar x, int i) const
 {
 	int merit = 0;
 	if(x.in(20))
@@ -721,12 +714,17 @@ double StowChannelCP::meritL(const Space& home, IntVar x, int i)
 	return merit;
 }
 
+double StowChannelCP::trampMeritL(const Space& home, IntVar x, int i)
+{
+	return static_cast<const StowChannelCP&>(home).meritL(x, i);
+}
+
 int StowChannelCP::valueFunL(const Space& home, IntVar x, int i)
 {
 	if(x.in(20)) return 20;
 	if(x.in(40)) return 40;
 	
-	return 0;	
+	return 0;
 }
 
 // ------------------ Dristroyer ------------------------- 

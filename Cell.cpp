@@ -74,6 +74,15 @@ int     Cell::GetNumLocation()
         return _numLocation;       
 }
 
+void	Cell::SetNumLevel(int pNumLevel)
+{
+        _numLevel = pNumLevel;
+}
+
+int     Cell::GetNumLevel()
+{
+        return _numLevel;       
+}
 
 // ------------------------ Methods ----------------------------------
 Cell::Cell(){}

@@ -13,6 +13,8 @@
 #include <gecode/minimodel.hh>
 #include <gecode/search.hh>
 #include "StowageInfo.h"
+#include "Casting.h"
+#include "DistinctStowageCP.h"
 
 using namespace Gecode;
 
@@ -30,6 +32,7 @@ class StowageCP: public IntMinimizeSpace
 				IntArgs				Length;     // Lenght of container i
 				IntArgs				Height;     // Height of container i
 				IntArgs				ContNonReefer; // container non reefer
+				StowageInfo			GenStowageInfo; // General information
                                    
       protected:
                 IntVarArray     S;   	// Container index of slot j.
@@ -45,12 +48,13 @@ class StowageCP: public IntMinimizeSpace
                 IntVar			OGCTD;	// Gravity Center total distance
                 IntVar          OV;  	// Number of over-stowing containers.
 				IntVarArray     OVT; 	// Container j over-stowing temporal.
-				IntVar			OCNS; 	// Number of container not stowed.				
+				IntVar			OCNS; 	// Number of container not stowed.
                 IntVar          OU;  // Number of used stacks. 
                 IntVarArray     OP;  // Number of different discharge ports in each stack.
                 IntVar          OR;  // Number of container non-reefers stowed in reefer cells.
                 IntVar          O;   // Solution Cost.
                 IntVarArray		OVA;	
+                IntVar			NuLevel;
       public:
             /**
              * Constructor:
@@ -89,10 +93,18 @@ class StowageCP: public IntMinimizeSpace
 			void print(int &pO, int &pOGCTD, int &pOR, string &pOP, int &pOPT, int &pOU, int &pOCNS, int &pOV, string &pS) const;
 			
 			/**
+			*	Propagator
+			*/
+			void casting(StowageCP& home, FloatVar x0, FloatVar x1);
+			//void distinctStowageCP(StowageCP& home, IntVarArray x);
+			
+			/**
 			*	branching L
 			*/
-			static double meritL(const Space& home, IntVar x, int i);			
-			static int valueFunL(const Space& home, IntVar x, int i);
+			double meritL(IntVar x, int i) const;			
+			static double trampMeritL(const Space& home, IntVar x, int i);			
+			int valueFunL(IntVar x, int i) const;
+			static int trampValueFunL(const Space& home, IntVar x, int i);
 			
 			/**
 			*	branching S

@@ -84,6 +84,7 @@ class StowageInfo
             map<double, int>    Cont_EH;        // Number of container with equal height
             int                 ContNormal;     // Number of normal containers
             int                 ContCUBE;       // Number of high-cube containers
+            map<int, Cell>		CellBySlot;		// cell by slot
 			
              // ------------------------ Properties -------------------------------
     		 /**
@@ -229,7 +230,7 @@ class StowageInfo
              /**
     		 *	ListCells Property GET
     		 */
-             vector<Cell> GetListCells();
+             vector<Cell> GetListCells();           
        
        
              // ------------------------ Methods ----------------------------------

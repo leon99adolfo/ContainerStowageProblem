@@ -22,8 +22,8 @@ ExecStatus Casting::propagate(Space& home, const ModEventDelta&)
     // create rounding object
     Rounding r;
     // prune bounds
-    GECODE_ME_CHECK(x1.eq(home, r.int_down(x0.max())));
-    //return (x0.assigned() && x1.assigned()) ?
+    GECODE_ME_CHECK(x1.gq(home, r.int_down(x0.min())));
+    GECODE_ME_CHECK(x1.lq(home, r.int_down(x0.max())));
     return (x1.assigned()) ? home.ES_SUBSUMED(*this) : ES_NOFIX;
 }
 

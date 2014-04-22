@@ -199,6 +199,7 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName, bool pChannelUse)
         objCell.SetCapAft(nuCapAft);
         objCell.SetCap40(nuCap40);
         objCell.SetNumLocation(nuLocationCell);
+        objCell.SetNumLevel(nuCellByStack);
          
         listCells.push_back(objCell);
 		
@@ -210,6 +211,10 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName, bool pChannelUse)
 		// Insert Slots
 		response.Slots.push_back( idxFirstTemp );
 		response.Slots.push_back( idxSecondTemp );
+		
+		// Insert cell by slot
+		response.CellBySlot[idxFirstTemp] = objCell;
+		response.CellBySlot[idxSecondTemp] = objCell;
 		
 		// Insert Slots A
 		response.Slots_A.push_back( idxFirstTemp );

@@ -28,7 +28,7 @@ void* Enviroment(string pDirFile, string pFile, bool pChannelUse, bool pnuTotalF
 	
 	// charge file
     StowageInfo objStowageInfo = objBLReadFiles.ChargeFile(pDirFile + pFile, pChannelUse);
-    objStowageInfo.ChargeData();
+    //objStowageInfo.ChargeData();
     
 	ofstream fileOut( (pDirFile+"Response/"+pFile).c_str() );
 	if(!fileOut)
@@ -100,8 +100,8 @@ void* Enviroment(string pDirFile, string pFile, bool pChannelUse, bool pnuTotalF
 int main(int argc, char *argv[])
 {
 	//int file_count = 0;
-	string full_path = "/home/adolfo/Universidad/maestria/tesis/inst2/";
-	bool boChannelUse = true;
+	string full_path = "/home/adolfo/Universidad/maestria/tesis/inst/";
+	bool boChannelUse = false;
 	bool boTotalFile = true;
     
     cout<<"Empieza a procesar"<<endl;

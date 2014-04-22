@@ -51,8 +51,7 @@ class StowChannelCP: public IntMinimizeSpace
                 IntVarArray     OP;  // Number of different discharge ports in each stack.
                 IntVar          OR;  // Number of container non-reefers stowed in reefer cells.
                 IntVar          O;   // Solution Cost.
-                IntVarArray		OVA;	
-                FloatVar		OCosa;
+                IntVarArray		OVA;
   
       public:
             /**
@@ -99,7 +98,8 @@ class StowChannelCP: public IntMinimizeSpace
 			/**
 			*	branching L
 			*/
-			static double meritL(const Space& home, IntVar x, int i);			
+			double meritL(IntVar x, int i) const;			
+			static double trampMeritL(const Space& home, IntVar x, int i);
 			static int valueFunL(const Space& home, IntVar x, int i);
 			
 			/**

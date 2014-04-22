@@ -24,6 +24,7 @@ class Cell
         int         _capAft;
         int         _cap40;
         int         _numLocation;
+        int         _numLevel;
 
 	public:
 		// ------------------------ Properties -------------------------------
@@ -97,6 +98,16 @@ class Cell
 		 *	NumLocation Property GET
 		 */
 		int     GetNumLocation();
+
+		/**
+		 *	NumLevel Property SET
+		 *	@param pNumLevel
+		 */
+		void	SetNumLevel(int pNumLevel);
+		/**
+		 *	NumLevel Property GET
+		 */
+		int     GetNumLevel();
 
 		// ------------------------ Methods ----------------------------------
 		/**
