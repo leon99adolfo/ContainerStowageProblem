@@ -22,7 +22,7 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName, bool pChannelUse)
     // Variables for stacks
     int nuLocationStack;
     double nuMaxWeigth, nuMaxHeigth;
-    vector<StackContainer> listStacks;
+    map<int, StackContainer> listStacks;
     // variables for cell
     int nuStackIdCell, nuIsReeferFore, nuIsReeferAft, nuCapFore, 
         nuCapAft, nuCap40, nuLocationCell;
@@ -140,7 +140,7 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName, bool pChannelUse)
         objStack.SetMaxHeigth(nuMaxHeigth);
         objStack.SetLocationId(nuLocationStack);
                          
-        listStacks.push_back(objStack);		
+        listStacks[(x+1)] = objStack;
 	}
     
     response.SetListStacks(listStacks);
@@ -347,6 +347,8 @@ map<int, ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoad
 		response.Cont.push_back( nuContainerIdx );			
         listContainer[ nuContainerIdx ] = objContainer;
               
+        response.WeightTotal += dbWeigthCont;
+              
         if(pAreLoaded)
         { 
 			response.ContLoadedByStackCell[nuStackIdCont][nuCellIdCont] = nuContainerIdx;
@@ -393,32 +395,68 @@ map<int, ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoad
 				response.Cont_EP[nuPortDischargeCont] = 1;
 			}
         }
-                
-        // find Container with equal weight
-        map<double, int>::iterator ContainerByWeigth = response.Cont_EW.find(dbWeigthCont);
-        if( ContainerByWeigth != response.Cont_EW.end() )
+		
+		// find Container with equal length
+        if( response.Cont_EL.find(nuLengthCont) != response.Cont_EL.end() )
 		{
 			if( nuLengthCont == 40)
 			{
-				response.Cont_EW[dbWeigthCont] += 2;
+				response.Cont_EL[nuLengthCont] += 2;
 			}
 			else
 			{
-				response.Cont_EW[dbWeigthCont] += 1;     
+				response.Cont_EL[nuLengthCont] += 1;  
 			}
         }
         else
         {
-			
-			if( nuLengthCont == 40)	
+            if( nuLengthCont == 40)
+            {
+				response.Cont_EL[nuLengthCont] = 2;
+			}
+			else
 			{
-				response.Cont_EW[dbWeigthCont] = 2;
+				response.Cont_EL[nuLengthCont] = 1;
+			}
+        }
+		
+		
+        // find Container with equal weight
+        if( nuLengthCont == 40)
+        {
+			int WeightContATmp = ceil(dbWeigthCont / 2);
+			int weightAft = WeightContATmp;
+			int weightFore = dbWeigthCont - WeightContATmp;
+			
+			if(response.Cont_EW.find(weightAft) != response.Cont_EW.end())
+			{
+				response.Cont_EW[weightAft] += 1;
+			}
+			else
+			{
+				response.Cont_EW[weightAft] = 1;
+			}
+		
+			if(response.Cont_EW.find(weightFore) != response.Cont_EW.end())
+			{
+				response.Cont_EW[weightFore] += 1;
+			}
+			else
+			{
+				response.Cont_EW[weightFore] = 1;
+			}
+		}
+		else
+		{
+			if(response.Cont_EW.find(dbWeigthCont) != response.Cont_EW.end())
+			{
+				response.Cont_EW[dbWeigthCont] += 1;
 			}
 			else
 			{
 				response.Cont_EW[dbWeigthCont] = 1;
 			}
-        }
+		}
 
         // find Container with equal height
         map<double, int>::iterator ContainerByHeigth = response.Cont_EH.find(dbHeigthCont);

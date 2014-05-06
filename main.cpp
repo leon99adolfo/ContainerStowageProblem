@@ -43,7 +43,7 @@ void* Enviroment(string pDirFile, string pFile, bool pChannelUse, bool pnuTotalF
 	so.stop = &ts;
 	if(pChannelUse)
 	{
-		StowChannelCP* m = new StowChannelCP( objStowageInfo );
+		StowChannelCP* m = new StowChannelCP( objStowageInfo);
 		BAB<StowChannelCP> e(m, so);
 		delete m;
 	
@@ -59,7 +59,7 @@ void* Enviroment(string pDirFile, string pFile, bool pChannelUse, bool pnuTotalF
 	}
 	else
 	{
-		StowageCP* m = new StowageCP( objStowageInfo );	
+		StowageCP* m = new StowageCP( objStowageInfo);
 		BAB<StowageCP> e(m, so);
 		delete m;
 		

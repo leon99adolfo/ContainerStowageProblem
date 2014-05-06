@@ -31,10 +31,9 @@ class StowageInfo
               vector<int>            _listLocations;
               map<int, ContainerBox> _listContainerLoad;
               map<int, ContainerBox> _listContainerLoaded;
-              vector<StackContainer> _listStacks;
+              map<int, StackContainer> _listStacks;
               vector<Cell>           _listCells;
-              
-              
+
               /**
                * Charge container in memory
                */
@@ -76,6 +75,7 @@ class StowageInfo
             map<int, int> 		POD;         	// Ports of discharges of container i
             map<int, int>      	Length;      	// Leight of container i
             map<int, double>    Height;      	// Height of container i
+            map<int, int>       Cont_EL;        // Number of container with Length L.
             map<int, int>       Cont_EP;        // Number of container with discharge port P.
             map<int, int>		ContLoadedSlot;
 			map<int, map<int, int> >	ContLoadedByStackCell; // Containers loaded by stack and cell.
@@ -85,6 +85,7 @@ class StowageInfo
             int                 ContNormal;     // Number of normal containers
             int                 ContCUBE;       // Number of high-cube containers
             map<int, Cell>		CellBySlot;		// cell by slot
+            int					WeightTotal;	// sum of weight container
 			
              // ------------------------ Properties -------------------------------
     		 /**
@@ -215,11 +216,11 @@ class StowageInfo
     		 *	ListStacks Property SET
     		 *	@param pListStacks
     		 */
-             void    SetListStacks(vector<StackContainer> pListStacks);
+             void    SetListStacks(map<int, StackContainer> pListStacks);
              /**
     		 *	ListStacks Property GET
     		 */
-             vector<StackContainer> GetListStacks();
+             map<int, StackContainer> GetListStacks();
              
              
              /**

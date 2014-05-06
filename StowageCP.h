@@ -14,7 +14,6 @@
 #include <gecode/search.hh>
 #include "StowageInfo.h"
 #include "Casting.h"
-#include "DistinctStowageCP.h"
 
 using namespace Gecode;
 
@@ -32,6 +31,7 @@ class StowageCP: public IntMinimizeSpace
 				IntArgs				Length;     // Lenght of container i
 				IntArgs				Height;     // Height of container i
 				IntArgs				ContNonReefer; // container non reefer
+				//IntArgs				ContReefer; // container reefer
 				StowageInfo			GenStowageInfo; // General information
                                    
       protected:
@@ -53,8 +53,8 @@ class StowageCP: public IntMinimizeSpace
                 IntVarArray     OP;  // Number of different discharge ports in each stack.
                 IntVar          OR;  // Number of container non-reefers stowed in reefer cells.
                 IntVar          O;   // Solution Cost.
-                IntVarArray		OVA;	
-                IntVar			NuLevel;
+                IntVarArray		OVA;
+                IntVar			UseStackI;
       public:
             /**
              * Constructor:
@@ -75,7 +75,8 @@ class StowageCP: public IntMinimizeSpace
 			/**
 			* This function save the maximum slot by stack
 			*/
-			void SaveContLoadedSlot(StowageInfo& pStowageInfo, map<int, int>& pSlotByStack, int pStack, int pSlot);
+			void SaveContLoadedSlot(StowageInfo& pStowageInfo, map<int, int>& pSlotByStack, 
+									map<int, int>& pnuSlotLoadesdByStack, int pStack, int pSlot);
 			
 			/** 
 			* Constructor overload
@@ -96,20 +97,18 @@ class StowageCP: public IntMinimizeSpace
 			*	Propagator
 			*/
 			void casting(StowageCP& home, FloatVar x0, FloatVar x1);
-			//void distinctStowageCP(StowageCP& home, IntVarArray x);
 			
 			/**
-			*	branching L
+			*	branching method
 			*/
-			double meritL(IntVar x, int i) const;			
-			static double trampMeritL(const Space& home, IntVar x, int i);			
-			int valueFunL(IntVar x, int i) const;
+			void BranchMethodByStack(StowageInfo pStowageInfo, vector<int> vectStacks);
+			void BranchMethodByLevel(StowageInfo pStowageInfo);
+			
+			
+			/**
+			*	branching P
+			*/
 			static int trampValueFunL(const Space& home, IntVar x, int i);
-			
-			/**
-			*	branching S
-			*/
-			static double meritS(const Space& home, IntVar x, int i);
 			
 			/**
 			*	Cost function

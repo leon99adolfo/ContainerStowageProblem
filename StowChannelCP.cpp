@@ -213,7 +213,7 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 			HTempHeight<<H[slot];
 		}
 			
-		double heigthStack =  pStowageInfo.GetListStacks().at(countStaks).GetMaxHeigth()*10000;
+		double heigthStack =  pStowageInfo.GetListStacks()[(countStaks+1)].GetMaxHeigth()*10000;
 		rel(*this, HS[countStaks], IRT_LQ, heigthStack); // Heigth limit	
 		
 		// ---------------------------------------------------------------------------------------------
@@ -346,7 +346,7 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 			LTempLength<<L[slot];
 		}	
 		
-		double dbMaxWeight = pStowageInfo.GetListStacks()[ ((it->first) - 1 ) ].GetMaxWeigth();
+		double dbMaxWeight = pStowageInfo.GetListStacks()[(it->first)].GetMaxWeigth();
 		linear(*this, WTempWeight, IRT_LQ, dbMaxWeight ); // Weight limit constraint
 		count(*this, LTempLength, IntSet(20, 40), IRT_EQ, OUT[idxOUT]);
 		idxOUT++;

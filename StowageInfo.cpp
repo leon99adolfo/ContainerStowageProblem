@@ -122,12 +122,12 @@ map<int, ContainerBox> StowageInfo::GetListContainerLoaded()
         return _listContainerLoaded;                 
 }
 
-void    StowageInfo::SetListStacks(vector<StackContainer> pListStacks)
+void    StowageInfo::SetListStacks(map<int, StackContainer> pListStacks)
 {
         _listStacks = pListStacks;        
 }
 
-vector<StackContainer> StowageInfo::GetListStacks()
+map<int, StackContainer> StowageInfo::GetListStacks()
 {
         return _listStacks;                   
 }
@@ -146,7 +146,8 @@ vector<Cell> StowageInfo::GetListCells()
 StowageInfo::StowageInfo()
 {
     ContNormal = 0;  
-    ContCUBE   = 0;         
+    ContCUBE   = 0;  
+    WeightTotal = 0;     
 }
 
 //StowageInfo::~StowageInfo(){}
@@ -202,14 +203,14 @@ void StowageInfo::ChargeData()
     {
         if(x == 0)
         {
-            _nuMaxStackHeight = _listStacks.at(x).GetMaxHeigth();
+            _nuMaxStackHeight = _listStacks[(x+1)].GetMaxHeigth();
         }
         else
         {
             //  Maximum Height
-            if(_listStacks.at(x).GetMaxHeigth() > _nuMaxStackHeight)
+            if(_listStacks[(x+1)].GetMaxHeigth() > _nuMaxStackHeight)
             {
-                _nuMaxStackHeight = _listStacks.at(x).GetMaxHeigth();                   
+                _nuMaxStackHeight = _listStacks[(x+1)].GetMaxHeigth();                   
             }  
         }
     }   
