@@ -512,6 +512,32 @@ map<int, ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoad
 
 void BLReadFiles::ChargeContainerInfo(ContainerBox objContainer)
 {
+	bool existCont = false;
+	for(int x = 0; x < response.SameContainer.size(); x++)
+	{		
+		if(	!objContainer.GetIsCharged() &&
+			objContainer.GetWeight() == response.SameContainer[x].Container.GetWeight() &&
+			objContainer.GetPortDischarge() == response.SameContainer[x].Container.GetPortDischarge() &&
+			objContainer.GetLength() == response.SameContainer[x].Container.GetLength() &&
+			objContainer.GetHeight() == response.SameContainer[x].Container.GetHeight() &&
+			objContainer.GetIsReefer() == response.SameContainer[x].Container.GetIsReefer() &&
+			objContainer.GetLocation() == response.SameContainer[x].Container.GetLocation())
+		{
+			existCont = true;
+			response.SameContainer[x].vecIdxContainer.push_back(nuContainerIdx);
+			break;
+		}		
+	}
+	
+	if(!existCont) 
+	{
+		EqualContainer objEqCont;
+		objEqCont.Container = objContainer;
+		objEqCont.vecIdxContainer.push_back(nuContainerIdx);
+		response.SameContainer.push_back(objEqCont);
+	}
+	
+	
     // Insert Container Weight 
 	response.Weight[nuContainerIdx] = objContainer.GetWeight();
 	

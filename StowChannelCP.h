@@ -52,6 +52,7 @@ class StowChannelCP: public IntMinimizeSpace
                 IntVar          OR;  // Number of container non-reefers stowed in reefer cells.
                 IntVar          O;   // Solution Cost.
                 IntVarArray		OVA;
+                IntVar			UseStackI;
   
       public:
             /**
@@ -98,14 +99,12 @@ class StowChannelCP: public IntMinimizeSpace
 			/**
 			*	branching L
 			*/
-			double meritL(IntVar x, int i) const;			
-			static double trampMeritL(const Space& home, IntVar x, int i);
-			static int valueFunL(const Space& home, IntVar x, int i);
+			static int trampValueFunL(const Space& home, IntVar x, int i);
 			
 			/**
-			*	branching S
-			*/
-			static double meritS(const Space& home, IntVar x, int i);
+			*	Branch method
+			*/			
+			void BranchMethodByLevel(StowageInfo pStowageInfo);
 			
 			/**
 			*	Cost function

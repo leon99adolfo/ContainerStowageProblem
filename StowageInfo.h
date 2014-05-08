@@ -9,6 +9,7 @@
 #define StowageInfo_h
 
 #include "StackContainer.h"
+#include "EqualContainer.h"
 #include <iostream>
 #include <vector>
 #include <map>
@@ -86,6 +87,7 @@ class StowageInfo
             int                 ContCUBE;       // Number of high-cube containers
             map<int, Cell>		CellBySlot;		// cell by slot
             int					WeightTotal;	// sum of weight container
+            vector<EqualContainer>	SameContainer; // Set equal container
 			
              // ------------------------ Properties -------------------------------
     		 /**

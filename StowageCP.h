@@ -101,8 +101,8 @@ class StowageCP: public IntMinimizeSpace
 			/**
 			*	branching method
 			*/
-			void BranchMethodByStack(StowageInfo pStowageInfo, vector<int> vectStacks);
-			void BranchMethodByLevel(StowageInfo pStowageInfo);
+			void BranchMethodByStack(StowageInfo pStowageInfo, vector<int> vectStacks, Symmetries pSyms);
+			void BranchMethodByLevel(StowageInfo pStowageInfo, Symmetries pSyms);
 			
 			
 			/**

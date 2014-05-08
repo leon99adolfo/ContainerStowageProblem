@@ -500,6 +500,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	exactly(*this, L, VC, 0);
 	exactly(*this, H, VC, 0);
 	exactly(*this, P, VC, 0);
+	exactly(*this, W, VC, 0);
 	
 	for(map<double, int>::iterator it=pStowageInfo.Cont_EW.begin(); it != pStowageInfo.Cont_EW.end(); ++it)
     { 
@@ -513,7 +514,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
     
     for (map<double, int>::iterator it=pStowageInfo.Cont_EH.begin(); it != pStowageInfo.Cont_EH.end(); ++it)
     {         	
-        if((it->first) != 0) atmost(*this, H, (it->first), (it->second));        
+        if((it->first) != 0) atmost(*this, H, ((it->first) * 10000), (it->second));        
     }
     
     bool exist20L = false;
@@ -528,20 +529,28 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
     if(!exist20L) exactly(*this, L, 20, 0); 
     if(!exist40L) exactly(*this, L, 40, 0); 
     
+    // symmetry breaking
+    Symmetries syms;
+    for(int x = 0; x < pStowageInfo.SameContainer.size(); x++)
+    {
+		IntArgs symmetryArgs = IntArgs( pStowageInfo.SameContainer[x].vecIdxContainer );		
+		syms << ValueSymmetry(symmetryArgs);
+	}
+	
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// post branching
 	//////////////////////////////////////////////////////////////////////////////////////////////////
-	BranchMethodByLevel(pStowageInfo);
+	BranchMethodByLevel(pStowageInfo, syms);
 	if(false)
 	{
 		// branch
-		BranchMethodByStack(pStowageInfo, sortStack);
-		BranchMethodByStack(pStowageInfo, emptyStack);
+		BranchMethodByStack(pStowageInfo, sortStack, syms);
+		BranchMethodByStack(pStowageInfo, emptyStack, syms);
 	}
 }
 
 // Branching by stack
-void StowageCP::BranchMethodByStack(StowageInfo pStowageInfo, vector<int> vectStacks)
+void StowageCP::BranchMethodByStack(StowageInfo pStowageInfo, vector<int> vectStacks, Symmetries pSyms)
 {	
 	for(int x = 0; x < vectStacks.size() ; x++)
 	{ 
@@ -565,12 +574,12 @@ void StowageCP::BranchMethodByStack(StowageInfo pStowageInfo, vector<int> vectSt
 		branch(*this, LBranch, INT_VAR_NONE(), INT_VAL(&trampValueFunL));
 		branch(*this, WBranch, INT_VAR_NONE(), INT_VAL_MAX());
 		branch(*this, HBranch, INT_VAR_NONE(), INT_VAL_MAX());
-		branch(*this, SBranch, INT_VAR_NONE(), INT_VAL_MAX());
+		branch(*this, SBranch, INT_VAR_NONE(), INT_VAL_MAX(), pSyms);
 	}
 }
 
 // Branching by level
-void StowageCP::BranchMethodByLevel(StowageInfo pStowageInfo)
+void StowageCP::BranchMethodByLevel(StowageInfo pStowageInfo, Symmetries pSyms)
 {
 	for(int x = 0; x < pStowageInfo.GetNumTiers() ; x++)
 	{
@@ -600,8 +609,9 @@ void StowageCP::BranchMethodByLevel(StowageInfo pStowageInfo)
 		branch(*this, LBranch, INT_VAR_NONE(), INT_VAL(&trampValueFunL));
 		branch(*this, WBranch, INT_VAR_NONE(), INT_VAL_MAX());
 		branch(*this, HBranch, INT_VAR_NONE(), INT_VAL_MAX());
-		branch(*this, SBranch, INT_VAR_NONE(), INT_VAL_MAX());
+		//branch(*this, SBranch, INT_VAR_NONE(), INT_VAL_MAX(), pSyms);
 	}
+	branch(*this, S, INT_VAR_NONE(), INT_VAL_MAX(), pSyms);
 }
 
 // search support
@@ -766,7 +776,7 @@ void StowageCP::ChargeInformation(StowageInfo pStowageInfo)
 	for(int x = 0; x < pStowageInfo.Cont.size() ; x++)
 	{
 		if( pStowageInfo.Cont_NR.find(x) == pStowageInfo.Cont_NR.end() )
-		{
+		{ 
 			ContNonReefer[x] = 0;
 			//ContReefer[x] = 1;
 		}
