@@ -141,6 +141,30 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName, bool pChannelUse)
         objStack.SetLocationId(nuLocationStack);
                          
         listStacks[(x+1)] = objStack;
+        
+        if ( response.ContLoadedMaxCell.find(x+1) == response.ContLoadedMaxCell.end())
+        {
+			bool existStack = false;
+			for(int y = 0; y < response.SameStackTmp.size(); y++)
+			{		
+				if(	objStack.GetMaxWeigth() == response.SameStackTmp[y].Stack.GetMaxWeigth() &&
+					objStack.GetMaxHeigth() == response.SameStackTmp[y].Stack.GetMaxHeigth() &&
+					objStack.GetLocationId() == response.SameStackTmp[y].Stack.GetLocationId())
+				{
+					existStack = true;
+					response.SameStackTmp[y].vecIdxStack.push_back(x+1);
+					break;
+				}
+			}
+			
+			if(!existStack) 
+			{
+				EqualStack objEqStack;
+				objEqStack.Stack = objStack;
+				objEqStack.vecIdxStack.push_back(x+1);
+				response.SameStackTmp.push_back(objEqStack);
+			}
+		}
 	}
     
     response.SetListStacks(listStacks);
@@ -222,10 +246,12 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName, bool pChannelUse)
 		// Insert Slots F
 		response.Slots_F.push_back( idxSecondTemp );
 		
+		int numberSlotR = 0;
 		// Insert slots reefer and not reefer
 		if( nuIsReeferAft  == objConstants.verdadero )
 		{
 			response.Slots_R[idxFirstTemp] = idxFirstTemp;
+			numberSlotR++;
 		}
 		else
 		{
@@ -238,6 +264,7 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName, bool pChannelUse)
 		if( nuIsReeferFore == objConstants.verdadero) 
 		{
 			response.Slots_R[idxSecondTemp] = idxSecondTemp;
+			numberSlotR++;
 		}
 		else
 		{
@@ -256,10 +283,7 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName, bool pChannelUse)
 			if(nuCapAft == objConstants.verdadero) response.Slots_20.push_back( idxFirstTemp );
 			if(nuCapFore == objConstants.verdadero) response.Slots_20.push_back( idxSecondTemp );
 		}
-
-		vector<int> TmpSlotsK;
-		vector<int> TmpSlotsKA;
-		vector<int> TmpSlotsKF;
+		
 		map<int, vector<int> >::iterator stackFinded = response.Slots_K.find(nuStackIdCell);		
 		if( stackFinded != response.Slots_K.end() )
 		{
@@ -271,10 +295,18 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName, bool pChannelUse)
 			response.Slots_K_A[ nuStackIdCell ].push_back( idxFirstTemp );
 			
 			// Insert Stack K Fore 
-			response.Slots_K_F[ nuStackIdCell ].push_back( idxSecondTemp );			
+			response.Slots_K_F[ nuStackIdCell ].push_back( idxSecondTemp );
+			
+			response.ListCellByStack[nuStackIdCell].push_back( objCell );
+			response.SlotRByStack[nuStackIdCell] += numberSlotR;
 		}
 		else
 		{
+			vector<int> TmpSlotsK;
+			vector<int> TmpSlotsKA;
+			vector<int> TmpSlotsKF;
+			vector<Cell> TmpCells;
+		
 			// Insert Stack
 			response.Stacks.push_back( nuStackIdCell );
 			
@@ -290,11 +322,16 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName, bool pChannelUse)
 			// Insert Stack K Fore 
 			TmpSlotsKF.push_back( idxSecondTemp );
 			response.Slots_K_F[nuStackIdCell] = TmpSlotsKF;
+						
+			TmpCells.push_back( objCell );
+			response.ListCellByStack[nuStackIdCell] = TmpCells;
 			
+			response.SlotRByStack[nuStackIdCell] = numberSlotR;
 		}
+		
     }
     response.SetNumCell(nuCell - nuCellNull);
-    response.SetListCells(listCells);    
+    response.SetListCells(listCells);     
 	response.ChargeData();
 	
     // Close file
@@ -526,7 +563,7 @@ void BLReadFiles::ChargeContainerInfo(ContainerBox objContainer)
 			existCont = true;
 			response.SameContainer[x].vecIdxContainer.push_back(nuContainerIdx);
 			break;
-		}		
+		}
 	}
 	
 	if(!existCont) 
@@ -536,7 +573,6 @@ void BLReadFiles::ChargeContainerInfo(ContainerBox objContainer)
 		objEqCont.vecIdxContainer.push_back(nuContainerIdx);
 		response.SameContainer.push_back(objEqCont);
 	}
-	
 	
     // Insert Container Weight 
 	response.Weight[nuContainerIdx] = objContainer.GetWeight();

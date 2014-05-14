@@ -20,8 +20,8 @@ class StackContainer
 		int _stackId;
 		double _maxWeigth;
 		double _maxHeigth;
-
-	public: 
+		
+	public:
         // ------------------------ Properties -------------------------------
 		/**
 		 *	LocationId Property SET

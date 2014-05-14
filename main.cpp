@@ -65,7 +65,51 @@ void* Enviroment(string pDirFile, string pFile, bool pChannelUse, bool pnuTotalF
 		
 		// search and print all solutions
 		while (StowageCP* s = e.next()) {
-			s->print(O, OGCTD, OR, OP, OPT, OU, OCNS, OV, SL); 
+			s->print();
+			
+			// --------------  print values  ---------------------------
+			O = s->O.val();
+			OGCTD = s->OGCTD.val();
+			OR = s->OR.val();
+			
+			stringstream ss;
+			OPT = 0;
+			OP = "";
+			for(int x = 0; x < s->OP.size() ; x++)
+			{
+				int value = s->OP[x].val();
+				OPT += value;		
+				if(x == 0) 
+				{
+					ss << value;
+				}
+				else
+				{
+					ss << "," << value;
+				}
+			}	
+			OP += ss.str();
+	
+			OU = s->OU.val();
+			OCNS = s->OCNS.val();
+			OV = s->OV.val();
+
+			stringstream ss2;
+			for(int x = 0; x < s->S.size() ; x++)
+			{
+				int value = s->S[x].val();
+				if(x == 0) 
+				{
+					ss2 << value;
+				}
+				else
+				{
+					ss2 << "," << value;
+				}
+			}
+			SL = ss2.str();
+			// ---------------------------------------------------------
+			
 			delete s;
 		
 			final2 = final;
@@ -100,8 +144,8 @@ void* Enviroment(string pDirFile, string pFile, bool pChannelUse, bool pnuTotalF
 int main(int argc, char *argv[])
 {
 	//int file_count = 0;
-	string full_path = "/home/adolfo/Universidad/maestria/tesis/inst2/";
-	bool boChannelUse = true;
+	string full_path = "/home/adolfo/Universidad/maestria/tesis/inst/";
+	bool boChannelUse = false;
 	bool boTotalFile = true;
     
     cout<<"Empieza a procesar"<<endl;

@@ -35,7 +35,7 @@ class StowageCP: public IntMinimizeSpace
 				StowageInfo			GenStowageInfo; // General information
                                    
       protected:
-                IntVarArray     S;   	// Container index of slot j.
+                
                 IntVarArray     L;   	// Length of container stowed in slot j.
                 IntVarArray   	H;   	// Height of container stowed in slot j.
                 IntVarArray   	W;   	// Weight of container stowed in slot j.
@@ -45,17 +45,19 @@ class StowageCP: public IntMinimizeSpace
                 BoolVarArray    CFEU_A;	// Is container 40' Aft?
                 BoolVarArray    CFEU_F;	// Is container 40' Fore?               
                 FloatVarArray	GCD;	// Gravity center distance
-                IntVar			OGCTD;	// Gravity Center total distance
-                IntVar          OV;  	// Number of over-stowing containers.
-				IntVarArray     OVT; 	// Container j over-stowing temporal.
-				IntVar			OCNS; 	// Number of container not stowed.
-                IntVar          OU;  // Number of used stacks. 
-                IntVarArray     OP;  // Number of different discharge ports in each stack.
-                IntVar          OR;  // Number of container non-reefers stowed in reefer cells.
-                IntVar          O;   // Solution Cost.
                 IntVarArray		OVA;
                 IntVar			UseStackI;
+                IntVar			UseSlotR; 
       public:
+			IntVarArray     S;   			// Container index of slot j.
+			IntVar          O;   			// Solution Cost.
+			IntVar			OGCTD;			// Gravity Center total distance
+			IntVar          OR;  			// Number of container non-reefers stowed in reefer cells.
+			IntVar          OV;  			// Number of over-stowing containers.
+			IntVarArray     OVT; 			// Container j over-stowing temporal.
+			IntVar			OCNS; 			// Number of container not stowed.
+			IntVar          OU;  			// Number of used stacks. 
+			IntVarArray     OP;  			// Number of different discharge ports in each stack.
             /**
              * Constructor:
              * 1 - Define range of the variables
@@ -91,7 +93,7 @@ class StowageCP: public IntMinimizeSpace
 			/**
 			*	Printing solutions
 			*/
-			void print(int &pO, int &pOGCTD, int &pOR, string &pOP, int &pOPT, int &pOU, int &pOCNS, int &pOV, string &pS) const;
+			void print() const;
 			
 			/**
 			*	Propagator

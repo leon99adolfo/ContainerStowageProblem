@@ -199,6 +199,12 @@ void StowageInfo::ChargeData()
     cout<<"_nuMaxWeight: "<<_nuMaxWeight<<endl;
         
     // Stacks
+    map<int, int> copySlotRByStack;
+    for(int x = 0; x < _listStacks.size(); x++)
+	{
+		copySlotRByStack[x+1] = SlotRByStack[x+1];
+	}
+    
     for(int x = 0; x < _listStacks.size(); x++)
     {
         if(x == 0)
@@ -213,7 +219,70 @@ void StowageInfo::ChargeData()
                 _nuMaxStackHeight = _listStacks[(x+1)].GetMaxHeigth();                   
             }  
         }
+        
+        int minNumberSlotR = INT_MAX;
+        int minStack = INT_MAX;        
+        for(map<int, int>::iterator it=copySlotRByStack.begin(); it != copySlotRByStack.end(); ++it)
+		{	
+			if(minNumberSlotR > (it->second)) 
+			{
+				minNumberSlotR = (it->second);
+				minStack = (it->first);
+			}
+        }
+        SortSlotRByStack.push_back(minStack);
+        copySlotRByStack.erase(minStack);        
     }   
+    
+    // stack class 
+    int nuClass = 0;
+    for(int x = 0; x < SameStackTmp.size(); x++)
+    {
+		if(SameStackTmp[x].vecIdxStack.size() <= 1) continue;
+		
+		int nuCantidad = SameStack.size();
+		for(int y = 0; y < SameStackTmp[x].vecIdxStack.size(); y++)
+		{
+			vector<Cell> cells1 = ListCellByStack[SameStackTmp[x].vecIdxStack[y]];
+			
+			// -------------------------------------------------------------------
+			bool existClass = false;
+			for(int z = nuCantidad; z < SameStack.size(); z++)  // aleoncm
+			{		
+				if(SameStack[z].Cells.size() != cells1.size()) break;
+				
+				bool equalAllCells = true;
+				for(int w = 0; w < SameStack[z].Cells.size(); w++)
+				{
+					if(!(SameStack[z].Cells[w].GetIsReeferFore() ==  cells1[w].GetIsReeferFore() &&
+						SameStack[z].Cells[w].GetIsReeferAft() ==  cells1[w].GetIsReeferAft() &&
+						SameStack[z].Cells[w].GetCapFore() ==  cells1[w].GetCapFore() &&
+						SameStack[z].Cells[w].GetCapAft() ==  cells1[w].GetCapAft() &&
+						SameStack[z].Cells[w].GetCap40() ==  cells1[w].GetCap40() &&
+						SameStack[z].Cells[w].GetNumLocation() ==  cells1[w].GetNumLocation()) )
+					{
+						equalAllCells = false;
+					}
+				}
+				
+				if(equalAllCells)
+				{
+					SameStack[z].vecIdxStack.push_back(SameStackTmp[x].vecIdxStack[y]);
+					existClass = true;
+					break;
+				}					
+			}
+				
+			if(!existClass)
+			{
+				EqualStack objEqStack;
+				objEqStack.Stack = SameStackTmp[x].Stack;
+				objEqStack.Cells = cells1;
+				objEqStack.vecIdxStack.push_back(SameStackTmp[x].vecIdxStack[y]);
+				SameStack.push_back(objEqStack);
+			}
+		}
+	}
      
     cout<<"_nuMaxStackHeight: "<<_nuMaxStackHeight<<endl;
 }

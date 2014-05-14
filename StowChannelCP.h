@@ -53,6 +53,7 @@ class StowChannelCP: public IntMinimizeSpace
                 IntVar          O;   // Solution Cost.
                 IntVarArray		OVA;
                 IntVar			UseStackI;
+                IntVar			UseSlotR; 
   
       public:
             /**
@@ -74,7 +75,8 @@ class StowChannelCP: public IntMinimizeSpace
 			/**
 			* This function save the maximum slot by stack
 			*/
-			void SaveContLoadedSlot(StowageInfo& pStowageInfo, map<int, int>& pSlotByStack, int pStack, int pSlot);
+			void SaveContLoadedSlot(StowageInfo& pStowageInfo, map<int, int>& pSlotByStack, 
+										map<int, int>& pnuSlotLoadesdByStack, int pStack, int pSlot);
 			
 			/** 
 			* Constructor overload
@@ -105,6 +107,7 @@ class StowChannelCP: public IntMinimizeSpace
 			*	Branch method
 			*/			
 			void BranchMethodByLevel(StowageInfo pStowageInfo);
+			void BranchMethodByStack(StowageInfo pStowageInfo, vector<int> vectStacks);
 			
 			/**
 			*	Cost function

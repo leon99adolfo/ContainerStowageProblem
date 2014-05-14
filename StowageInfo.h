@@ -10,9 +10,11 @@
 
 #include "StackContainer.h"
 #include "EqualContainer.h"
+#include "EqualStack.h"
 #include <iostream>
 #include <vector>
 #include <map>
+#include <climits>
 
 using namespace std;
 
@@ -88,6 +90,11 @@ class StowageInfo
             map<int, Cell>		CellBySlot;		// cell by slot
             int					WeightTotal;	// sum of weight container
             vector<EqualContainer>	SameContainer; // Set equal container
+            vector<EqualStack>	SameStackTmp;		// Set equal stack
+            vector<EqualStack>	SameStack;		// Set equal stack
+            map<int, vector<Cell> > ListCellByStack; // cells by stack
+            map<int, int> 		SlotRByStack; // Slots reffer by slots
+            vector<int>			SortSlotRByStack;  // sort SlotRByStack
 			
              // ------------------------ Properties -------------------------------
     		 /**
