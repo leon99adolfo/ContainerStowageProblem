@@ -45,9 +45,9 @@ class StowageCP: public IntMinimizeSpace
                 BoolVarArray    CFEU_A;	// Is container 40' Aft?
                 BoolVarArray    CFEU_F;	// Is container 40' Fore?               
                 FloatVarArray	GCD;	// Gravity center distance
-                IntVarArray		OVA;
                 IntVar			UseStackI;
-                IntVar			UseSlotR; 
+                IntVar			UseSlotR;
+                 
       public:
 			IntVarArray     S;   			// Container index of slot j.
 			IntVar          O;   			// Solution Cost.
@@ -58,6 +58,8 @@ class StowageCP: public IntMinimizeSpace
 			IntVar			OCNS; 			// Number of container not stowed.
 			IntVar          OU;  			// Number of used stacks. 
 			IntVarArray     OP;  			// Number of different discharge ports in each stack.
+			IntVarArray		OVA;
+			IntVarArray		PreOVA;
             /**
              * Constructor:
              * 1 - Define range of the variables
@@ -88,7 +90,7 @@ class StowageCP: public IntMinimizeSpace
 			/**
 			*	Space
 			*/
-			virtual Space* copy(bool share);
+			virtual Space* copy(bool share);				
 						
 			/**
 			*	Printing solutions
@@ -105,7 +107,6 @@ class StowageCP: public IntMinimizeSpace
 			*/
 			void BranchMethodByStack(StowageInfo pStowageInfo, vector<int> vectStacks, Symmetries pSyms);
 			void BranchMethodByLevel(StowageInfo pStowageInfo, Symmetries pSyms);
-			
 			
 			/**
 			*	branching P

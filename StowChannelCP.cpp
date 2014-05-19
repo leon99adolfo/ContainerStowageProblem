@@ -88,7 +88,7 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 
 	//----------------------------------------- Loaded Container Constraints -------------------------
 	// Loaded Container
-	vector<int> nuStackUsedR;
+	map<int, int> nuStackUsedR;
 	map<int, int> slotByStackFore;
 	map<int, int> slotByStackAft;
 	map<int, int> nuSlotLoadesdByStack;
@@ -98,7 +98,7 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 		ContainerBox objContainer = pStowageInfo.GetListContainerLoaded()[pStowageInfo.Cont_L[x]];
 		int stack = objContainer.GetStackId();
 		
-		nuStackUsedR.push_back(stack);
+		if(nuStackUsedR.find(stack) != nuStackUsedR.end()) nuStackUsedR[stack] = stack;
 		
 		int nuCellNull = 0;
 		for(int y = 0; y < pStowageInfo.CellNull[stack].size() ; y++)
@@ -409,7 +409,11 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 			nuSlotLoadesdByStack.erase(maxStack);
 			
 		}
-		else if( copySlotLoadesdByStack.find(pStowageInfo.SortSlotRByStack[x]) == copySlotLoadesdByStack.end()) 
+	}
+	
+	for(int x = 0; x < pStowageInfo.SortSlotRByStack.size(); x++)
+	{	
+		if( copySlotLoadesdByStack.find(pStowageInfo.SortSlotRByStack[x]) == copySlotLoadesdByStack.end()) 
 		{
 			emptyStack.push_back(pStowageInfo.SortSlotRByStack[x]);
 		}
@@ -435,8 +439,7 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 	
 	// Get empty stack
 	IntVar nuCeroOU(*this, 0, pStowageInfo.GetNumStacks());
-	count(*this, OUT, 0, IRT_EQ, nuCeroOU);
-	rel(*this, OU == pStowageInfo.GetNumStacks() - nuCeroOU);
+	count(*this, OUT, 0, IRT_EQ, nuCeroOU);	
 	
 	// Get Different POD
 	IntVar OPT(*this, 0, pStowageInfo.GetNumPortsDischarge() * pStowageInfo.GetNumStacks());
@@ -468,26 +471,24 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 		UseStackIArgs<<expr(*this, CS > amountSlot);
 	}
     linear(*this, UseStackIArgs, IRT_EQ, UseStackI);
+    rel(*this, OU == pStowageInfo.GetNumStacks() - nuCeroOU - UseStackI);
     
     // used SlotR
     IntVarArgs UseSlotRArgs;
-    for(int x = 0; x < nuStackUsedR.size(); x++)
+    for (map<int, int>::iterator it=nuStackUsedR.begin(); it != nuStackUsedR.end(); ++it)
 	{	
-		UseSlotRArgs<<IntVar(*this, pStowageInfo.SlotRByStack[nuStackUsedR[x]], pStowageInfo.SlotRByStack[nuStackUsedR[x]]);
+		UseSlotRArgs<<IntVar(*this, pStowageInfo.SlotRByStack[(it->first)], pStowageInfo.SlotRByStack[(it->first)]);
 	}
-
+	
 	int  contSlotReffer = 1;
 	for(int x = 0; x < pStowageInfo.SortSlotRByStack.size(); x++)
 	{		
 		int idxStack = pStowageInfo.SortSlotRByStack[x];
 		bool exists = false;
-		for(int y = 0; y < nuStackUsedR.size(); y++)
+		if(nuStackUsedR.find(idxStack) != nuStackUsedR.end())
 		{
-			if(idxStack == nuStackUsedR[y]) 
-			{
-				exists = true;
-				break;
-			}
+			exists = true;
+			break;
 		}
 		
 		if(exists) continue;
@@ -506,12 +507,12 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 	// --------------------------------------------------------------------------------------
 	// --------------------------- Cost function --------------------------------------------
 	// --------------------------------------------------------------------------------------	
-	rel(*this, O == 1000 * OCNS + 20 * OPT + 10 * (OU - UseStackI) + 5 * OR );//+ OGCTD);
+	rel(*this, O == 1000 * OCNS + 20 * OPT + 10 * OU + 5 * OR );//+ OGCTD);
 
 	// OVA Constraint
 	rel(*this, OVA[0] == OCNS);
 	rel(*this, OVA[1] == OPT);
-	rel(*this, OVA[2] == (OU - UseStackI));
+	rel(*this, OVA[2] == OU);
 	rel(*this, OVA[3] == OR);
 	rel(*this, OVA[4] == OGCTD);
 	
@@ -525,6 +526,15 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 	exactly(*this, H, VC.size(), 0);
 	exactly(*this, P, VC.size(), 0);
 	exactly(*this, W, VC.size(), 0);
+	
+	// symmetry breaking with virtual slots
+	IntVarArgs stowVirtualSlots;
+	for(int x = pStowageInfo.Slots.size(); x < nuSlotsContainer; x++)
+	{
+		//cout<<"S["<<x<<"]"<<endl;
+		stowVirtualSlots<<S[x];
+	}
+	rel(*this, stowVirtualSlots, IRT_LE);
 	
 	for(map<double, int>::iterator it=pStowageInfo.Cont_EW.begin(); it != pStowageInfo.Cont_EW.end(); ++it)
     { 
@@ -597,15 +607,15 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// Branching
 	//////////////////////////////////////////////////////////////////////////////////////////////////		
-	if(false)
+	if(pStowageInfo.LevelDistribute)
+	{
+		BranchMethodByLevel(pStowageInfo);
+	}
+	else
 	{
 		// branch
 		BranchMethodByStack(pStowageInfo, sortStack);
 		BranchMethodByStack(pStowageInfo, emptyStack);
-	}
-	else
-	{
-		BranchMethodByLevel(pStowageInfo);
 	}
     
 }
@@ -630,6 +640,7 @@ void StowChannelCP::BranchMethodByStack(StowageInfo pStowageInfo, vector<int> ve
 			LBranch<<L[slot];
 			HBranch<<H[slot];
 			SBranch<<S[slot];
+			//cout<<"slot: "<<slot<<endl;
 		}	
 		// branch
 		branch(*this, PBranch, INT_VAR_NONE(), INT_VAL_MAX());
@@ -650,7 +661,7 @@ void StowChannelCP::BranchMethodByLevel(StowageInfo pStowageInfo)
 		IntVarArgs WBranch;
 		IntVarArgs LBranch;
 		IntVarArgs HBranch;
-		IntVarArgs SBranch;
+		//IntVarArgs SBranch;
 		
 		for(int y = 0; y < pStowageInfo.Slots_K.size() ; y++)
 		{
@@ -664,13 +675,14 @@ void StowChannelCP::BranchMethodByLevel(StowageInfo pStowageInfo)
 				WBranch<<W[slot1]<<W[slot2];
 				LBranch<<L[slot1]<<L[slot2];
 				HBranch<<H[slot1]<<H[slot2];
-				
+				//SBranch<<S[slot1]<<S[slot2];
 			}		
 		}
 		branch(*this, PBranch, INT_VAR_NONE(), INT_VAL_MAX());
 		branch(*this, LBranch, INT_VAR_NONE(), INT_VAL(&trampValueFunL));
 		branch(*this, WBranch, INT_VAR_NONE(), INT_VAL_MAX());    	
 		branch(*this, HBranch, INT_VAR_NONE(), INT_VAL_MAX());
+		//branch(*this, SBranch, INT_VAR_NONE(), INT_VAL_MIN());
 	}	
 	branch(*this, RC, INT_VAR_NONE(), INT_VAL_MIN());
 }
@@ -810,18 +822,14 @@ void StowChannelCP::SaveContLoadedSlot(StowageInfo& pStowageInfo, map<int, int>&
 	{
 		if(pSlotByStack[pStack] < pSlot )
 		{
-			pStowageInfo.ContLoadedSlot[pSlotByStack[pStack]] = pSlotByStack[pStack];
 			pSlotByStack[pStack] = pSlot;
-		}					
-		else
-		{
-			pStowageInfo.ContLoadedSlot[pSlot] = pSlot; 
 		}
 	}
 	else
 	{
 		pSlotByStack[pStack] = pSlot;
 	}
+	pStowageInfo.ContLoadedSlot[pSlot] = pSlot;
 	
 	pnuSlotLoadesdByStack[pStack] = (pnuSlotLoadesdByStack.find(pStack) != pnuSlotLoadesdByStack.end()) ? pnuSlotLoadesdByStack[pStack] + 1 : 1;
 }
@@ -877,7 +885,16 @@ void StowChannelCP::ChargeInformation(StowageInfo pStowageInfo)
 		}
 		else
 		{
-			ContNonReefer[x] = 1;
+			bool IsLoaded = false;
+			for(int y = 0; y < pStowageInfo.Cont_L.size(); y++)
+			{
+				if(pStowageInfo.Cont_L[y] == x)
+				{
+					IsLoaded = true;
+					break;
+				}
+			}
+			ContNonReefer[x] = IsLoaded ? 0: 1;
 		}
 	}
 

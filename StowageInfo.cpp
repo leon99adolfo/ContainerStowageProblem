@@ -187,6 +187,33 @@ void StowageInfo::ChargeContainer(map<int, ContainerBox> pListContainer, bool pV
      }
 }
 
+bool StowageInfo::IsValidLoadedCont()
+{
+	for(map<int, map<int, int> >::iterator it=ContLoadedByStackCell.begin(); it != ContLoadedByStackCell.end(); ++it)
+	{
+		map<int, int> cellsByStack = it->second;
+		for(int x = 1; x <= cellsByStack.size(); x++)
+		{
+			bool nullCell = false;
+			for(int y = 0; y < CellNull[it->first].size(); y++)
+			{
+				if((CellNull[it->first][y] + 1) == x) 
+				{	
+					nullCell = true;
+					break;
+				}
+			}
+			
+			if(!nullCell && cellsByStack.find(x) == cellsByStack.end()) 
+			{
+				cout<<"pila: "<<it->first<<" celda: "<<x<<endl;
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
 void StowageInfo::ChargeData()
 {
     // Container load

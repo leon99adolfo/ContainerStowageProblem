@@ -16,7 +16,7 @@ using namespace std;
 using namespace Gecode;
 
 
-void* Enviroment(string pDirFile, string pFile, bool pChannelUse, bool pnuTotalFile, ofstream &pTotalFile)
+void* Enviroment(string pDirFile, string pResponseDir, string pFile, bool pChannelUse, bool pnuTotalFile, ofstream &pTotalFile, bool pLevel)
 {	
 	// Variables
 	BLReadFiles objBLReadFiles;
@@ -28,12 +28,21 @@ void* Enviroment(string pDirFile, string pFile, bool pChannelUse, bool pnuTotalF
 	
 	// charge file
     StowageInfo objStowageInfo = objBLReadFiles.ChargeFile(pDirFile + pFile, pChannelUse);
-    //objStowageInfo.ChargeData();
+    objStowageInfo.LevelDistribute = pLevel;
+    if(!objStowageInfo.IsValidLoadedCont())
+    {
+		if(pTotalFile)
+		{
+			cout<<"------------------	Bad File "<<pFile<< "	-------------------"<<endl; 
+			pTotalFile<<"------------------	Bad File "<<pFile<<"	-------------------"<<endl; 
+		}
+		return 0;
+	} 
     
-	ofstream fileOut( (pDirFile+"Response/"+pFile).c_str() );
+	ofstream fileOut( (pDirFile + pResponseDir + pFile).c_str() );
 	if(!fileOut)
 	{
-		cout<<"Error, The file can't open "<<pDirFile+"Response/"+pFile<<endl;
+		cout<<"Error, The file can't open "<<pDirFile + pResponseDir +pFile<<endl;
 		return 0;
 	}
 	
@@ -59,15 +68,18 @@ void* Enviroment(string pDirFile, string pFile, bool pChannelUse, bool pnuTotalF
 	}
 	else
 	{
-		StowageCP* m = new StowageCP( objStowageInfo);
+		StowageCP* m = new StowageCP(objStowageInfo);	
 		BAB<StowageCP> e(m, so);
 		delete m;
 		
-		// search and print all solutions
-		while (StowageCP* s = e.next()) {
+		// search and print all solutions		
+		while (StowageCP* s = e.next()) {			
 			s->print();
 			
+			// ---------------------------------------------------------
 			// --------------  print values  ---------------------------
+			// ---------------------------------------------------------
+			
 			O = s->O.val();
 			OGCTD = s->OGCTD.val();
 			OR = s->OR.val();
@@ -109,6 +121,8 @@ void* Enviroment(string pDirFile, string pFile, bool pChannelUse, bool pnuTotalF
 			}
 			SL = ss2.str();
 			// ---------------------------------------------------------
+			// ---------------------------------------------------------
+			// ---------------------------------------------------------
 			
 			delete s;
 		
@@ -132,7 +146,6 @@ void* Enviroment(string pDirFile, string pFile, bool pChannelUse, bool pnuTotalF
 
 	if(pnuTotalFile)
 	{
-		//pTotalFile<<sbTitulos<<endl;
 		pTotalFile<<O<<"\t"<<OGCTD<<"\t"<<OR<<"\t"<<OPT<<"\t"
 				  <<OU<<"\t"<<OCNS<<"\t"<<OV<<"\t"<<(double)final2 / ((double)CLOCKS_PER_SEC)
 				  <<"\t"<<(double)final / ((double)CLOCKS_PER_SEC)<<"\t"<<pFile<<"\t"<<OP<<endl; 
@@ -143,17 +156,58 @@ void* Enviroment(string pDirFile, string pFile, bool pChannelUse, bool pnuTotalF
 
 int main(int argc, char *argv[])
 {
+	if(argc != 2) 
+	{
+		cout<<"Missing Execute Mode"<<endl;
+		return 0;
+	}
+	
+	int mode = atoi(argv[1]);
+	if(mode < 0 || mode > 3)
+	{
+		cout<<"Range [0..3]"<<endl;
+		return 0;
+	}
+	
 	//int file_count = 0;
 	string full_path = "/home/adolfo/Universidad/maestria/tesis/inst/";
-	bool boChannelUse = false;
+	string responseDir;
+	bool boChannelUse;
+	bool boIsLevel;
+	switch(mode)
+	{
+		case 0: 
+			responseDir = "M1L/";
+			boChannelUse = false;
+			boIsLevel = true;
+			break;
+		case 1: 
+			responseDir = "M1S/";
+			boChannelUse = false;
+			boIsLevel = false;
+			break;
+		case 2: 
+			responseDir = "M2L/";
+			boChannelUse = true;
+			boIsLevel = true;
+			break;
+		case 3: 
+			responseDir = "M2S/";
+			boChannelUse = true;
+			boIsLevel = false;
+			break;
+};
+	
 	bool boTotalFile = true;
     
     cout<<"Empieza a procesar"<<endl;
     
-    ofstream fileOutTotal( (full_path+"Response/responseTotal.txt").c_str() );		
+    system(("mkdir " + full_path + responseDir).c_str());
+    
+    ofstream fileOutTotal( (full_path + responseDir + "responseTotal.txt").c_str() );		
 	if(!fileOutTotal)
 	{
-		cout<<"Error, The file can't open "<<full_path+"Response/responseTotal.txt"<<endl;
+		cout<<"Error, The file can't open "<<full_path+ responseDir + "responseTotal.txt"<<endl;
 		return 0;
 	}
 	
@@ -185,7 +239,7 @@ int main(int argc, char *argv[])
 			if(num = 1)
 			{
 				cout << filepath << ": " << num << endl;				
-				Enviroment(full_path, dirp->d_name, boChannelUse, boTotalFile, fileOutTotal);
+				Enviroment(full_path, responseDir, dirp->d_name, boChannelUse, boTotalFile, fileOutTotal, boIsLevel);
 			}
 		}
 		fin.close();
