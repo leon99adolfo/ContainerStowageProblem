@@ -65,13 +65,13 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 		}
 		else
 		{
-			// mejorar esto (aleoncm)
+			/*// mejorar esto (aleoncm)
 			bool isContLoaded = false;
 			for(int y = 0; y < pStowageInfo.Cont_L.size() ; y++)
 			{
 				if(x == pStowageInfo.Cont_L[y]) isContLoaded = true;
 			}
-			if(!isContLoaded) VC<<C[x];
+			if(!isContLoaded)*/ VC<<C[x];
 		}
 	}
 
@@ -507,7 +507,7 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 	// --------------------------------------------------------------------------------------
 	// --------------------------- Cost function --------------------------------------------
 	// --------------------------------------------------------------------------------------	
-	rel(*this, O == 1000 * OCNS + 20 * OPT + 10 * OU + 5 * OR );//+ OGCTD);
+	rel(*this, O == 1000 * OCNS + 20 * OPT + 10 * OU + 5 * OR + OGCTD);
 
 	// OVA Constraint
 	rel(*this, OVA[0] == OCNS);
@@ -572,7 +572,7 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 			EC<<C[pStowageInfo.SameContainer[x].vecIdxContainer[y]];
 		}
 		rel(*this, EC, IRT_LE);
-	}	
+	}
 	
 	// symmetry breaking for equal stack
 	for(int x = 0; x < pStowageInfo.SameStack.size(); x++)
