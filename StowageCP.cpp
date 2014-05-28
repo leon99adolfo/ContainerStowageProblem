@@ -257,7 +257,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			
 		// calculate gravity center distance		
 		double unitStack = heigthStack / pStowageInfo.GetNumTiers();
-		double quarterStack = heigthStack / 4;
+		double quarterStack = heigthStack / 3;
 		double GCSY = quarterStack / unitStack;
 		
 		FloatVar PenY(*this, -1 * pStowageInfo.GetNumTiers(), pStowageInfo.GetNumTiers());
@@ -471,6 +471,9 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	IntVar ORTemp(*this, 0, pStowageInfo.Slots_R.size());
 	linear(*this, NRSR, IRT_EQ, ORTemp);
 	
+	// OverStowage is zero
+	rel(*this, OV == 0); 	
+	
 	// Total Distance
 	linear(*this, GCD, FRT_EQ, GCTD);
 		
@@ -524,10 +527,13 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	linear(*this, UseSlotRArgs, IRT_EQ, UseSlotRTmp);
 	max(*this, expr(*this, UseSlotRTmp - StowedSlotR), IntVar(*this, 0, 0), UseSlotR);
 	max(*this, expr(*this, ORTemp - UseSlotR), IntVar(*this, 0, 0), OR);
+	
+	// tolerance
+	//rel(*this, OGCTD >= 50);
 	// --------------------------------------------------------------------------------------
 	// --------------------------- Cost function --------------------------------------------
 	// --------------------------------------------------------------------------------------
-	rel(*this, O == 1000 * OCNS + 100 * OV + 20 * OPT + 10 * OU + 5 * OR + OGCTD);	
+	rel(*this, O == 1000 * OCNS + 20 * OPT + 10 * OU + 5 * OR + OGCTD);	
 	
 	// OVA Constraint
 	rel(*this, OVA[0] == OCNS);
@@ -621,15 +627,21 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 // Branching by stack
 void StowageCP::BranchMethodByStack(StowageInfo pStowageInfo, vector<int> vectStacks, Symmetries pSyms)
 {	
+	/*IntVarArgs PBranch;
+	IntVarArgs WBranch;
+	IntVarArgs LBranch;
+	IntVarArgs HBranch;
+	IntVarArgs SBranch;*/
+	
 	for(int x = 0; x < vectStacks.size() ; x++)
 	{ 
-		//cout<<"pila: "<<vectStacks[x]<<endl;
-		vector<int> slots = pStowageInfo.Slots_K[vectStacks[x]];
 		IntVarArgs PBranch;
 		IntVarArgs WBranch;
 		IntVarArgs LBranch;
 		IntVarArgs HBranch;
 		IntVarArgs SBranch;
+		
+		vector<int> slots = pStowageInfo.Slots_K[vectStacks[x]];		
 		for(int y = 0; y < slots.size(); y++)
 		{
 			int slot = slots[y];
@@ -638,7 +650,7 @@ void StowageCP::BranchMethodByStack(StowageInfo pStowageInfo, vector<int> vectSt
 			LBranch<<L[slot];
 			HBranch<<H[slot];
 			SBranch<<S[slot];
-		}	
+		}
 		// branch
 		branch(*this, PBranch, INT_VAR_NONE(), INT_VAL_MAX());
 		branch(*this, LBranch, INT_VAR_NONE(), INT_VAL(&trampValueFunL));
@@ -646,19 +658,26 @@ void StowageCP::BranchMethodByStack(StowageInfo pStowageInfo, vector<int> vectSt
 		branch(*this, HBranch, INT_VAR_NONE(), INT_VAL_MAX());
 		branch(*this, SBranch, INT_VAR_NONE(), INT_VAL_MAX(), pSyms);
 	}
+	
+	// branch
+	/*branch(*this, PBranch, INT_VAR_NONE(), INT_VAL_MAX());
+	branch(*this, LBranch, INT_VAR_NONE(), INT_VAL(&trampValueFunL));
+	branch(*this, WBranch, INT_VAR_NONE(), INT_VAL_MAX());
+	branch(*this, HBranch, INT_VAR_NONE(), INT_VAL_MAX());
+	branch(*this, SBranch, INT_VAR_NONE(), INT_VAL_MAX(), pSyms);*/
 }
 
 // Branching by level
 void StowageCP::BranchMethodByLevel(StowageInfo pStowageInfo, Symmetries pSyms)
 {
+	IntVarArgs PBranch;
+	IntVarArgs WBranch;
+	IntVarArgs LBranch;
+	IntVarArgs HBranch;
+	IntVarArgs SBranch;
+	
 	for(int x = 0; x < pStowageInfo.GetNumTiers() ; x++)
 	{
-		IntVarArgs PBranch;
-		IntVarArgs WBranch;
-		IntVarArgs LBranch;
-		IntVarArgs HBranch;
-		IntVarArgs SBranch;
-		
 		for(int y = 0; y < pStowageInfo.Slots_K.size() ; y++)
 		{
 			vector<int> slots = pStowageInfo.Slots_K[(y+1)];
@@ -675,13 +694,13 @@ void StowageCP::BranchMethodByLevel(StowageInfo pStowageInfo, Symmetries pSyms)
 				
 			}		
 		}
-		branch(*this, PBranch, INT_VAR_NONE(), INT_VAL_MAX());
-		branch(*this, LBranch, INT_VAR_NONE(), INT_VAL(&trampValueFunL));
-		branch(*this, WBranch, INT_VAR_NONE(), INT_VAL_MAX());
-		branch(*this, HBranch, INT_VAR_NONE(), INT_VAL_MAX());
-		branch(*this, SBranch, INT_VAR_NONE(), INT_VAL_MAX(), pSyms);
 	}
-	//branch(*this, S, INT_VAR_NONE(), INT_VAL_MAX(), pSyms);
+	
+	branch(*this, PBranch, INT_VAR_NONE(), INT_VAL_MAX());
+	branch(*this, LBranch, INT_VAR_NONE(), INT_VAL(&trampValueFunL));
+	branch(*this, WBranch, INT_VAR_NONE(), INT_VAL_MAX());
+	branch(*this, HBranch, INT_VAR_NONE(), INT_VAL_MAX());
+	branch(*this, SBranch, INT_VAR_NONE(), INT_VAL_MAX(), pSyms);
 }
 
 // search support
@@ -743,6 +762,14 @@ void StowageCP::print() const
 	cout <<"O "<< O << endl << endl;
 	//cout <<"PreOVA "<< PreOVA << endl << endl;
 	
+}
+
+// Add Constrain
+void StowageCP::constrain(const Space& _b)
+{
+	const StowageCP& b = static_cast<const StowageCP&>(_b);	
+	rel(*this, OVA, IRT_LE, b.OVA);
+	rel(*this, O < b.O);
 }
 
 // cost funtion

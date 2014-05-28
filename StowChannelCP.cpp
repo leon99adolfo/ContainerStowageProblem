@@ -247,7 +247,7 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 				
 		// calculate gravity center distance		
 		double unitStack = heigthStack / pStowageInfo.GetNumTiers();
-		double quarterStack = heigthStack / 4;
+		double quarterStack = heigthStack / 3;
 		double GCSY = quarterStack / unitStack;
 		
 		FloatVar PenY(*this, -1 * pStowageInfo.GetNumTiers(), pStowageInfo.GetNumTiers());
@@ -623,15 +623,21 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 // Branching by stack
 void StowChannelCP::BranchMethodByStack(StowageInfo pStowageInfo, vector<int> vectStacks)
 {	
+	/*IntVarArgs PBranch;
+	IntVarArgs WBranch;
+	IntVarArgs LBranch;
+	IntVarArgs HBranch;
+	IntVarArgs SBranch;*/
+		
 	for(int x = 0; x < vectStacks.size() ; x++)
 	{ 
-		//cout<<"pila: "<<vectStacks[x]<<endl;
-		vector<int> slots = pStowageInfo.Slots_K[vectStacks[x]];
 		IntVarArgs PBranch;
 		IntVarArgs WBranch;
 		IntVarArgs LBranch;
 		IntVarArgs HBranch;
 		IntVarArgs SBranch;
+		//cout<<"pila: "<<vectStacks[x]<<endl;
+		vector<int> slots = pStowageInfo.Slots_K[vectStacks[x]];
 		for(int y = 0; y < slots.size(); y++)
 		{
 			int slot = slots[y];
@@ -641,7 +647,7 @@ void StowChannelCP::BranchMethodByStack(StowageInfo pStowageInfo, vector<int> ve
 			HBranch<<H[slot];
 			SBranch<<S[slot];
 			//cout<<"slot: "<<slot<<endl;
-		}	
+		}
 		// branch
 		branch(*this, PBranch, INT_VAR_NONE(), INT_VAL_MAX());
 		branch(*this, LBranch, INT_VAR_NONE(), INT_VAL(&trampValueFunL));
@@ -649,20 +655,27 @@ void StowChannelCP::BranchMethodByStack(StowageInfo pStowageInfo, vector<int> ve
 		branch(*this, HBranch, INT_VAR_NONE(), INT_VAL_MAX());
 		branch(*this, SBranch, INT_VAR_NONE(), INT_VAL_MIN());
 	}
+	
+	// branch
+	/*branch(*this, PBranch, INT_VAR_NONE(), INT_VAL_MAX());
+	branch(*this, LBranch, INT_VAR_NONE(), INT_VAL(&trampValueFunL));
+	branch(*this, WBranch, INT_VAR_NONE(), INT_VAL_MAX());    	
+	branch(*this, HBranch, INT_VAR_NONE(), INT_VAL_MAX());
+	branch(*this, SBranch, INT_VAR_NONE(), INT_VAL_MIN());*/
 	//branch(*this, RC, INT_VAR_NONE(), INT_VAL_MIN());
 }
 
 // Branching by level
 void StowChannelCP::BranchMethodByLevel(StowageInfo pStowageInfo)
 {
+	IntVarArgs PBranch;
+	IntVarArgs WBranch;
+	IntVarArgs LBranch;
+	IntVarArgs HBranch;
+	//IntVarArgs SBranch;
+	
 	for(int x = 0; x < pStowageInfo.GetNumTiers() ; x++)
-	{
-		IntVarArgs PBranch;
-		IntVarArgs WBranch;
-		IntVarArgs LBranch;
-		IntVarArgs HBranch;
-		//IntVarArgs SBranch;
-		
+	{	
 		for(int y = 0; y < pStowageInfo.Slots_K.size() ; y++)
 		{
 			vector<int> slots = pStowageInfo.Slots_K[(y+1)];
@@ -677,16 +690,17 @@ void StowChannelCP::BranchMethodByLevel(StowageInfo pStowageInfo)
 				HBranch<<H[slot1]<<H[slot2];
 				//SBranch<<S[slot1]<<S[slot2];
 			}		
-		}
-		branch(*this, PBranch, INT_VAR_NONE(), INT_VAL_MAX());
-		branch(*this, LBranch, INT_VAR_NONE(), INT_VAL(&trampValueFunL));
-		branch(*this, WBranch, INT_VAR_NONE(), INT_VAL_MAX());    	
-		branch(*this, HBranch, INT_VAR_NONE(), INT_VAL_MAX());
-		//branch(*this, SBranch, INT_VAR_NONE(), INT_VAL_MIN());
-	}	
+		}		
+	}
+	
+	// branch	
+	branch(*this, PBranch, INT_VAR_NONE(), INT_VAL_MAX());
+	branch(*this, LBranch, INT_VAR_NONE(), INT_VAL(&trampValueFunL));
+	branch(*this, WBranch, INT_VAR_NONE(), INT_VAL_MAX());    	
+	branch(*this, HBranch, INT_VAR_NONE(), INT_VAL_MAX());
+	//branch(*this, SBranch, INT_VAR_NONE(), INT_VAL_MIN());
 	branch(*this, RC, INT_VAR_NONE(), INT_VAL_MIN());
 }
-
 
 // search support
 StowChannelCP::StowChannelCP(bool share, StowChannelCP& s): IntMinimizeSpace(share, s)
@@ -711,6 +725,14 @@ StowChannelCP::StowChannelCP(bool share, StowChannelCP& s): IntMinimizeSpace(sha
 	OVA.update(*this, share, s.OVA);
 	O.update(*this, share, s.O);
 }
+  
+// Add Constrain
+void StowChannelCP::constrain(const Space& _b)
+{
+	const StowChannelCP& b = static_cast<const StowChannelCP&>(_b);	
+	rel(*this, OVA, IRT_LE, b.OVA);
+	rel(*this, O < b.O);
+}  
   
 // Copy solution  
 Space* StowChannelCP::copy(bool share) 

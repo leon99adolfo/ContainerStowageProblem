@@ -132,23 +132,32 @@ void* Enviroment(string pDirFile, string pResponseDir, string pFile, bool pChann
 		}
 	}
 		
-	string sbTitulos = "O\tOGCTD\tOR\tOPT\tOU\tOCNS\tOV\tTimeS\tTimeT\tFile\tOP";
-	fileOut<<sbTitulos<<endl;
-		
-	final=clock()-init; 
-	fileOut<<O<<"\t"<<OGCTD<<"\t"<<OR<<"\t"<<OPT<<"\t"
-			<<OU<<"\t"<<OCNS<<"\t"<<OV<<"\t"<<(double)final2 / ((double)CLOCKS_PER_SEC)
-			<<"\t"<<(double)final / ((double)CLOCKS_PER_SEC)<<"\t"<<pFile<<"\t"<<OP<<endl<<endl;
-					
-	fileOut<<"S:"<<endl<<SL<<endl;
-	
+	if(OP.compare("") != 0)
+	{		
+		string sbTitulos = "O\tOGCTD\tOR\tOPT\tOU\tOCNS\tOV\tTimeS\tTimeT\tFile\tOP";
+		fileOut<<sbTitulos<<endl;
+			
+		final=clock()-init; 
+		fileOut<<O<<"\t"<<OGCTD<<"\t"<<OR<<"\t"<<OPT<<"\t"
+				<<OU<<"\t"<<OCNS<<"\t"<<OV<<"\t"<<(double)final2 / ((double)CLOCKS_PER_SEC)
+				<<"\t"<<(double)final / ((double)CLOCKS_PER_SEC)<<"\t"<<pFile<<"\t"<<OP<<endl<<endl;
+						
+		fileOut<<"S:"<<endl<<SL<<endl;
+	}
 	fileOut.close();
 
 	if(pnuTotalFile)
 	{
-		pTotalFile<<O<<"\t"<<OGCTD<<"\t"<<OR<<"\t"<<OPT<<"\t"
-				  <<OU<<"\t"<<OCNS<<"\t"<<OV<<"\t"<<(double)final2 / ((double)CLOCKS_PER_SEC)
-				  <<"\t"<<(double)final / ((double)CLOCKS_PER_SEC)<<"\t"<<pFile<<"\t"<<OP<<endl; 
+		if(OP.compare("") == 0)
+		{
+			pTotalFile<<"----------- without solution -------------------"<<endl;
+		}
+		else
+		{
+			pTotalFile<<O<<"\t"<<OGCTD<<"\t"<<OR<<"\t"<<OPT<<"\t"
+					  <<OU<<"\t"<<OCNS<<"\t"<<OV<<"\t"<<(double)final2 / ((double)CLOCKS_PER_SEC)
+					  <<"\t"<<(double)final / ((double)CLOCKS_PER_SEC)<<"\t"<<pFile<<"\t"<<OP<<endl; 
+		}
 	}
 }
 
@@ -156,7 +165,7 @@ void* Enviroment(string pDirFile, string pResponseDir, string pFile, bool pChann
 
 int main(int argc, char *argv[])
 {
-	if(argc != 2) 
+	if(argc != 3) 
 	{
 		cout<<"Missing Execute Mode"<<endl;
 		return 0;
@@ -170,7 +179,7 @@ int main(int argc, char *argv[])
 	}
 	
 	//int file_count = 0;
-	string full_path = "/home/adolfo/Universidad/maestria/tesis/inst/";
+	string full_path =  argv[2];//"/home/adolfo/Universidad/maestria/tesis/inst/";
 	string responseDir;
 	bool boChannelUse;
 	bool boIsLevel;
@@ -196,7 +205,7 @@ int main(int argc, char *argv[])
 			boChannelUse = true;
 			boIsLevel = false;
 			break;
-};
+	};
 	
 	bool boTotalFile = true;
     

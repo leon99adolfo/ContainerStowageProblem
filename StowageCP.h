@@ -117,6 +117,12 @@ class StowageCP: public IntMinimizeSpace
 			*	Cost function
 			*/
 			virtual IntVar cost(void) const;
+			
+			/**
+			*	Add Constraint 
+			*/
+			virtual void constrain(const Space& _b);
+
 };
 
 #endif
