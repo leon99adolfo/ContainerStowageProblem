@@ -51,6 +51,7 @@ class StowageInfo
             double      _nuMaxWeight;  // maximum weight
             double      _nuMaxStackHeight; // Maximum height of the stack
             bool		LevelDistribute;
+            bool		ActiveRC;
 			/* Model variables */
 			vector<int>			Stacks;			// Stack index set
 			vector<int>			Slots;			// Slot index set

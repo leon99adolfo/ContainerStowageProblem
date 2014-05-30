@@ -106,7 +106,7 @@ class StowChannelCP: public IntMinimizeSpace
 			/**
 			*	Branch method
 			*/			
-			void BranchMethodByLevel(StowageInfo pStowageInfo);
+			void BranchMethodByLevel(StowageInfo pStowageInfo, bool pActiveRC);
 			void BranchMethodByStack(StowageInfo pStowageInfo, vector<int> vectStacks);
 			
 			/**

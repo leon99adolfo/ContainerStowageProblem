@@ -16,7 +16,7 @@ using namespace std;
 using namespace Gecode;
 
 
-void* Enviroment(string pDirFile, string pResponseDir, string pFile, bool pChannelUse, bool pnuTotalFile, ofstream &pTotalFile, bool pLevel)
+void* Enviroment(string pDirFile, string pResponseDir, string pFile, bool pChannelUse, bool pnuTotalFile, ofstream &pTotalFile, bool pLevel, bool pActiveRC)
 {	
 	// Variables
 	BLReadFiles objBLReadFiles;
@@ -29,6 +29,7 @@ void* Enviroment(string pDirFile, string pResponseDir, string pFile, bool pChann
 	// charge file
     StowageInfo objStowageInfo = objBLReadFiles.ChargeFile(pDirFile + pFile, pChannelUse);
     objStowageInfo.LevelDistribute = pLevel;
+    objStowageInfo.ActiveRC = pActiveRC;
     if(!objStowageInfo.IsValidLoadedCont())
     {
 		if(pTotalFile)
@@ -150,7 +151,7 @@ void* Enviroment(string pDirFile, string pResponseDir, string pFile, bool pChann
 	{
 		if(OP.compare("") == 0)
 		{
-			pTotalFile<<"----------- without solution -------------------"<<endl;
+			pTotalFile<<"------ without solution \t"<<(double)final / ((double)CLOCKS_PER_SEC)<<"\t <"<<pFile<<">---------"<<endl;
 		}
 		else
 		{
@@ -179,10 +180,11 @@ int main(int argc, char *argv[])
 	}
 	
 	//int file_count = 0;
-	string full_path =  argv[2];//"/home/adolfo/Universidad/maestria/tesis/inst/";
+	string full_path =  argv[2];
 	string responseDir;
 	bool boChannelUse;
 	bool boIsLevel;
+	bool boActiveRC = true;
 	switch(mode)
 	{
 		case 0: 
@@ -194,16 +196,30 @@ int main(int argc, char *argv[])
 			responseDir = "M1S/";
 			boChannelUse = false;
 			boIsLevel = false;
+			boActiveRC = false;
 			break;
 		case 2: 
 			responseDir = "M2L/";
 			boChannelUse = true;
 			boIsLevel = true;
+			boActiveRC = true;
 			break;
 		case 3: 
 			responseDir = "M2S/";
 			boChannelUse = true;
 			boIsLevel = false;
+			break;
+		case 4:
+			responseDir = "M2LRC/";
+			boChannelUse = true;
+			boIsLevel = true;
+			boActiveRC = false;
+			break;
+		case 5:
+			responseDir = "M1SAV/";
+			boChannelUse = false;
+			boIsLevel = false;
+			boActiveRC = true;
 			break;
 	};
 	
@@ -248,7 +264,7 @@ int main(int argc, char *argv[])
 			if(num = 1)
 			{
 				cout << filepath << ": " << num << endl;				
-				Enviroment(full_path, responseDir, dirp->d_name, boChannelUse, boTotalFile, fileOutTotal, boIsLevel);
+				Enviroment(full_path, responseDir, dirp->d_name, boChannelUse, boTotalFile, fileOutTotal, boIsLevel, boActiveRC);
 			}
 		}
 		fin.close();

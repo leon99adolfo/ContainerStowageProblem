@@ -617,29 +617,29 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	else
 	{
 		// branch
-		BranchMethodByStack(GenStowageInfo, sortStack, syms);
-		BranchMethodByStack(GenStowageInfo, emptyStack, syms);
+		BranchMethodByStack(GenStowageInfo, sortStack, syms, pStowageInfo.ActiveRC);
+		BranchMethodByStack(GenStowageInfo, emptyStack, syms, pStowageInfo.ActiveRC);
 	}
 }
 
 	
 
 // Branching by stack
-void StowageCP::BranchMethodByStack(StowageInfo pStowageInfo, vector<int> vectStacks, Symmetries pSyms)
+void StowageCP::BranchMethodByStack(StowageInfo pStowageInfo, vector<int> vectStacks, Symmetries pSyms, bool pAllVar)
 {	
-	/*IntVarArgs PBranch;
+	IntVarArgs PBranch;
 	IntVarArgs WBranch;
 	IntVarArgs LBranch;
 	IntVarArgs HBranch;
-	IntVarArgs SBranch;*/
+	IntVarArgs SBranch;
 	
 	for(int x = 0; x < vectStacks.size() ; x++)
-	{ 
-		IntVarArgs PBranch;
-		IntVarArgs WBranch;
-		IntVarArgs LBranch;
-		IntVarArgs HBranch;
-		IntVarArgs SBranch;
+	{
+		IntVarArgs PBranch2;
+		IntVarArgs WBranch2;
+		IntVarArgs LBranch2;
+		IntVarArgs HBranch2;
+		IntVarArgs SBranch2;
 		
 		vector<int> slots = pStowageInfo.Slots_K[vectStacks[x]];		
 		for(int y = 0; y < slots.size(); y++)
@@ -650,7 +650,27 @@ void StowageCP::BranchMethodByStack(StowageInfo pStowageInfo, vector<int> vectSt
 			LBranch<<L[slot];
 			HBranch<<H[slot];
 			SBranch<<S[slot];
+			
+			PBranch2<<P[slot];
+			WBranch2<<W[slot];
+			LBranch2<<L[slot];
+			HBranch2<<H[slot];
+			SBranch2<<S[slot];
 		}
+		
+		if(!pAllVar)
+		{
+			// branch
+			branch(*this, PBranch2, INT_VAR_NONE(), INT_VAL_MAX());
+			branch(*this, LBranch2, INT_VAR_NONE(), INT_VAL(&trampValueFunL));
+			branch(*this, WBranch2, INT_VAR_NONE(), INT_VAL_MAX());
+			branch(*this, HBranch2, INT_VAR_NONE(), INT_VAL_MAX());
+			branch(*this, SBranch2, INT_VAR_NONE(), INT_VAL_MAX(), pSyms);
+		}
+	}
+	
+	if(pAllVar)
+	{
 		// branch
 		branch(*this, PBranch, INT_VAR_NONE(), INT_VAL_MAX());
 		branch(*this, LBranch, INT_VAR_NONE(), INT_VAL(&trampValueFunL));
@@ -658,13 +678,6 @@ void StowageCP::BranchMethodByStack(StowageInfo pStowageInfo, vector<int> vectSt
 		branch(*this, HBranch, INT_VAR_NONE(), INT_VAL_MAX());
 		branch(*this, SBranch, INT_VAR_NONE(), INT_VAL_MAX(), pSyms);
 	}
-	
-	// branch
-	/*branch(*this, PBranch, INT_VAR_NONE(), INT_VAL_MAX());
-	branch(*this, LBranch, INT_VAR_NONE(), INT_VAL(&trampValueFunL));
-	branch(*this, WBranch, INT_VAR_NONE(), INT_VAL_MAX());
-	branch(*this, HBranch, INT_VAR_NONE(), INT_VAL_MAX());
-	branch(*this, SBranch, INT_VAR_NONE(), INT_VAL_MAX(), pSyms);*/
 }
 
 // Branching by level

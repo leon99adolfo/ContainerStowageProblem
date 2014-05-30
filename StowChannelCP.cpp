@@ -65,13 +65,13 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 		}
 		else
 		{
-			/*// mejorar esto (aleoncm)
+			// mejorar esto (aleoncm)
 			bool isContLoaded = false;
 			for(int y = 0; y < pStowageInfo.Cont_L.size() ; y++)
 			{
 				if(x == pStowageInfo.Cont_L[y]) isContLoaded = true;
 			}
-			if(!isContLoaded)*/ VC<<C[x];
+			if(!isContLoaded) VC<<C[x];
 		}
 	}
 
@@ -609,7 +609,7 @@ StowChannelCP::StowChannelCP(StowageInfo pStowageInfo):
 	//////////////////////////////////////////////////////////////////////////////////////////////////		
 	if(pStowageInfo.LevelDistribute)
 	{
-		BranchMethodByLevel(pStowageInfo);
+		BranchMethodByLevel(pStowageInfo, pStowageInfo.ActiveRC);
 	}
 	else
 	{
@@ -666,13 +666,13 @@ void StowChannelCP::BranchMethodByStack(StowageInfo pStowageInfo, vector<int> ve
 }
 
 // Branching by level
-void StowChannelCP::BranchMethodByLevel(StowageInfo pStowageInfo)
+void StowChannelCP::BranchMethodByLevel(StowageInfo pStowageInfo, bool pActiveRC)
 {
 	IntVarArgs PBranch;
 	IntVarArgs WBranch;
 	IntVarArgs LBranch;
 	IntVarArgs HBranch;
-	//IntVarArgs SBranch;
+	IntVarArgs SBranch;
 	
 	for(int x = 0; x < pStowageInfo.GetNumTiers() ; x++)
 	{	
@@ -688,7 +688,7 @@ void StowChannelCP::BranchMethodByLevel(StowageInfo pStowageInfo)
 				WBranch<<W[slot1]<<W[slot2];
 				LBranch<<L[slot1]<<L[slot2];
 				HBranch<<H[slot1]<<H[slot2];
-				//SBranch<<S[slot1]<<S[slot2];
+				SBranch<<S[slot1]<<S[slot2];
 			}		
 		}		
 	}
@@ -698,8 +698,14 @@ void StowChannelCP::BranchMethodByLevel(StowageInfo pStowageInfo)
 	branch(*this, LBranch, INT_VAR_NONE(), INT_VAL(&trampValueFunL));
 	branch(*this, WBranch, INT_VAR_NONE(), INT_VAL_MAX());    	
 	branch(*this, HBranch, INT_VAR_NONE(), INT_VAL_MAX());
-	//branch(*this, SBranch, INT_VAR_NONE(), INT_VAL_MIN());
-	branch(*this, RC, INT_VAR_NONE(), INT_VAL_MIN());
+	if(pActiveRC)
+	{
+		branch(*this, RC, INT_VAR_NONE(), INT_VAL_MIN());
+	}
+	else
+	{
+		branch(*this, SBranch, INT_VAR_NONE(), INT_VAL_MIN());
+	}
 }
 
 // search support
