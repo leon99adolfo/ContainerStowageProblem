@@ -648,11 +648,25 @@ void StowChannelCP::BranchMethodByStack(StowageInfo pStowageInfo, vector<int> ve
 			SBranch<<S[slot];
 			//cout<<"slot: "<<slot<<endl;
 		}
-		// branch
-		branch(*this, PBranch, INT_VAR_NONE(), INT_VAL_MAX());
-		branch(*this, LBranch, INT_VAR_NONE(), INT_VAL(&trampValueFunL));
-		branch(*this, WBranch, INT_VAR_NONE(), INT_VAL_MAX());    	
-		branch(*this, HBranch, INT_VAR_NONE(), INT_VAL_MAX());
+		
+		for (int x = 0; x  < pStowageInfo.variance.size(); x++)
+		{
+			switch (pStowageInfo.variance[x])
+			{	
+				case 0:
+					branch(*this, PBranch, INT_VAR_NONE(), INT_VAL_MAX());
+					break;
+				case 1:
+					branch(*this, LBranch, INT_VAR_NONE(), INT_VAL(&trampValueFunL));
+					break;
+				case 2:
+					branch(*this, WBranch, INT_VAR_NONE(), INT_VAL_MAX());
+					break;
+				case 3:
+					branch(*this, HBranch, INT_VAR_NONE(), INT_VAL_MAX());
+					break;
+			}
+		}
 		branch(*this, SBranch, INT_VAR_NONE(), INT_VAL_MIN());
 	}
 	
@@ -693,11 +707,24 @@ void StowChannelCP::BranchMethodByLevel(StowageInfo pStowageInfo, bool pActiveRC
 		}		
 	}
 	
-	// branch	
-	branch(*this, PBranch, INT_VAR_NONE(), INT_VAL_MAX());
-	branch(*this, LBranch, INT_VAR_NONE(), INT_VAL(&trampValueFunL));
-	branch(*this, WBranch, INT_VAR_NONE(), INT_VAL_MAX());    	
-	branch(*this, HBranch, INT_VAR_NONE(), INT_VAL_MAX());
+	for (int x = 0; x  < pStowageInfo.variance.size(); x++)
+	{
+		switch (pStowageInfo.variance[x])
+		{	
+			case 0:
+				branch(*this, PBranch, INT_VAR_NONE(), INT_VAL_MAX());
+				break;
+			case 1:
+				branch(*this, LBranch, INT_VAR_NONE(), INT_VAL(&trampValueFunL));
+				break;
+			case 2:
+				branch(*this, WBranch, INT_VAR_NONE(), INT_VAL_MAX());
+				break;
+			case 3:
+				branch(*this, HBranch, INT_VAR_NONE(), INT_VAL_MAX());
+				break;
+		}
+	}
 	if(pActiveRC)
 	{
 		branch(*this, RC, INT_VAR_NONE(), INT_VAL_MIN());
@@ -737,7 +764,6 @@ void StowChannelCP::constrain(const Space& _b)
 {
 	const StowChannelCP& b = static_cast<const StowChannelCP&>(_b);	
 	rel(*this, OVA, IRT_LE, b.OVA);
-	rel(*this, O < b.O);
 }  
   
 // Copy solution  

@@ -53,8 +53,6 @@ class StowageCP: public IntMinimizeSpace
 			IntVar          O;   			// Solution Cost.
 			IntVar			OGCTD;			// Gravity Center total distance
 			IntVar          OR;  			// Number of container non-reefers stowed in reefer cells.
-			IntVar          OV;  			// Number of over-stowing containers.
-			IntVarArray     OVT; 			// Container j over-stowing temporal.
 			IntVar			OCNS; 			// Number of container not stowed.
 			IntVar          OU;  			// Number of used stacks. 
 			IntVarArray     OP;  			// Number of different discharge ports in each stack.

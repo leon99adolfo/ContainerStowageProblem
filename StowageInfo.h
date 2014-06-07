@@ -97,6 +97,11 @@ class StowageInfo
             map<int, vector<Cell> > ListCellByStack; // cells by stack
             map<int, int> 		SlotRByStack; // Slots reffer by slots
             vector<int>			SortSlotRByStack;  // sort SlotRByStack
+			map<int, int> 		varianceH; // Variance H
+			map<int, int> 		varianceW; // Variance W
+			map<int, int> 		varianceL; // Variance L
+			map<int, int> 		varianceP; // Variance P
+			vector<int>	 		variance; // Variance P
 			
              // ------------------------ Properties -------------------------------
     		 /**

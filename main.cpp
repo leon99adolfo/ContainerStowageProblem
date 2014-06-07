@@ -49,7 +49,7 @@ void* Enviroment(string pDirFile, string pResponseDir, string pFile, bool pChann
 	
 	// create model and search engine
 	Search::Options so;
-	Search::TimeStop ts(600000); // stop after 600000 ms
+	Search::TimeStop ts(180000); // stop after 600000 ms
 	so.stop = &ts;
 	if(pChannelUse)
 	{
@@ -105,7 +105,7 @@ void* Enviroment(string pDirFile, string pResponseDir, string pFile, bool pChann
 	
 			OU = s->OU.val();
 			OCNS = s->OCNS.val();
-			OV = s->OV.val();
+			OV = 0;
 
 			stringstream ss2;
 			for(int x = 0; x < s->S.size() ; x++)
@@ -133,12 +133,12 @@ void* Enviroment(string pDirFile, string pResponseDir, string pFile, bool pChann
 		}
 	}
 		
+	final=clock()-init; 	
 	if(OP.compare("") != 0)
 	{		
 		string sbTitulos = "O\tOGCTD\tOR\tOPT\tOU\tOCNS\tOV\tTimeS\tTimeT\tFile\tOP";
 		fileOut<<sbTitulos<<endl;
 			
-		final=clock()-init; 
 		fileOut<<O<<"\t"<<OGCTD<<"\t"<<OR<<"\t"<<OPT<<"\t"
 				<<OU<<"\t"<<OCNS<<"\t"<<OV<<"\t"<<(double)final2 / ((double)CLOCKS_PER_SEC)
 				<<"\t"<<(double)final / ((double)CLOCKS_PER_SEC)<<"\t"<<pFile<<"\t"<<OP<<endl<<endl;
@@ -173,9 +173,9 @@ int main(int argc, char *argv[])
 	}
 	
 	int mode = atoi(argv[1]);
-	if(mode < 0 || mode > 3)
+	if(mode < 0 || mode > 5)
 	{
-		cout<<"Range [0..3]"<<endl;
+		cout<<"Range [0..5]"<<endl;
 		return 0;
 	}
 	

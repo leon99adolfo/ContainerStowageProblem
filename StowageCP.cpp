@@ -13,8 +13,6 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
               CFEU_F(*this,(pStowageInfo.Slots.size()/2), 0, 1),
               GCD(*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo.GetNumTiers()),
               OGCTD(*this, 0, pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks() * 100), 
-              OV (*this, 0, pStowageInfo.Slots.size()),
-			  OVT(*this, pStowageInfo.Slots.size(), 0, 1),
 			  OCNS(*this, 0, pStowageInfo.Slots.size()),
               OU (*this, 0, pStowageInfo.GetNumStacks()),
               OP (*this, pStowageInfo.GetNumStacks(), 0, pStowageInfo.GetNumPortsDischarge()),
@@ -25,7 +23,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 							(10 * pStowageInfo.GetNumStacks()) +
 							(5 * pStowageInfo.Slots_R.size()) +
 							(pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks() * 100) ),
-			  OVA (*this, 6, 0, (1000 * pStowageInfo.GetNumContainerLoad()) + 
+			  OVA (*this, 5, 0, (1000 * pStowageInfo.GetNumContainerLoad()) + 
 								(pStowageInfo.GetNumTiers() * pStowageInfo.GetNumStacks() * 100)),
 			  UseStackI(*this, 0, pStowageInfo.GetNumStacks()),
 			  UseSlotR(*this, 0, pStowageInfo.GetNumStacks() * pStowageInfo.GetNumTiers() * 2)
@@ -156,22 +154,28 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			// Aft slot 
 			if ( pStowageInfo.ContLoadedSlot.find(slot) != pStowageInfo.ContLoadedSlot.end())	
 			{
-				slotsCellWeight<<IntVar(*this, pStowageInfo._nuMaxWeight, pStowageInfo._nuMaxWeight);				
+				slotsCellWeight<<IntVar(*this, pStowageInfo._nuMaxWeight, pStowageInfo._nuMaxWeight);
+				PTempPODAft<<IntVar(*this, pStowageInfo._nuMaxPOD, pStowageInfo._nuMaxPOD);				
 			}
 			else
 			{
 				slotsCellWeight<<W[slot];
+				PTempPODAft<<P[slot];
 			}
 			
 			// Fore slot
 			if ( pStowageInfo.ContLoadedSlot.find(slot + 1) != pStowageInfo.ContLoadedSlot.end())	
 			{
-				slotsCellWeight<<IntVar(*this, pStowageInfo._nuMaxWeight, pStowageInfo._nuMaxWeight);				
+				slotsCellWeight<<IntVar(*this, pStowageInfo._nuMaxWeight, pStowageInfo._nuMaxWeight);
+				PTempPODFore<<IntVar(*this, pStowageInfo._nuMaxPOD, pStowageInfo._nuMaxPOD);				
 			}
 			else
 			{
 				slotsCellWeight<<W[slot + 1];
+				PTempPODFore<<P[slot+1];
 			}
+			
+			PTempPODAftFore<<P[slot]<<P[slot+1];
 			
 			// full variable WeightTotal
 			WeightTotalArgs<<WD[slot]<<WD[slot + 1];
@@ -187,45 +191,6 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			for (map<int, int>::iterator it=pStowageInfo.Cont_40_F.begin(); it != pStowageInfo.Cont_40_F.end(); ++it)
 				rel(*this, S[slot], IRT_NQ, it->second);
 							
-			// ---------------------------------------------------------------------------------------
-			// This restriction is goal (POD)
-			PTempPODAft<<P[slot];
-			PTempPODFore<<P[slot+1];
-			PTempPODAftFore<<P[slot]<<P[slot+1];
-			BoolVar	IsOverStowed20A(*this, 0, 1), 
-					IsOverStowed20F(*this, 0, 1),
-					IsOverStowed40(*this, 0, 1);
-			// Get minimun value
-			IntVar 	minPODAft(*this, pStowageInfo._nuMinPOD, pStowageInfo._nuMaxPOD), 
-					minPODFore(*this, pStowageInfo._nuMinPOD, pStowageInfo._nuMaxPOD),  
-					minPODAftFore(*this, pStowageInfo._nuMinPOD, pStowageInfo._nuMaxPOD);
-			// Restriction min
-			min(*this, PTempPODAft, minPODAft);
-			min(*this, PTempPODFore, minPODFore);
-			min(*this, PTempPODAftFore, minPODAftFore);
-			// This restriction is goal (POD)
-			IsOverStowed20A = expr(*this, P[slot] > minPODAft);
-			IsOverStowed20F = expr(*this, P[slot] > minPODFore);
-			IsOverStowed40 = expr(*this, P[slot] > minPODAftFore);
-			// Get solution Bool
-			BoolVar OverStow40(*this, 0, 1), OverStow20A(*this, 0, 1), OverStow20F(*this, 0, 1),
-					NegCFEU_A(*this, 0, 1);
-					
-			NegCFEU_A = expr(*this, !CFEU_A[countCont]);			
-			rel(*this, CFEU_A[countCont], BOT_AND, IsOverStowed40, OverStow40);
-			rel(*this, NegCFEU_A, BOT_AND, IsOverStowed20A, OverStow20A);
-			rel(*this, NegCFEU_A, BOT_AND, IsOverStowed20F, OverStow20F);
-			
-			// This restriction is goal (POD) for container 40
-			IntVar GenericCero(*this, 0, 0);
-			IntVar GenericOne(*this, 1, 1);
-			ite(*this, OverStow40, GenericOne, GenericCero, OVT[countCont*2]);
-			ite(*this, OverStow40, GenericOne, GenericCero, OVT[(countCont*2) + 1]);
-			// This restriction is goal (POD) for container 20 aft
-			ite(*this, OverStow20A, GenericOne, GenericCero, OVT[countCont*2]);
-			// This restriction is goal (POD) for container 20 fore
-			ite(*this, OverStow20F, GenericOne, GenericCero, OVT[(countCont*2) + 1]);
-			
 			// ---------------------------------------------------------------------------------------				
 			// Gravitatory center In Y
 			rel(*this, GraviCentersY[(posY*2)] == WD[slot] * posY);
@@ -239,7 +204,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 			// Get Height
 			HTempHeight<<H[slot];
 		}
-
+		
 		double heigthStack =  pStowageInfo.GetListStacks()[(countStaks+1)].GetMaxHeigth()*10000;
 		rel(*this, HS[countStaks], IRT_LQ, heigthStack); // Heigth limit	
 		
@@ -269,6 +234,8 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		extensional(*this, LTempLength, d);  // regular constraint		
 		linear(*this, HTempHeight, IRT_LQ, HS[ (it->first) - 1 ]); // Height limit constraint
 		rel(*this, WTempWeight, IRT_GQ); // weight ordered constraint		
+		rel(*this, PTempPODAft, IRT_GQ); // POD ordered constraint (Aft)
+		rel(*this, PTempPODFore, IRT_GQ); // POD ordered constraint (Fore)	
 		// ---------------------------------------------------------------------------------------------
 		
 		// Goal OP
@@ -285,6 +252,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		countStaks++;
     }
     
+
     countCont = 0;
 	// regular constraint Stack-Fore
 	for (map<int, vector<int> >::iterator it=pStowageInfo.Slots_K_F.begin(); it != pStowageInfo.Slots_K_F.end(); ++it)
@@ -454,10 +422,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	IntVar C40F(*this, 0, (pStowageInfo.Cont.size()/2));	// containers 40 stowed in fore 
 	linear(*this, CFEU_F, IRT_EQ, C40F);
 	int numberContainer = pStowageInfo.GetNumContainerLoad() + pStowageInfo.GetNumContainerLoaded();
-	rel(*this, OCNS == numberContainer - (CS - C40F)); 
-	
-	// Get Over-stowing container
-	linear(*this, OVT, IRT_EQ, OV); 
+	rel(*this, OCNS == numberContainer - (CS - C40F));  
 	
 	// Get empty stack
 	IntVar nuCeroOU(*this, 0, pStowageInfo.GetNumStacks());
@@ -469,10 +434,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	
 	// objetive reffer
 	IntVar ORTemp(*this, 0, pStowageInfo.Slots_R.size());
-	linear(*this, NRSR, IRT_EQ, ORTemp);
-	
-	// OverStowage is zero
-	rel(*this, OV == 0); 	
+	linear(*this, NRSR, IRT_EQ, ORTemp); 	
 	
 	// Total Distance
 	linear(*this, GCD, FRT_EQ, GCTD);
@@ -537,11 +499,10 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 	
 	// OVA Constraint
 	rel(*this, OVA[0] == OCNS);
-	rel(*this, OVA[1] == OV);
-	rel(*this, OVA[2] == OPT);
-	rel(*this, OVA[3] == OU);
-	rel(*this, OVA[4] == OR);
-	rel(*this, OVA[5] == OGCTD);
+	rel(*this, OVA[1] == OPT);
+	rel(*this, OVA[2] == OU);
+	rel(*this, OVA[3] == OR);
+	rel(*this, OVA[4] == OGCTD);
 	
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// Propagator
@@ -588,6 +549,8 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		syms << ValueSymmetry(symmetryArgs);
 	}
 	
+	
+	
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// post branching
 	//////////////////////////////////////////////////////////////////////////////////////////////////	
@@ -608,7 +571,8 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 					ES1<<S[slots1[z]];	
 				}
 				ES2<<ES1;
-			}		
+			}	
+			if(x == 0) {cout<<ES2<<endl;	}
 			//syms << VariableSequenceSymmetry(ES2, GenStowageInfo.SameStack[x].vecIdxStack.size());
 		}
 	
@@ -660,22 +624,48 @@ void StowageCP::BranchMethodByStack(StowageInfo pStowageInfo, vector<int> vectSt
 		
 		if(!pAllVar)
 		{
-			// branch
-			branch(*this, PBranch2, INT_VAR_NONE(), INT_VAL_MAX());
-			branch(*this, LBranch2, INT_VAR_NONE(), INT_VAL(&trampValueFunL));
-			branch(*this, WBranch2, INT_VAR_NONE(), INT_VAL_MAX());
-			branch(*this, HBranch2, INT_VAR_NONE(), INT_VAL_MAX());
+			for (int x = 0; x  < pStowageInfo.variance.size(); x++)
+			{
+				switch (pStowageInfo.variance[x])
+				{	
+					case 0:
+						branch(*this, PBranch2, INT_VAR_NONE(), INT_VAL_MAX());
+						break;
+					case 1:
+						branch(*this, LBranch2, INT_VAR_NONE(), INT_VAL(&trampValueFunL));
+						break;
+					case 2:
+						branch(*this, WBranch2, INT_VAR_NONE(), INT_VAL_MAX());
+						break;
+					case 3:
+						branch(*this, HBranch2, INT_VAR_NONE(), INT_VAL_MAX());
+						break;
+				}
+			}
 			branch(*this, SBranch2, INT_VAR_NONE(), INT_VAL_MAX(), pSyms);
 		}
 	}
 	
 	if(pAllVar)
 	{
-		// branch
-		branch(*this, PBranch, INT_VAR_NONE(), INT_VAL_MAX());
-		branch(*this, LBranch, INT_VAR_NONE(), INT_VAL(&trampValueFunL));
-		branch(*this, WBranch, INT_VAR_NONE(), INT_VAL_MAX());
-		branch(*this, HBranch, INT_VAR_NONE(), INT_VAL_MAX());
+		for (int x = 0; x  < pStowageInfo.variance.size(); x++)
+		{
+			switch (pStowageInfo.variance[x])
+			{	
+				case 0:
+					branch(*this, PBranch, INT_VAR_NONE(), INT_VAL_MAX());
+					break;
+				case 1:
+					branch(*this, LBranch, INT_VAR_NONE(), INT_VAL(&trampValueFunL));
+					break;
+				case 2:
+					branch(*this, WBranch, INT_VAR_NONE(), INT_VAL_MAX());
+					break;
+				case 3:
+					branch(*this, HBranch, INT_VAR_NONE(), INT_VAL_MAX());
+					break;
+			}
+		}
 		branch(*this, SBranch, INT_VAR_NONE(), INT_VAL_MAX(), pSyms);
 	}
 }
@@ -709,10 +699,25 @@ void StowageCP::BranchMethodByLevel(StowageInfo pStowageInfo, Symmetries pSyms)
 		}
 	}
 	
-	branch(*this, PBranch, INT_VAR_NONE(), INT_VAL_MAX());
-	branch(*this, LBranch, INT_VAR_NONE(), INT_VAL(&trampValueFunL));
-	branch(*this, WBranch, INT_VAR_NONE(), INT_VAL_MAX());
-	branch(*this, HBranch, INT_VAR_NONE(), INT_VAL_MAX());
+	
+	for (int x = 0; x  < pStowageInfo.variance.size(); x++)
+	{
+		switch (pStowageInfo.variance[x])
+		{	
+			case 0:
+				branch(*this, PBranch, INT_VAR_NONE(), INT_VAL_MAX());
+				break;
+			case 1:
+				branch(*this, LBranch, INT_VAR_NONE(), INT_VAL(&trampValueFunL));
+				break;
+			case 2:
+				branch(*this, WBranch, INT_VAR_NONE(), INT_VAL_MAX());
+				break;
+			case 3:
+				branch(*this, HBranch, INT_VAR_NONE(), INT_VAL_MAX());
+				break;
+		}
+	}
 	branch(*this, SBranch, INT_VAR_NONE(), INT_VAL_MAX(), pSyms);
 }
 
@@ -729,8 +734,6 @@ StowageCP::StowageCP(bool share, StowageCP& s): IntMinimizeSpace(share, s)
 	CFEU_A.update(*this, share, s.CFEU_A);
 	CFEU_F.update(*this, share, s.CFEU_F);
 	GCD.update(*this, share, s.GCD);
-	OV.update(*this, share, s.OV);
-	OVT.update(*this, share, s.OVT);
 	OCNS.update(*this, share, s.OCNS);
 	OU.update(*this, share, s.OU);
 	UseStackI.update(*this, share, s.UseStackI);
@@ -753,7 +756,7 @@ void StowageCP::print() const
 {
 	//cout << "Salida" << endl;	
     cout <<"S"<< S << endl << endl;    
-	/*cout <<"L"<< L << endl << endl;
+	cout <<"L"<< L << endl << endl;
 	cout <<"H"<< H << endl << endl;
 	cout <<"W"<< W << endl << endl;
 	cout <<"WD"<< WD << endl << endl;
@@ -762,15 +765,13 @@ void StowageCP::print() const
 	cout <<"CFEU_A"<< CFEU_A << endl << endl;
 	cout <<"CFEU_F"<< CFEU_F << endl << endl;
 	cout <<"GCD"<< GCD << endl << endl;
-	cout <<"OVT"<< OVT << endl << endl;
-	cout <<"OV "<< OV << endl << endl;
 	cout <<"OCNS "<< OCNS << endl << endl;
 	cout <<"OU "<< OU << endl << endl;
 	cout <<"UseStackI "<< UseStackI << endl << endl;
 	cout <<"UseSlotR "<< UseSlotR << endl << endl;
 	cout <<"OP "<< OP << endl << endl;	
 	cout <<"OR "<< OR << endl << endl;
-	cout <<"OGCTD "<< OGCTD << endl << endl;*/
+	cout <<"OGCTD "<< OGCTD << endl << endl;
 	cout <<"OVA "<< OVA << endl << endl;
 	cout <<"O "<< O << endl << endl;
 	//cout <<"PreOVA "<< PreOVA << endl << endl;
@@ -782,7 +783,6 @@ void StowageCP::constrain(const Space& _b)
 {
 	const StowageCP& b = static_cast<const StowageCP&>(_b);	
 	rel(*this, OVA, IRT_LE, b.OVA);
-	rel(*this, O < b.O);
 }
 
 // cost funtion

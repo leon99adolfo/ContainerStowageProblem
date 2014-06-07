@@ -334,6 +334,33 @@ StowageInfo BLReadFiles::ChargeFile(string pFileName, bool pChannelUse)
     response.SetListCells(listCells);     
 	response.ChargeData();
 	
+	// print variance
+	cout<<"Variace P: "<<response.varianceP.size()<<endl;
+	cout<<"Variace L: "<<response.varianceL.size()<<endl;
+	cout<<"Variace W: "<<response.varianceW.size()<<endl;
+	cout<<"Variace H: "<<response.varianceH.size()<<endl;
+	map<int, int> varianceTmp;
+	varianceTmp[0] = response.varianceP.size();
+	varianceTmp[1] = response.varianceL.size();
+	varianceTmp[2] = response.varianceW.size();
+	varianceTmp[3] = response.varianceH.size();
+	
+	for (int x = 0; x < 4; x++)
+	{
+		int mayor = INT_MIN;
+		int mayorValor = INT_MIN;
+		for(map<int, int>::iterator it2=varianceTmp.begin(); it2 != varianceTmp.end(); ++it2)
+		{
+			if(mayorValor < it2->second)
+			{
+				mayor = it2->first;
+				mayorValor = it2->second;
+			}
+		}
+		if(mayorValor > 1) response.variance.push_back(mayor);
+		varianceTmp.erase(mayor);		
+	}
+	
     // Close file
     archivoAr.close();
     
@@ -401,6 +428,31 @@ map<int, ContainerBox> BLReadFiles::ReadContainer(int pContainers, bool pAreLoad
 				}
 			}			
 		}
+		
+		// ---------------  varinace 
+		if(!pIsVirtual)
+		{
+			if ( response.varianceH.find(dbHeigthCont) == response.varianceH.end() )
+			{
+				response.varianceH[dbHeigthCont] = dbHeigthCont;
+			}
+			
+			if ( response.varianceW.find(dbWeigthCont) == response.varianceW.end() )
+			{
+				response.varianceW[dbWeigthCont] = dbWeigthCont;
+			}
+			
+			if ( response.varianceP.find(nuPortDischargeCont) == response.varianceP.end() )
+			{
+				response.varianceP[nuPortDischargeCont] = nuPortDischargeCont;
+			}    
+			
+			if ( response.varianceL.find(nuLengthCont) == response.varianceL.end() )
+			{
+				response.varianceL[nuLengthCont] = nuLengthCont;
+			}
+		}
+		// -------------------
               
         if( objContainer.GetLength() == objConstants.container40 ) 
         {
