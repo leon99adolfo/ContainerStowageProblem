@@ -572,7 +572,7 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 				}
 				ES2<<ES1;
 			}	
-			if(x == 0) {cout<<ES2<<endl;	}
+			//if(x == 0) {cout<<ES2<<endl;	}
 			//syms << VariableSequenceSymmetry(ES2, GenStowageInfo.SameStack[x].vecIdxStack.size());
 		}
 	
