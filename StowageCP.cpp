@@ -221,9 +221,9 @@ StowageCP::StowageCP(StowageInfo pStowageInfo):
 		div(*this, sumGraviCentersY, WeightTotal, GCY[countStaks]);			
 			
 		// calculate gravity center distance		
-		double unitStack = heigthStack / pStowageInfo.GetNumTiers();
-		double quarterStack = heigthStack / 3;
-		double GCSY = quarterStack / unitStack;
+		//double unitStack = heigthStack / pStowageInfo.GetNumTiers();
+		double quarterStack = heigthStack / 30000;
+		double GCSY = quarterStack; // / unitStack;
 		
 		FloatVar PenY(*this, -1 * pStowageInfo.GetNumTiers(), pStowageInfo.GetNumTiers());
 		rel(*this, PenY == GCY[countStaks] - GCSY);			

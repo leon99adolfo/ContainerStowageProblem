@@ -49,7 +49,7 @@ void* Enviroment(string pDirFile, string pResponseDir, string pFile, bool pChann
 	
 	// create model and search engine
 	Search::Options so;
-	Search::TimeStop ts(180000); // stop after 600000 ms
+	Search::TimeStop ts(60000); // stop after 600000 ms
 	so.stop = &ts;
 	if(pChannelUse)
 	{
